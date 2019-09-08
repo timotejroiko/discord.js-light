@@ -7,8 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
-    "type": "git",
-    "url": "git+https://github.com/timotejroiko/djs-shenanigans.git"
+    "url": "https://github.com/timotejroiko/djs-shenanigans.git"
   },
   "keywords": [
     "discord",
