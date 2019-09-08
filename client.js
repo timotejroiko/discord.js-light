@@ -226,7 +226,7 @@ module.exports = function(options) {
 		if(typeof client.options.enableHandler === "string") {
 			const fs = require("fs");
 			client.commands = new Map();
-			client.options.enableHandler = "../../"+client.options.enableHandler;
+			client.options.enableHandler = process.cwd()+client.options.enableHandler;
 			fs.readdirSync(client.options.enableHandler).forEach(t => {
 				let cmd = t.split(".")[0].toLowerCase();
 				client.commands.set(cmd,require(`${client.options.enableHandler}/${cmd}`));
