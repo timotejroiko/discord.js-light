@@ -20,10 +20,10 @@ Pros:
 
 Cons:
 
-* Disabled everything except messages and reactions (some stuff might be re-enableable)
-* Disabled caching and auto-updating of channels, users, members, roles, emojis and voice states (must be fetched and cached by end-user when needed)
+* Disabled everything except guilds, messages and reactions (some stuff might be re-enableable)
+* Disabled auto-caching and auto-updating of channels, permissionOverwrites, users, members, roles, emojis and voice states (must be fetched and cached by end-user when needed)
 * Presences and typing events are permanently disabled
-* Some features that rely on cached data might require fixes or workarounds
+* Some features that rely on cached data might have unexpected behavior and require fixes or workarounds
 * Voice features were not tested
 
 ## Getting Started
@@ -88,13 +88,13 @@ All fields are optional.
 
 ## Command handlers
 
-djs-shenanigans has 3 different ways of working depending on the command handler mode:
+djs-shenanigans has 3 different ways of working depending on the command handler mode. The command handler will process all messages that start with a valid custom prefix, a default prefix or a bot mention. All other messages will be ignored. All bot responses are cached by default. The command handler also listens to message edits and processes them as new messages. You can differentiate between new and updated messages by checking for the existence of message.editedTimestamp. If responding to a message edit using message.send(), the response will be sent as a message edit if the previous response is cached (see non-standard API). When using Router or File mode, empty commands (prefix + nothing or mention + nothing) will be processed as a "nocommand" command.
 
 ### Message Event Mode
 
 options.enableHandler set to false or omitted.
 
-In this mode, client will listen to messages that start with a valid prefix and emit them as a "message" event. Example:
+In this mode, client will listen to messages that start with a valid prefix and emit them as a "message" event. This is the most barebones setup, messages are captured from the raw event, checked for prefixes and bot users and then emitted. You can also use this event to capture messages from whitelisted channels, regardless of command handler mode (see non-standard API). Example:
 
 ```js
 const client = require("djs-shenanigans")({
@@ -102,16 +102,18 @@ const client = require("djs-shenanigans")({
 });
 
 client.on("message", message => {
-	// only messages from non-bot users which start with a valid prefix are received, in this case messages starting with !
-	// the message itself is not cached, but its channel and user/member are automatically cached.
+	// messages from non-bot users which start with a valid prefix are received (ie: "!somecommand")
+	// the message itself is not cached, but its channel and author/member are automatically cached.
+	// you must handle commands and errors by yourself
+	// also receives messages from whitelisted channels regardless of command handler mode
 });
 ```
 
-### Route Mode
+### Router Mode
 
 options.enableHandler set to true.
 
-In this mode, client will listen to messages that start with a valid prefix and contain a command registered as an event. Registered command events are prefixed with a slash to avoid interfering with standard events. Example:
+In this mode, client will listen to messages that start with a valid prefix and contain a command registered as an event. This is for those who like the idea of handling commands like a webserver. Registered command events are prefixed with a slash to avoid interfering with standard events. Example:
 
 ```js
 const client = require("djs-shenanigans")({
@@ -120,16 +122,20 @@ const client = require("djs-shenanigans")({
 });
 
 client.on("/ping", message => {
-	// only messages from non-bot users which start with a valid prefix followed by the command "ping" are received
-	// the message, its channel and user/member are automatically cached.
+	// only messages from non-bot users which start with a valid prefix followed by the command "ping" are received (ie: "!ping")
+	// this message, its channel and author/member are automatically cached.
 });
+
+client.on("/nocommand", message => {
+	// empty commands go here (ie: prefix+nothing or mention+nothing)
+})
 ```
 
 ### File Mode
 
 options.enableHandler set to a string pointing to a folder.
 
-In this mode, client will listen to messages that start with a valid prefix and contain a valid command file. The client will scan the supplied folder and register all files found as commands using their file names. This mode also enables a built-in command reloading function (see non-standard API). Example:
+In this mode, client will listen to messages that start with a valid prefix and contain a valid command file. This is the standard command handler approach, the client will scan the supplied folder and register all files found as commands using their file names. This mode also enables a built-in command reloading function (see non-standard API). Example:
 
 ```js
 // index.js
@@ -145,9 +151,17 @@ const client = require("djs-shenanigans")({
 ```js
 // commands/ping.js
 module.exports.run = message => {
-	// only messages from non-bot users which start with a valid prefix followed by the command "ping" are received
-	// the message, its channel and user/member are automatically cached.
-	// commands must contain a "run" function to whom the client passes the message
+	// only messages from non-bot users which start with a valid prefix followed by the command "ping" are received (ie: "!ping")
+	// this message, its channel and author/member are automatically cached.
+	// errors that happen inside here are handled and logged automatically. if options.sendErrors is set to true, the error is also sent as a response
+	// commands must contain a "run" function, other props such as module.exports.help can be optionally added for management and interaction with client.commands
+}
+```
+
+```js
+// commands/nocommand.js
+module.exports.run = message => {
+	// empty commands go here (ie: prefix+nothing or mention+nothing)
 }
 ```
 
@@ -157,20 +171,23 @@ djs-shenanigans has some extra functions built in for convenience:
 
 | Function | Returns | Description |
 | ------------- | ------------- | ------------- |
-| message.send(content,options) | promise>message | This function is the same as message.channel.send() but adds several improvements: automatically resolves promises and converts objects to text, truncates large strings if no split options are provided, detects and warns about errors and failures when sending, logs response time and errors if logging is enabled, adds request and response pairing if messages are cached. |
+| message.send(content,options) | promise>message | This function is the same as message.channel.send() but adds several improvements: automatically resolves promises and converts objects to text, truncates large strings if no split options are provided, detects and warns about errors and failures when sending, logs response time and errors if logging is enabled, adds request and response pairing if messages are cached, if possible sends responses as edits when triggered by message edits. |
 | message.commandResponse | message | The message object that was send as a response to this command. Only available if it was sent with message.send() and the message is cached |
 | message.commandMessage | message | The message object that was received to trigger this response. Only available if this response was sent with message.send() and the triggering message is cached. |
 | message.commandResponseTime | number | Message response time in milliseconds. Only available in response messages if they were sent with message.send() and are cached; |
+| message.command | string | The command used without prefix and content. Only available with the command handler in router or file mode |
+| message.argument | string | The message content without prefix and command. Only available with the command handler in router or file mode |
 | message.isOwner() | boolean | Quickly check if the user who sent the message is a bot owner. Uses the array of owners from options.owners |
 | channel.createCollector(filter,options) | messageCollector | The same as channel.createMessageCollector() but adds a channel bypass to receive all messages instead of only messages starting with a valid prefix |
-| channel.whitelisted | boolean | If set to true, this channel will fire "message" events for all messages, instead of only messages starting with a valid prefix. |
+| channel.whitelisted | boolean | If set to true, this channel will fire "message" events for all messages, instead of only messages that start with a valid prefix. |
 | client.shutdown() | boolean | Begins graceful shutdown in this process, replaces all functions and commands with a temporary message and exits the process after a few seconds |
-| client.asyncEval() | promise>anything | An eval function that accepts awaiting promises |
+| client.asyncEval() | promise>anything | An eval function compatible with promises and async/await syntax |
 | client.pm2shutdown() | boolean | Sends a shutdown signal to all processes in the pm2 cluster. Only available when running in pm2 cluster mode |
 | client.survey(string) | promise>array | Similar to broadcastEval() but for pm2 clusters. Sends a string to be evaluated by all processes in the cluster and returns an array of responses indexed by process number. Only available when running in pm2 cluster mode |
 | client.broadcast(string) | promise>array | Same as client.survey() but it does not wait for a response. It returns an array of booleans representing whether the message was received by the target processes or not. Only available when running in pm2 cluster mode |
 | client.commands | map | Where commands are stored when running the command handler in file mode |
 | client.commands.reload(command) | boolean | Function to reload a command managed by the command handler in file mode |
+| reaction | reaction | Reaction objects will contain partials when comming from uncached messages. |
 
 ## PM2 Cluter Mode
 
@@ -192,7 +209,7 @@ Client logins are queued using a lockfile to avoid too many login attempts.
 
 ## Performance
 
-This test case was done on a linux ubuntu 18 vps (1vcpu, 1gb ram) running around 1500 guilds. The following scripts were used:
+This test case was done on ubuntu 18 (1vcpu, 1gb ram) running around 1500 guilds and all optional libraries installed (zlib-sync, erlpack, bufferutil, utf-8-validate). The following scripts were used:
 
 ```js
 // discord.js default settings
@@ -229,3 +246,20 @@ Results:
 
 ![CPU Usage](bench/cpu.jpg)
 ![Memory Usage](bench/mem.jpg)
+
+| Client | Average Idle Network Usage (nethogs) |
+| ------------- | ------------- |
+| discord.js default | 5 kbps up / 20 kbps down |
+| discord.js disabled events | 5 kbps up / 20 kbps down |
+| djs-shenanigans | 0.1 kbps up / 0.5 kbps down |
+
+
+As you can see, djs-shenanigans uses a lot less memory, cpu and network compared to discord.js v12 in this test case.
+
+## About
+
+This project is highly experimental, so there might be many bugs and broken features especially with untested features and scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions or suggestions you might find.
+
+You can also find me in discord (Tim#2373)
+[my discord server](https://discord.gg/y9zT7GN)
+[discordbots.org server](https://discord.gg/EYHTgJX)

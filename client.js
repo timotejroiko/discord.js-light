@@ -195,7 +195,6 @@ module.exports = function(options) {
 			}
 		}
 	});
-	Object.defineProperty(client._events,"raw",{writable:false});
 	if(client.options.enableLogger) {
 		client.on("ready", () => {
 			console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Client Ready`);
@@ -363,9 +362,7 @@ async function handler(client,r,cmd) {
 				try {
 					await Promise.resolve(client.commands.get(cmd).run(message));
 				} catch(e) {
-					if(client.options.enableLogger) {
-						logger(e,client);
-					}
+					logger(e,client);
 					if(client.options.sendErrors) {
 						message.send(e).catch(e => {
 							if(client.options.enableLogger) {
