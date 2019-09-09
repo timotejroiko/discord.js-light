@@ -10,6 +10,7 @@ Pros:
 
 * Drastically lower cpu, memory and network usage (see performance section)
 * Built-in automatic sharding, command handlers, error handler, custom prefix handler and discordbots.org updater
+* On-demand caching (data is cached only when used, say goodbye to sweeping)
 * Designed to run as replicable independent instances (compatible with pm2 cluster)
 * Some additional functions and methods for convenience (see non-standard API section)
 
@@ -237,7 +238,7 @@ Running multiple instances manually across a single machine or multiple machines
 
 ## Performance
 
-This test case was done on ubuntu 18 (1vcpu, 1gb ram) running around 1500 guilds with all optional libraries installed (zlib-sync, erlpack, bufferutil, utf-8-validate). The following scripts were used:
+This test case was done on ubuntu 18 (1vcpu, 1gb ram) running around 1500 guilds with all optional libraries installed (zlib-sync, erlpack, bufferutil, utf-8-validate). Data was recorded using `top` and `nethogs`. The following scripts were used:
 
 ```js
 // discord.js default settings
@@ -274,13 +275,7 @@ Results:
 
 ![CPU Usage](bench/cpu.jpg)
 ![Memory Usage](bench/mem.jpg)
-
-| Client | Average Idle Network Usage (nethogs) |
-| ------------- | ------------- |
-| discord.js default | 5 kbps up / 20 kbps down |
-| discord.js disabled events | 5 kbps up / 20 kbps down |
-| djs-shenanigans | 0.1 kbps up / 0.5 kbps down |
-
+![Network Usage](bench/net.jpg)
 
 As you can see, djs-shenanigans uses a lot less memory, cpu and network compared to discord.js v12 in this test case.
 
