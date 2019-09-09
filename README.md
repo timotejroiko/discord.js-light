@@ -203,7 +203,6 @@ Since this library tampers with discord.js's functions and caches, there is a lo
 | guild.members | Caches only members that used commands. Specific members can be cached by guild.members.fetch(id) (fetching all members ir not recommended and will probably not work) |
 | guild.roles | Always empty, unless manually cached using guild.fetch() or guild.roles.fetch() |
 | guild.emojis | Always empty, unless manually cached using guild.fetch() |
-| guild.features | Always empty, unless manually cached using guild.fetch() |
 | guild.presences | Always empty |
 | guild.voiceStates | Always empty |
 | client.users | Caches only users that used commands. Specific users can be cached by client.users.fetch(id) |
