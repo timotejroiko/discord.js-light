@@ -44,7 +44,7 @@ npm install utf-8-validate
 Simple usage:
 
 ```js
-const client = require("djs-shenanigans")(options); // good old discord.js client
+const client = require("djs-shenanigans")(); // good old discord.js client
 
 client.on("message", message => {
 	// do stuff
@@ -73,7 +73,7 @@ All fields are optional.
 
 | Option | Type | Description |
 | ------------- | ------------- | ------------- |
-| token | string | Your discord bot token. If provided, the client will attempt negotiate shards and login automatically, else you will need to run client.login() and manually specify shard settings |
+| token | string | Your discord bot token. If provided, the client will attempt to negotiate shards and login automatically, else you will need to run client.login() and manually specify shard settings |
 | dblToken | string | Your discordbots.org token. If provided, the client will send your guild count to discordbots.org every 24 hours |
 | dblTest | boolean | If set to true, the client will also send your guild count to discordbots.org immediatelly after logging in |
 | owners | array | Array of user IDs. Used by the non-standard method message.isOwner() |
@@ -81,10 +81,10 @@ All fields are optional.
 | process | number | The zero-indexed id of the current process if running multiple instances manually. Ignored when using pm2 cluster mode |
 | shardsPerProcess | number | Manually specify the number of shards each process should spawn. Uses recommended shards if omitted or set to "auto" |
 | defaultPrefix | string | Default prefix for all guilds and dms |
-| customPrefix | function(guild id) | Function that should return a guild-specific prefix from a guild id |
+| customPrefix | function(guildID) | Function that should return a guild-specific prefix from a guild id |
 | enableLogger | boolean | Enables logging of connection statuses, messages and errors |
 | enableHandler | boolean/string | Command handler mode. See command handlers section |
-| sendErrors | boolean | If set to true, the command handler will send command errors instead of only logging them |
+| sendErrors | boolean | If set to true, the command handler will also attempt to send command errors instead of only logging them |
 
 ## Command handlers
 
@@ -153,22 +153,24 @@ module.exports.run = message => {
 
 ## Non-standard API
 
-djs-shenanigans has come extra functions built in for convenience:
+djs-shenanigans has some extra functions built in for convenience:
 
 | Function | Returns | Description |
 | ------------- | ------------- | ------------- |
-| message.send(content,options) | promise->message | This function is the same as message.channel.send() but adds several improvements: automatically resolves promises and converts objects to text, truncates large strings if no split options are provided, detects and warns about errors and failures when sending, logs response time and errors if logging is enabled, adds request and response pairing if messages are cached. |
+| message.send(content,options) | promise>message | This function is the same as message.channel.send() but adds several improvements: automatically resolves promises and converts objects to text, truncates large strings if no split options are provided, detects and warns about errors and failures when sending, logs response time and errors if logging is enabled, adds request and response pairing if messages are cached. |
 | message.commandResponse | message | The message object that was send as a response to this command. Only available if it was sent with message.send() and the message is cached |
 | message.commandMessage | message | The message object that was received to trigger this response. Only available if this response was sent with message.send() and the triggering message is cached. |
 | message.commandResponseTime | number | Message response time in milliseconds. Only available in response messages if they were sent with message.send() and are cached; |
 | message.isOwner() | boolean | Quickly check if the user who sent the message is a bot owner. Uses the array of owners from options.owners |
-| channel.createCollector() | messageCollector | The same as channel.createMessageCollector() but adds a channel bypass to receive all messages instead of only messages starting with a valid prefix |
+| channel.createCollector(filter,options) | messageCollector | The same as channel.createMessageCollector() but adds a channel bypass to receive all messages instead of only messages starting with a valid prefix |
 | channel.whitelisted | boolean | If set to true, this channel will fire "message" events for all messages, instead of only messages starting with a valid prefix. |
 | client.shutdown() | boolean | Begins graceful shutdown in this process, replaces all functions and commands with a temporary message and exits the process after a few seconds |
-| client.asyncEval() | promise->anything | An eval function that accepts awaiting promises |
+| client.asyncEval() | promise>anything | An eval function that accepts awaiting promises |
 | client.pm2shutdown() | boolean | Sends a shutdown signal to all processes in the pm2 cluster. Only available when running in pm2 cluster mode |
-| client.survey() | promise->array | Similar to broadcastEval() but for pm2 clusters. Sends a string to be evaluated by all processes in the cluster and returns an array of responses indexed by process number. Only available when running in pm2 cluster mode |
-| client.broadcast() | promise->array | Same as client.survey() but it does not wait for a response. It returns an array of booleans representing whether the message was received by the target processes or not. Only available when running in pm2 cluster mode |
+| client.survey(string) | promise>array | Similar to broadcastEval() but for pm2 clusters. Sends a string to be evaluated by all processes in the cluster and returns an array of responses indexed by process number. Only available when running in pm2 cluster mode |
+| client.broadcast(string) | promise>array | Same as client.survey() but it does not wait for a response. It returns an array of booleans representing whether the message was received by the target processes or not. Only available when running in pm2 cluster mode |
+| client.commands | map | Where commands are stored when running the command handler in file mode |
+| client.commands.reload(command) | boolean | Function to reload a command managed by the command handler in file mode |
 
 ## PM2 Cluter Mode
 
