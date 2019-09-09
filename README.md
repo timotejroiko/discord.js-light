@@ -8,22 +8,17 @@ djs-shenanigans tweaks discord.js by removing some of its features for performan
 
 Pros:
 
-* Drastically lower cpu usage (see performance section)
-* Drastically lower memory usage (see performance section)
-* Built-in automatic sharding
-* Built-in command handlers
-* Built-in error handlers
-* Built-in custom prefix handler
-* Built-in discordbots.org server count updater
+* Drastically lower cpu, memory and network usage (see performance section)
+* Built-in automatic sharding, command handlers, error handler, custom prefix handler and discordbots.org updater
 * Designed to run as replicable independent instances (compatible with pm2 cluster)
 * Some additional functions and methods for convenience (see non-standard API section)
 
 Cons:
 
-* Disabled everything except guilds, messages and reactions (some stuff might be re-enableable)
-* Disabled auto-caching and auto-updating of channels, permissionOverwrites, users, members, roles, emojis and voice states (must be fetched and cached by end-user when needed)
+* Disabled everything messages and reactions (some stuff might be re-enableable)
+* Disabled caching of channels, permissionOverwrites, users, members, roles, emojis and voice states
 * Presences and typing events are permanently disabled
-* Some features that rely on cached data might have unexpected behavior and require fixes or workarounds
+* Some features that rely on cached data might have unexpected behavior
 * Voice features were not tested
 
 ## Getting Started
@@ -32,7 +27,7 @@ Installation:
 
 ```npm install timotejroiko/djs-shenanigans```
 
-optional packages (recommended to improve performance, especially zlib-sync)
+optional packages (recommended to improve performance, especially zlib-sync. dont use zucc)
 
 ```
 npm install zlib-sync
@@ -209,7 +204,7 @@ Client logins are queued using a lockfile to avoid too many login attempts.
 
 ## Performance
 
-This test case was done on ubuntu 18 (1vcpu, 1gb ram) running around 1500 guilds and all optional libraries installed (zlib-sync, erlpack, bufferutil, utf-8-validate). The following scripts were used:
+This test case was done on ubuntu 18 (1vcpu, 1gb ram) running around 1500 guilds with all optional libraries installed (zlib-sync, erlpack, bufferutil, utf-8-validate). The following scripts were used:
 
 ```js
 // discord.js default settings
