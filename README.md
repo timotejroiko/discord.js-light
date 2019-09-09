@@ -15,11 +15,11 @@ Pros:
 
 Cons:
 
-* Disabled everything messages and reactions (some stuff might be re-enableable)
-* Disabled caching of channels, permissionOverwrites, users, members, roles, emojis and voice states
+* Most events are disabled or are handled differently (see non-standard behavior section)
+* Disabled caching of unused channels, permissionOverwrites, users, members, roles, emojis and voice states (see non-standard behavior section)
 * Presences and typing events are permanently disabled
-* Some features that rely on cached data might have unexpected behavior
-* Voice features were not tested
+* Some features that rely on cached data might require additional handling (see non-standard behavior section)
+* Many features have not been tested (voice)
 
 ## Getting Started
 
@@ -233,7 +233,7 @@ Client logins are queued using a lockfile to avoid too many login attempts.
 
 ## Manual Instances
 
-Running multiple instances manually across a single machine or multiple machines is possible but each instance must be configured with a process id and total processes count in the client options. Sharding is then negotiated automatically. Be aware that login queueing will not be available, and you will need to devise your own sequential login system to avoid being banned by discord (discord only allows one login every 5 seconds, shards count as logins), as well as use your own inter-process communication if needed. It is also possible to use a master process to control everything.
+Running multiple instances manually across a single machine or multiple machines is possible but each instance must be configured with a process id and total processes count in the client options. Sharding is then negotiated automatically. Be aware that login queueing will not be available, so you will need wait for each process to fully login before firing another process to avoid being banned by discord (discord only allows one login every 5 seconds, shards count as logins), as well as use your own inter-process communication if needed. You can also use a master process to control everything like traditional sharders.
 
 ## Performance
 
