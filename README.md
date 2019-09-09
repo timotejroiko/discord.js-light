@@ -233,7 +233,7 @@ Client logins are queued using a lockfile to avoid too many login attempts.
 
 ## Manual Instances
 
-Running multiple instances manually across a single machine or multiple machines is possible but each instance but be configured with a process id and total processes count in the client options. Sharding is then negotiated automatically. Be aware that login queueing will not be available, and you will need to devise your own sequential login system to avoid being banned by discord (discord only allows one login every 5 seconds), as well as use your own inter-process communication if needed. It is also possible to use a master process to control everything.
+Running multiple instances manually across a single machine or multiple machines is possible but each instance must be configured with a process id and total processes count in the client options. Sharding is then negotiated automatically. Be aware that login queueing will not be available, and you will need to devise your own sequential login system to avoid being banned by discord (discord only allows one login every 5 seconds), as well as use your own inter-process communication if needed. It is also possible to use a master process to control everything.
 
 ## Performance
 
