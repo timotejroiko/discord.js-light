@@ -185,6 +185,21 @@ module.exports = function(options) {
 					if(!(client.guilds.get(r.d.id).emojis || {size:0}).size) { r.d.emojis = []; }
 					if(!(client.guilds.get(r.d.id).roles || {size:0}).size) { r.d.roles = []; }
 				}
+			} else if(client.guilds.get(r.d.guild_id) && (r.t === "GUILD_MEMBER_UPDATE" || r.t === "GUILD_MEMBER_REMOVE")) {
+				if(r.t === "GUILD_MEMBER_REMOVE") {
+					client.guilds.get(r.d.guild_id).members.delete(r.d.user.id)
+				} else {
+					client.guilds.get(r.d.guild_id).members.add(r.d);
+				}
+			} else if(client.users.get(r.d.id) && r.t === "USER_UPDATE") {
+				client.users.add(r.d);
+			} else if(client.channel.get(r.d.id) && (r.t === "CHANNEL_UPDATE" || r.t === "CHANNEL_DELETE")) {
+				if(r.t === "CHANNEL_DELETE") {
+					client.channels.delete(r.d.id);
+				} else {
+					if(r.d.permission_overwrites && !client.channels.get(r.d.id).permissionOverwrites.size) { r.d.permission_overwrites = []; }
+					client.channels.add(r.d.id);
+				}
 			} else if(r.t === "READY") {
 				if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${r.d.shard[0]}] Connected. Fetching ${r.d.guilds.length} guilds`)}
 				if(process.env.exec_mode === "cluster_mode" && (r.d.shard[0]+1) % client.options.shardsPerProcess === 0) {

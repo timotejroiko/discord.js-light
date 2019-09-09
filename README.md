@@ -71,7 +71,7 @@ All fields are optional.
 | token | string | Your discord bot token. If provided, the client will attempt to negotiate shards and login automatically, else you will need to run client.login() and manually specify shard settings |
 | dblToken | string | Your discordbots.org token. If provided, the client will send your guild count to discordbots.org every 24 hours |
 | dblTest | boolean | If set to true, the client will also send your guild count to discordbots.org immediatelly after logging in |
-| owners | array | Array of user IDs. Used by the non-standard method message.isOwner() |
+| owners | array | Array of user IDs. Used by the non-standard method message.isOwner |
 | processes | number | Total number of processes running this bot if running multiple instances manually. Ignored when using pm2 cluster mode |
 | process | number | The zero-indexed id of the current process if running multiple instances manually. Ignored when using pm2 cluster mode |
 | shardsPerProcess | number | Manually specify the number of shards each process should spawn. Uses recommended shards if omitted or set to "auto" |
@@ -164,16 +164,16 @@ module.exports.run = message => {
 
 djs-shenanigans has some extra functions built in for convenience:
 
-| Function | Returns | Description |
+| Func/Prop | Returns | Description |
 | ------------- | ------------- | ------------- |
 | message.send(content,options) | promise>message | This function is the same as message.channel.send() but adds several improvements: automatically resolves promises and converts objects to text, truncates large strings if no split options are provided, detects and warns about errors and failures when sending, logs response time and errors if logging is enabled, adds request and response pairing if messages are cached, if possible sends responses as edits when triggered by message edits. |
-| message.commandResponse | message | The message object that was send as a response to this command. Only available if it was sent with message.send() and the message is cached |
+| message.commandResponse | message | The message object that was sent as a response to this command. Only available if it was sent with message.send() and the message is cached |
 | message.commandMessage | message | The message object that was received to trigger this response. Only available if this response was sent with message.send() and the triggering message is cached. |
 | message.commandResponseTime | number | Message response time in milliseconds. Only available in response messages if they were sent with message.send() and are cached; |
 | message.command | string | The command used without prefix and content. Only available with the command handler in router or file mode |
 | message.argument | string | The message content without prefix and command. Only available with the command handler in router or file mode |
-| message.isOwner() | boolean | Quickly check if the user who sent the message is a bot owner. Uses the array of owners from options.owners |
-| channel.createCollector(filter,options) | messageCollector | The same as channel.createMessageCollector() but adds a channel bypass to receive all messages instead of only messages starting with a valid prefix |
+| message.isOwner | boolean | Quickly check if the user who sent the message is a bot owner. Uses the array of owners from options.owners |
+| channel.createCollector(filter,options) | messageCollector | The same as channel.createMessageCollector() but whitelists the channel during the duration of the collector, to receive all messages instead of only messages starting with a valid prefix or command |
 | channel.whitelisted | boolean | If set to true, this channel will fire "message" events for all messages, instead of only messages that start with a valid prefix. |
 | client.shutdown() | boolean | Begins graceful shutdown in this process, replaces all functions and commands with a temporary message and exits the process after a few seconds |
 | client.asyncEval() | promise>anything | An eval function compatible with promises and async/await syntax |
@@ -181,8 +181,38 @@ djs-shenanigans has some extra functions built in for convenience:
 | client.survey(string) | promise>array | Similar to broadcastEval() but for pm2 clusters. Sends a string to be evaluated by all processes in the cluster and returns an array of responses indexed by process number. Only available when running in pm2 cluster mode |
 | client.broadcast(string) | promise>array | Same as client.survey() but it does not wait for a response. It returns an array of booleans representing whether the message was received by the target processes or not. Only available when running in pm2 cluster mode |
 | client.commands | map | Where commands are stored when running the command handler in file mode |
-| client.commands.reload(command) | boolean | Function to reload a command managed by the command handler in file mode |
-| reaction | reaction | Reaction objects will contain partials when comming from uncached messages. |
+| client.commands.reload(command) | boolean | Function to reload a command managed by the command handler in file mode. Can be used to add/change command files without restarting the bot. |
+
+## Non-standard behavior
+
+Since this library tampers with discord.js's functions and caches, there is a lot of unexpected behavior, here are a few documented behavior changes from my tests (there might be other untested unexpected behaviors, feel free to contribute with your tests and use cases)
+
+| Subject | Changes |
+| ------------- | ------------- |
+| reactions | All message reaction events and collectors should work, but the reaction object is a bit different and might contain partials (a partial is an object that only contains an id and nothing else) |
+| reaction.channel | The channel object or channel partial |
+| reaction.message | The message object or message partial |
+| reaction.guild | The guild object or null if DM |
+| reaction.user | The user object or user partial |
+| reaction.emoji | The emoji object as per the Discord Gateway API |
+| channels | Channels are cached only when used, messages are only cached when using a command handler, permissions are never cached |
+| channel.messages | Caches only messages that were processed by the command handler in router or file mode |
+| channel.permissionOverwrites | Always empty, unless manually cached by client.channels.fetch() |
+| guilds | All guilds are cached by default but do not contain everything |
+| guild.channels | Caches only channels where commands were used |
+| guild.members | Caches only members that used commands. Specific members can be cached by guild.members.fetch(id) (fetching all members ir not recommended and will probably not work) |
+| guild.roles | Always empty, unless manually cached using guild.fetch() |
+| guild.emojis | Always empty, unless manually cached using guild.fetch() |
+| guild.features | Always empty, may be cached by guild.fetch() but will be lost on guild update events |
+| guild.presences | Always empty |
+| guild.voiceStates | Always empty |
+| client.users | Caches only users that used commands. Specific users can be cached by client.users.fetch(id) |
+| events | Many events are modified or disabled |
+| message update | The message update event is disabled, but message updates are processed by the command handler |
+| message delete/deletebulk | Message delete events are fired only by whitelisted channels |
+| guild member/roles/emojis/integrations/ban events | These are all disabled. Member update and delete are internally processed for cached members |
+| channel pins/create/update/delete | These are all disabled. Update and delete are internally processed for cached channels |
+| user updates / webhooks / voice states / presences / typing | These are all disabled. User updates are internally processed for cached users |
 
 ## PM2 Cluter Mode
 
@@ -201,6 +231,10 @@ pm2 scale yourProcessName numberOfProcesses && pm2 restart yourProcessName
 When running in pm2 cluster mode, you have access to cluster specific functions such as client.broadcast() client.survey() and client.pm2shutdown().
 Cluster mode automatically negotiates shards and spreads them equally across processes, or you can set a specific amount of shards using options.shardsPerProcess.
 Client logins are queued using a lockfile to avoid too many login attempts.
+
+## Manual Instances
+
+Running multiple instances manually across a single machine or multiple machines is possible but each instance but be configured with a process id and total processes count in the client options. Sharding is then negotiated automatically. Be aware that login queueing will not be available, and you will need to devise your own sequential login system to avoid being banned by discord (discord only allows one login every 5 seconds), as well as use your own inter-process communication if needed. It is also possible to use a master process to control everything.
 
 ## Performance
 
