@@ -210,7 +210,7 @@ Since this library tampers with discord.js's functions and caches, there is a lo
 | message update | The message update event is disabled, but message updates are processed by the command handler |
 | message delete/deletebulk | Message delete events are fired only by whitelisted channels |
 | guild member / roles / emojis / integrations / bans | These events are all disabled. Member update and delete are internally processed for cached members |
-| channel / create / update / delete / pins | These are all disabled. Update and delete are internally processed for cached channels |
+| channel create / update / delete / pins | These are all disabled. Update and delete are internally processed for cached channels |
 | user updates / webhooks / voice states / presences / typing | These are all disabled. User updates are internally processed for cached users |
 
 ## PM2 Cluter Mode
