@@ -190,10 +190,10 @@ Since this library tampers with discord.js's functions and caches, there is a lo
 | Subject | Changes |
 | ------------- | ------------- |
 | reactions | All message reaction events and collectors should work, but the reaction object is a bit different and might contain partials (a partial is an object that only contains an id and nothing else) |
-| reaction.channel | The channel object or channel partial |
-| reaction.message | The message object or message partial |
+| reaction.channel | The channel object or channel partial if not cached |
+| reaction.message | The message object or message partial if not cached |
 | reaction.guild | The guild object or null if DM |
-| reaction.user | The user object or user partial |
+| reaction.user | The user object or user partial if not cached |
 | reaction.emoji | The emoji object as per the Discord Gateway API |
 | channels | Channels are cached only when used, messages are only cached when using a command handler, permissions are never cached |
 | channel.messages | Caches only messages that were processed by the command handler in router or file mode |
