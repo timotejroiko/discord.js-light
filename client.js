@@ -192,7 +192,7 @@ module.exports = function(options) {
 				}
 			} else if(client.users.get(r.d.id) && r.t === "USER_UPDATE") {
 				client.users.add(r.d);
-			} else if(client.channel.get(r.d.id) && (r.t === "CHANNEL_UPDATE" || r.t === "CHANNEL_DELETE")) {
+			} else if(client.channels.get(r.d.id) && (r.t === "CHANNEL_UPDATE" || r.t === "CHANNEL_DELETE")) {
 				if(r.t === "CHANNEL_DELETE") {
 					client.channels.delete(r.d.id);
 				} else {
