@@ -285,7 +285,7 @@ module.exports = function(options) {
 		return true;
 	};
 	client.asyncEval = async f => {
-		return Promise.resolve(eval(`(async() => {${f}})()`));
+		return Promise.resolve(eval(`(async() => {return ${f}})()`));
 	}
 	if(process.env.exec_mode === "cluster_mode") {
 		client.pm2shutdown = () => {

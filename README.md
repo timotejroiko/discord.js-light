@@ -17,10 +17,9 @@ Pros:
 Cons:
 
 * Most events are disabled or are handled differently (see non-standard behavior section)
-* Disabled caching of unused channels, permissionOverwrites, users, members, roles, emojis and voice states (see non-standard behavior section)
-* Presences and typing events are permanently disabled
 * Some features that rely on cached data might require additional handling (see non-standard behavior section)
-* Many features have not been tested (voice)
+* Presences and typing events are permanently disabled (more a pro than a con)
+* Some features have not been tested (ie: voice)
 
 ## Getting Started
 
