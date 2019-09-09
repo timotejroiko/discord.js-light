@@ -194,16 +194,16 @@ Since this library tampers with discord.js's functions and caches, there is a lo
 | reaction.message | The message object or message partial if not cached |
 | reaction.guild | The guild object or null if DM |
 | reaction.user | The user object or user partial if not cached |
-| reaction.emoji | The emoji object as per the Discord Gateway API |
+| reaction.emoji | The emoji object as per the Discord Gateway API (not the reaction emoji object from discord.js) |
 | channels | Channels are cached only when used, messages are only cached when using a command handler, permissions are never cached |
 | channel.messages | Caches only messages that were processed by the command handler in router or file mode |
-| channel.permissionOverwrites | Always empty, unless manually cached by client.channels.fetch() |
-| guilds | All guilds are cached by default but do not contain everything |
+| channel.permissionOverwrites | Always empty, unless manually cached by channel.fetch() or channels.fetch(id) |
+| guilds | All guilds are cached and auto-updated by default but they do not contain everything |
 | guild.channels | Caches only channels where commands were used |
 | guild.members | Caches only members that used commands. Specific members can be cached by guild.members.fetch(id) (fetching all members ir not recommended and will probably not work) |
-| guild.roles | Always empty, unless manually cached using guild.fetch() |
+| guild.roles | Always empty, unless manually cached using guild.fetch() or guild.roles.fetch() |
 | guild.emojis | Always empty, unless manually cached using guild.fetch() |
-| guild.features | Always empty, may be cached by guild.fetch() but will be lost on guild update events |
+| guild.features | Always empty, unless manually cached using guild.fetch() |
 | guild.presences | Always empty |
 | guild.voiceStates | Always empty |
 | client.users | Caches only users that used commands. Specific users can be cached by client.users.fetch(id) |

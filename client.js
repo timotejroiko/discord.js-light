@@ -176,14 +176,15 @@ module.exports = function(options) {
 				r.d.channels = [];
 				r.d.members = [];
 				r.d.voice_states = [];
-				r.d.features = [];
 				r.d.presences = [];
 				if(!client.guilds.get(r.d.id)) {
 					r.d.emojis = [];
 					r.d.roles = [];
+					r.d.features = [];
 				} else {
 					if(!(client.guilds.get(r.d.id).emojis || {size:0}).size) { r.d.emojis = []; }
 					if(!(client.guilds.get(r.d.id).roles || {size:0}).size) { r.d.roles = []; }
+					if(!client.guilds.get(r.d.id).features.length) { r.d.features = []; }
 				}
 			} else if(client.guilds.get(r.d.guild_id) && (r.t === "GUILD_MEMBER_UPDATE" || r.t === "GUILD_MEMBER_REMOVE")) {
 				if(r.t === "GUILD_MEMBER_REMOVE") {
