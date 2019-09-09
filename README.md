@@ -277,7 +277,7 @@ Results:
 ![Memory Usage](bench/mem.jpg)
 ![Network Usage](bench/net.jpg)
 
-As you can see, djs-shenanigans uses significantly less resources compared to discord.js v12 in this test case. Roughly 5-6x less memory 5-10x less cpu and 5-20x less network bandwidth.
+As you can see, djs-shenanigans uses significantly less resources compared to discord.js v12 in this test case. Roughly 5-6x less memory, 5-10x less cpu and 5-20x less network bandwidth.
 
 ## About
 
