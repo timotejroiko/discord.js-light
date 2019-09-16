@@ -1,6 +1,6 @@
 # djs-shenanigans
 
-A modified Discord client built on top of [discord.js](https://github.com/discordjs/discord.js) 12.0.0, Shenanigans aims to drastically reduce discord.js's resource usage while also adding its own set of utilities. This package is very experimental and should be used with caution and lots of testing, as it may disable or break some of discord.js's features.
+A modified Discord client built on top of [discord.js](https://github.com/discordjs/discord.js) 12.0.0, Shenanigans aims to drastically reduce discord.js's resource usage while also adding its own set of utilities aimed primarily for reactive message-based bots. This package is very experimental and should be used with caution and lots of testing, as it may disable or break some of discord.js's features.
 
 ## Features
 
@@ -18,7 +18,7 @@ Cons:
 
 * Most events are disabled or are handled differently (see non-standard behavior section)
 * Some features that rely on cached data might require additional handling (see non-standard behavior section)
-* Presences and typing events are permanently disabled (more a pro than a con)
+* Presences, typing and guild member events are disabled (disable websocket guild_subscriptions)
 * Some features have not been tested (ie: voice)
 
 ## Getting Started
@@ -200,7 +200,7 @@ Since this library tampers with discord.js's functions and caches, there is a lo
 | channel.permissionOverwrites | Always empty, unless manually cached by channel.fetch() or channels.fetch(id) |
 | guilds | All guilds are cached and auto-updated by default but they do not contain everything |
 | guild.channels | Caches only channels where commands were used |
-| guild.members | Caches only members that used commands. Specific members can be cached by guild.members.fetch(id) (fetching all members ir not recommended and will probably not work) |
+| guild.members | Caches only members that used commands. Specific members can be cached by guild.members.fetch(id) (fetching all members ir not recommended and will probably not work. Cached guild members are not updated and may contain stale information) |
 | guild.roles | Always empty, unless manually cached using guild.fetch() or guild.roles.fetch() |
 | guild.emojis | Always empty, unless manually cached using guild.fetch() |
 | guild.presences | Always empty |
@@ -209,7 +209,7 @@ Since this library tampers with discord.js's functions and caches, there is a lo
 | events | Many events are modified or disabled |
 | message update | The message update event is disabled, but message updates are processed by the command handler |
 | message delete/deletebulk | Message delete events are fired only by whitelisted channels |
-| guild member / roles / emojis / integrations / bans | These events are all disabled. Member update and delete are internally processed for cached members |
+| guild member / roles / emojis / integrations / bans | These events are all disabled. GuildMember events are unavailable as a side effect of implementing disable guild_subscriptions, therefore cached members will not be auto-updated. |
 | channel create / update / delete / pins | These are all disabled. Update and delete are internally processed for cached channels |
 | user updates / webhooks / voice states / presences / typing | These are all disabled. User updates are internally processed for cached users |
 
@@ -283,3 +283,4 @@ As you can see, djs-shenanigans uses significantly less resources compared to di
 This project is highly experimental, so the code is quite rough and there might be bugs and broken features especially with untested features and scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions or contributions you might find.
 
 You can also find me in my [discord](https://discord.gg/y9zT7GN) (Tim#2373)
+

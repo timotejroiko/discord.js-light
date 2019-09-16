@@ -184,13 +184,14 @@ module.exports = function(options) {
 					if(!(client.guilds.get(r.d.id).emojis || {size:0}).size) { r.d.emojis = []; }
 					if(!(client.guilds.get(r.d.id).roles || {size:0}).size) { r.d.roles = []; }
 				}
-			} else if(client.guilds.get(r.d.guild_id) && (r.t === "GUILD_MEMBER_UPDATE" || r.t === "GUILD_MEMBER_REMOVE")) {
+			} 
+			/*else if(client.guilds.get(r.d.guild_id) && (r.t === "GUILD_MEMBER_UPDATE" || r.t === "GUILD_MEMBER_REMOVE")) {
 				if(r.t === "GUILD_MEMBER_REMOVE") {
 					client.guilds.get(r.d.guild_id).members.delete(r.d.user.id)
 				} else {
 					client.guilds.get(r.d.guild_id).members.add(r.d);
 				}
-			} else if(client.users.get(r.d.id) && r.t === "USER_UPDATE") {
+			} */ else if(client.users.get(r.d.id) && r.t === "USER_UPDATE") {
 				client.users.add(r.d);
 			} else if(client.channels.get(r.d.id) && (r.t === "CHANNEL_UPDATE" || r.t === "CHANNEL_DELETE")) {
 				if(r.t === "CHANNEL_DELETE") {
