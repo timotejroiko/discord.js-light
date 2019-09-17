@@ -9,16 +9,15 @@ djs-shenanigans tweaks discord.js by removing some of its features for performan
 Pros:
 
 * Drastically lower cpu, memory and network usage (see performance section)
-* Built-in automatic sharding, command handlers, error handler, custom prefix handler and discordbots.org updater
+* Built-in automatic sharding, command handlers, error handlers, custom prefix handlers and discordbots.org updater
 * On-demand caching (data is cached only when used, say goodbye to sweeping)
-* Designed to run as replicable independent instances (compatible with pm2 cluster)
+* Designed to run as replicable independent instances (compatible with pm2 clusters)
 * Some additional functions and methods for convenience (see non-standard API section)
 
 Cons:
 
-* Most events are disabled or are handled differently (see non-standard behavior section)
-* Some features that rely on cached data might require additional handling (see non-standard behavior section)
-* Presences, typing and guild member events are disabled (disable websocket guild_subscriptions)
+* Most events are disabled, are handled differently or require additional handling (see non-standard behavior section)
+* Presences, typing and guild member events are unavailable due to disabling guild subscriptions (see non-standard behavior section)
 * Some features have not been tested (ie: voice)
 
 ## Getting Started
@@ -79,11 +78,12 @@ All fields are optional.
 | customPrefix | function(guildID) | Function that should return a guild-specific prefix from a guild id |
 | enableLogger | boolean | Enables logging of connection statuses, messages and errors |
 | enableHandler | boolean/string | Command handler mode. See command handlers section |
+| enableRoles | boolean | If set to true, role events are enabled and roles and channel permissionOverwrites will be cached (required for permission checking) |
 | sendErrors | boolean | If set to true, the command handler will also attempt to send command errors instead of only logging them |
 
 ## Command handlers
 
-djs-shenanigans has 3 different ways of working depending on the command handler mode. The command handler will process all messages that start with a valid custom prefix, a default prefix or a bot mention. All other messages will be ignored. All bot responses are cached by default. The command handler also listens to message edits and processes them as new messages. You can differentiate between new and updated messages by checking for the existence of message.editedTimestamp. If responding to a message edit using message.send(), the response will be sent as a message edit if the previous response is cached (see non-standard API). When using Router or File mode, empty commands (prefix + nothing or mention + nothing) will be processed as a "nocommand" command.
+djs-shenanigans has 3 different ways of operating depending on the command handler mode. The command handler will process all messages from non-bot users that start with a valid prefix or a bot mention, all other messages will be ignored. All bot responses are cached by default. The command handler also listens to message edits and processes them as new messages. You can differentiate between new and updated messages by checking for the existence of message.editedTimestamp. If responding to a message edit using message.send(), the response will be sent as a message edit if the previous response is cached (see non-standard API). When using Router or File mode, empty commands (prefix + nothing or mention + nothing) will be processed as a "nocommand" command.
 
 ### Message Event Mode
 
@@ -97,7 +97,7 @@ const client = require("djs-shenanigans")({
 });
 
 client.on("message", message => {
-	// messages from non-bot users which start with a valid prefix are received (ie: "!somecommand")
+	// only messages from non-bot users which start with a valid prefix are received (ie: "!somecommand")
 	// the message itself is not cached, but its channel and author/member are automatically cached.
 	// you must handle commands and errors by yourself
 	// also receives messages from whitelisted channels regardless of command handler mode
@@ -119,6 +119,7 @@ const client = require("djs-shenanigans")({
 client.on("/ping", message => {
 	// only messages from non-bot users which start with a valid prefix followed by the command "ping" are received (ie: "!ping")
 	// this message, its channel and author/member are automatically cached.
+	// you must handle errors by yourself.
 });
 
 client.on("/nocommand", message => {
@@ -140,7 +141,7 @@ const client = require("djs-shenanigans")({
 });
 
 // scans the "commands" folder for js files and registers them in client.commands
-// client.commands is a Map object with the file name serving as the key, and its exported functions as the value.
+// client.commands is a Map object with the file name serving as the key, and its exported object as the value.
 ```
 
 ```js
@@ -195,23 +196,26 @@ Since this library tampers with discord.js's functions and caches, there is a lo
 | reaction.guild | The guild object or null if DM |
 | reaction.user | The user object or user partial if not cached |
 | reaction.emoji | The emoji object as per the Discord Gateway API (not the reaction emoji object from discord.js) |
-| channels | Channels are cached only when used, messages are only cached when using a command handler, permissions are never cached |
+| channels | Channels are cached only when a valid command is used, messages are only cached when using the command handler in router or file mode, channel permissions are cached if options.enableRoles is set to tue |
 | channel.messages | Caches only messages that were processed by the command handler in router or file mode |
-| channel.permissionOverwrites | Always empty, unless manually cached by channel.fetch() or channels.fetch(id) |
+| channel.permissionOverwrites | Empty unless options.enableRoles is set to true. Can also be manually cached by channel.fetch() or channels.fetch(id) (roles are required for permission checking functions) |
 | guilds | All guilds are cached and auto-updated by default but they do not contain everything |
-| guild.channels | Caches only channels where commands were used |
-| guild.members | Caches only members that used commands. Specific members can be cached by guild.members.fetch(id) (fetching all members ir not recommended and will probably not work. Cached guild members are not updated and may contain stale information) |
-| guild.roles | Always empty, unless manually cached using guild.fetch() or guild.roles.fetch() |
+| guild.channels | Only channels where commands were used are cached |
+| guild.members | Only members that used commands are cached. Cached members are updated as they send new messages. Specific members can be cached by guild.members.fetch(id) (fetching all members will not work) |
+| guild.roles | Empty unless options.enableRoles is set to true. Can also be manually cached using guild.fetch() or guild.roles.fetch() (roles are required for permission checking functions. manually cached roles will be lost on member and guild updates if enableRoles is not enabled) |
 | guild.emojis | Always empty, unless manually cached using guild.fetch() |
 | guild.presences | Always empty |
 | guild.voiceStates | Always empty |
-| client.users | Caches only users that used commands. Specific users can be cached by client.users.fetch(id) |
+| client.users | Only users that used valid commands are cached. Specific users can be cached by client.users.fetch(id) |
 | events | Many events are modified or disabled |
-| message update | The message update event is disabled, but message updates are processed by the command handler |
-| message delete/deletebulk | Message delete events are fired only by whitelisted channels |
-| guild member / roles / emojis / integrations / bans | These events are all disabled. GuildMember events are unavailable as a side effect of implementing disable guild_subscriptions, therefore cached members will not be auto-updated. |
-| channel create / update / delete / pins | These are all disabled. Update and delete are internally processed for cached channels |
-| user updates / webhooks / voice states / presences / typing | These are all disabled. User updates are internally processed for cached users |
+| message update | The message update event is disabled, but message updates are processed by the command handler as new messages |
+| message delete/deletebulk | Message delete events are fired only in whitelisted channels |
+| guild member create / delete / update | These events are all disabled as a side effect of disabling guild_subscriptions. Cached guild members are updated as they send new messages. Detecting member joins and leaves is currently not possible with guild_subscriptions disabled |
+| guild roles / emojis / integrations / bans | These events are all disabled. Role events will be enabled if options.enableRoles is set to true (required for permission checking functions) |
+| channel create / update / delete / pins | Channel create and pins are disabled. Channel update and delete are enabled only for cached channels |
+| user updates / webhooks / voice states / presences / typing | These are all disabled. Cached users are updated as they send new messages |
+
+Some disabled events may eventually be re-enabled further down the road when more testing is done.
 
 ## PM2 Cluter Mode
 
@@ -280,7 +284,7 @@ As you can see, djs-shenanigans uses significantly less resources compared to di
 
 ## About
 
-This project is highly experimental, so the code is quite rough and there might be bugs and broken features especially with untested features and scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions or contributions you might find.
+This project is highly experimental, so the code is quite rough and there might be bugs and broken features especially in untested scenarios (i have tested only features that my bots need). You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions or contributions you might find.
 
 You can also find me in my [discord](https://discord.gg/BpeedKh) (Tim#2373)
 

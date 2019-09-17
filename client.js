@@ -216,7 +216,7 @@ module.exports = function(options) {
 					client.channels.delete(r.d.id);
 					client.emit("channelDelete",channel);
 				} else {
-					if(!client.options.enableRoles) { r.d.permission_overwrites = []; }
+					if(!client.options.enableRoles && !client.channels.get(r.d.id).permissionOverwrites.size) { r.d.permission_overwrites = []; }
 					let oldchannel = client.channels.get(r.d.id).clone();
 					let channel = client.channels.add(r.d.id);
 					client.emit("channelUpdate",oldchannel,channel);
