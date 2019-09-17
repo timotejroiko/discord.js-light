@@ -122,6 +122,7 @@ module.exports = function(options) {
 	client.options.customPrefix = options.customPrefix;
 	client.options.enableLogger = options.enableLogger;
 	client.options.enableHandler = options.enableHandler;
+	client.options.enableRoles = options.enableRoles;
 	client.options.sendErrors = options.sendErrors;
 	client.options.dblTest = options.dblTest;
 	client.options.guildPrefixes = {};
@@ -136,16 +137,26 @@ module.exports = function(options) {
 				if(r.d.author.id === client.user.id) {
 					(client.channels.get(r.d.channel_id) || await client.channels.fetch(r.d.channel_id)).messages.add(r.d);
 					return;
-				} else if(r.d.content) {
+				}
+				if(!client.options.enableRoles) { if(r.d.member) { r.d.member.roles = []; } }
+				if(r.d.content && !r.d.author.bot) {
 					let prefix = r.d.guild_id ? client.options.guildPrefixes[r.d.guild_id] || (client.options.guildPrefixes[r.d.guild_id] = await client.options.customPrefix(r.d.guild_id) || client.options.defaultPrefix) : client.options.defaultPrefix;
 					if(r.d.content.startsWith(prefix)) {
 						let cmd = (r.d.content.slice(prefix.length).split(" ")[0] || "").toLowerCase();
 						if(!cmd) { cmd = "nocommand"; }
 						handler(client,r,cmd);
 					} else if(r.d.content.startsWith(`<!@${client.user.id}>`) || r.d.content.startsWith(`<@${client.user.id}>`)) {
-						let cmd = (r.d.content.split(" ")[0] || "").toLowerCase();
+						let cmd = (r.d.content.split(" ")[1] || "").toLowerCase();
 						if(!cmd) { cmd = "nocommand"; }
 						handler(client,r,cmd);
+					} else {
+						if(client.users.get(r.d.author.id)) {
+							client.users.add(r.d.author);
+						}
+						if(r.d.guild_id && client.guilds.get(r.d.guild_id).members.get(r.d.author.id)) {
+							r.d.member.user = r.d.author;
+							client.guilds.get(r.d.guild_id).members.add(r.d.member);
+						}
 					}
 				}
 			} else if(r.t === "MESSAGE_DELETE" || r.t === "MESSAGE_DELETE_BULK") {
@@ -171,34 +182,44 @@ module.exports = function(options) {
 				reaction.guild = client.guilds.get(r.d.guild_id) || null;
 				reaction.user = client.users.get(r.d.user_id) || {id:r.d.user_id};
 				reaction.emoji = r.d.emoji;
-				client.emit(r.t.split("_").map((t,i) => {t = t.toLowerCase();if(i){t = t[0].toUpperCase() + t.slice(1);} return t}).join(""),reaction,reaction.user)
+				client.emit(r.t.split("_").map((t,i) => i ? t[0]+t.slice(1).toLowerCase() : t.toLowerCase()).join(""),reaction,reaction.user);
 			} else if(r.t === "GUILD_CREATE" || r.t === "GUILD_UPDATE") {
-				r.d.channels = [];
-				r.d.members = [];
 				r.d.voice_states = [];
 				r.d.presences = [];
 				if(!client.guilds.get(r.d.id)) {
-					r.d.emojis = [];
-					r.d.roles = [];
+					r.d.members = [];
+					r.d.channels = [];
+					if(!client.options.enableEmojis) { r.d.emojis = []; }
+					if(!client.options.enableRoles) { r.d.roles = []; }
 				} else {
+					r.d.channels = client.guilds.get(r.d.id).channels.array();
+					r.d.members = client.guilds.get(r.d.id).members.array();
+					if(!client.options.enableRoles) { r.d.roles = []; }
 					if(!(client.guilds.get(r.d.id).emojis || {size:0}).size) { r.d.emojis = []; }
-					if(!(client.guilds.get(r.d.id).roles || {size:0}).size) { r.d.roles = []; }
 				}
-			} 
-			/*else if(client.guilds.get(r.d.guild_id) && (r.t === "GUILD_MEMBER_UPDATE" || r.t === "GUILD_MEMBER_REMOVE")) {
-				if(r.t === "GUILD_MEMBER_REMOVE") {
-					client.guilds.get(r.d.guild_id).members.delete(r.d.user.id)
-				} else {
-					client.guilds.get(r.d.guild_id).members.add(r.d);
+			} else if(r.t === "GUILD_ROLE_CREATE" || r.t === "GUILD_ROLE_UPDATE") {
+				if(client.options.enableRoles) {
+					let oldrole = client.guilds.get(r.d.guild_id).roles.get(r.d.role.id).clone();
+					let role = client.guilds.get(r.d.guild_id).roles.add(r.d.role);
+					if(r.t === "GUILD_ROLE_CREATE") { client.emit("roleCreate",role); }
+					else { client.emit("roleUpdate",oldrole,role); }
 				}
-			} */ else if(client.users.get(r.d.id) && r.t === "USER_UPDATE") {
-				client.users.add(r.d);
+			} else if(r.t === "GUILD_ROLE_DELETE") {
+				if(client.options.enableRoles) {
+					let role = client.guilds.get(r.d.guild_id).roles.get(r.d.role.id).clone();
+					client.guilds.get(r.d.guild_id).roles.delete(r.d.role.id);
+					client.emit("roleDelete",role);
+				}
 			} else if(client.channels.get(r.d.id) && (r.t === "CHANNEL_UPDATE" || r.t === "CHANNEL_DELETE")) {
 				if(r.t === "CHANNEL_DELETE") {
+					let channel = client.channels.get(r.d.id).clone();
 					client.channels.delete(r.d.id);
+					client.emit("channelDelete",channel);
 				} else {
-					if(r.d.permission_overwrites && !client.channels.get(r.d.id).permissionOverwrites.size) { r.d.permission_overwrites = []; }
-					client.channels.add(r.d.id);
+					if(!client.options.enableRoles) { r.d.permission_overwrites = []; }
+					let oldchannel = client.channels.get(r.d.id).clone();
+					let channel = client.channels.add(r.d.id);
+					client.emit("channelUpdate",oldchannel,channel);
 				}
 			} else if(r.t === "READY") {
 				if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${r.d.shard[0]}] Connected. Fetching ${r.d.guilds.length} guilds`)}
@@ -358,13 +379,9 @@ async function handler(client,r,cmd) {
 				let channel = client.channels.get(r.d.channel_id);
 				if(!channel) {
 					channel = await client.channels.fetch(r.d.channel_id);
-					channel.permissionOverwrites.clear();
+					if(!client.options.enableRoles) { channel.permissionOverwrites.clear(); }
 				}
 				let message = channel.messages.add(r.d);
-				if(message.author.bot) {
-					channel.messages.delete(message.id);
-					return;
-				}
 				message.command = cmd;
 				message.argument = message.content.split(" ").slice(1).join(" ");
 				if(client.options.enableLogger) {
@@ -392,13 +409,9 @@ async function handler(client,r,cmd) {
 				let channel = client.channels.get(r.d.channel_id);
 				if(!channel) {
 					channel = await client.channels.fetch(r.d.channel_id);
-					channel.permissionOverwrites.clear();
+					if(!client.options.enableRoles) { channel.permissionOverwrites.clear(); }
 				}
 				let message = channel.messages.add(r.d);
-				if(message.author.bot) {
-					channel.messages.delete(message.id);
-					return;
-				}
 				message.command = cmd;
 				message.argument = message.content.split(" ").slice(1).join(" ");
 				if(client.options.enableLogger) {
@@ -415,11 +428,10 @@ async function handler(client,r,cmd) {
 		let channel = client.channels.get(r.d.channel_id);
 		if(!channel) {
 			channel = await client.channels.fetch(r.d.channel_id);
-			channel.permissionOverwrites.clear();
+			if(!client.options.enableRoles) { channel.permissionOverwrites.clear(); }
 		}
 		if(channel.whitelisted) { return; }
 		let message = channel.messages.add(r.d,false);
-		if(message.author.bot) { return; }
 		client.emit("message",message);
 	}
 }
