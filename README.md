@@ -282,5 +282,5 @@ As you can see, djs-shenanigans uses significantly less resources compared to di
 
 This project is highly experimental, so the code is quite rough and there might be bugs and broken features especially with untested features and scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions or contributions you might find.
 
-You can also find me in my [discord](https://discord.gg/y9zT7GN) (Tim#2373)
+You can also find me in my [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
