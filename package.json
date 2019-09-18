@@ -1,36 +1,33 @@
 {
-  "name": "djs-shenanigans",
-  "version": "1.0.0",
-  "description": "A modified Discord client built on top of discord.js",
-  "main": "client.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "url": "https://github.com/timotejroiko/djs-shenanigans.git"
-  },
-  "keywords": [
-    "discord",
-    "api",
-    "bot",
-    "client",
-    "node",
-    "shenanigans"
-  ],
-  "author": "Timotej Valentin Rojko",
-  "license": "Apache-2.0",
-  "dependencies": {
-    "discord.js": "github:discordjs/discord.js",
-    "lockfile": "^1.0.4",
-    "pm2": "^3.5.1"
-  },
-  "peerDependencies": {
-    "bufferutil": "^4.0.1",
-    "zlib-sync": "^0.1.4",
-	"erlpack": "discordapp/erlpack",
-	"utf-8-validate": "^5.0.2"
-  },
-  "engines": {
-    "node": ">=10.0.0"
-  }
+	"name": "djs-shenanigans",
+	"version": "1.1.0",
+	"description": "A modified Discord client built on top of discord.js",
+	"main": "client.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"url": "https://github.com/timotejroiko/djs-shenanigans.git"
+	},
+	"keywords": [
+		"discord",
+		"api",
+		"bot",
+		"client",
+		"node",
+		"shenanigans"
+	],
+	"author": "Timotej Valentin Rojko",
+	"license": "Apache-2.0",
+	"dependencies": {
+		"discord.js": "github:discordjs/discord.js",
+		"lockfile": "^1.0.4",
+		"pm2": "^3.5.1"
+	},
+	"peerDependencies": {
+		"utf-8-validate": "^5.0.2"
+	},
+	"engines": {
+		"node": ">=10.0.0"
+	}
 }
