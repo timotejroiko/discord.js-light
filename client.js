@@ -44,9 +44,13 @@ Structures.extend("Message", Message => {
 		get isOwner() {
 			return this.client.options.owners.includes(this.author.id);
 		}
-		asyncEval(f) {
+		async asyncEval(f) {
 			let client = this.client;
-			return Promise.resolve(eval(`(async() => {return ${f}})()`));
+			try {
+				return await Promise.resolve(eval(`(async() => {return ${f}})()`));
+			} catch(e) {
+				return e;
+			}
 		}
 	}
 	return xMessage;
