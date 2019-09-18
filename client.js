@@ -205,28 +205,33 @@ module.exports = function(options) {
 					if(!client.options.enableRoles) { r.d.roles = []; }
 					if(!(client.guilds.get(r.d.id).emojis || {size:0}).size) { r.d.emojis = []; }
 				}
-			} else if(r.t === "GUILD_ROLE_CREATE" || r.t === "GUILD_ROLE_UPDATE") {
+			} else if(r.t.indexOf("GUILD_ROLE") > -1) {
 				if(client.options.enableRoles) {
-					let oldrole = client.guilds.get(r.d.guild_id).roles.get(r.d.role.id).clone();
-					let role = client.guilds.get(r.d.guild_id).roles.add(r.d.role);
-					if(r.t === "GUILD_ROLE_CREATE") { client.emit("roleCreate",role); }
-					else { client.emit("roleUpdate",oldrole,role); }
-				}
-			} else if(r.t === "GUILD_ROLE_DELETE") {
-				if(client.options.enableRoles) {
-					let role = client.guilds.get(r.d.guild_id).roles.get(r.d.role.id).clone();
-					client.guilds.get(r.d.guild_id).roles.delete(r.d.role.id);
-					client.emit("roleDelete",role);
+					let guild = client.guilds.get(r.d.guild_id);
+					if(r.t === "GUILD_ROLE_CREATE") {
+						let role = guild.roles.add(r.d.role);
+						client.emit("roleCreate",role);
+					} else if(r.t === "GUILD_ROLE_UPDATE") {
+						let role = guild.roles.get(r.d.role.id);
+						let oldrole = role._update(r.d.role);
+						client.emit("roleUpdate",oldrole,role);
+					} else if(r.t === "GUILD_ROLE_DELETE") {
+						let role = guild.roles.get(r.d.role.id);
+						guild.roles.remove(r.d.role.id);
+						role.deleted = true;
+						client.emit("roleDelete",role);
+					}
 				}
 			} else if(client.channels.get(r.d.id) && (r.t === "CHANNEL_UPDATE" || r.t === "CHANNEL_DELETE")) {
 				if(r.t === "CHANNEL_DELETE") {
-					let channel = client.channels.get(r.d.id).clone();
-					client.channels.delete(r.d.id);
+					let channel = client.channels.get(r.d.id);
+					client.channels.remove(channel.id);
+					channel.deleted = true;
 					client.emit("channelDelete",channel);
 				} else {
 					if(!client.options.enableRoles && !client.channels.get(r.d.id).permissionOverwrites.size) { r.d.permission_overwrites = []; }
-					let oldchannel = client.channels.get(r.d.id).clone();
-					let channel = client.channels.add(r.d.id);
+					let oldchannel = client.channels.get(r.d.id)._update(r.d);
+					let channel = client.channels.get(r.d.id);
 					client.emit("channelUpdate",oldchannel,channel);
 				}
 			} else if(r.t === "READY") {
