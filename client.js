@@ -82,10 +82,7 @@ Structures.extend("TextChannel", TextChannel => {
 Structures.extend("GuildMember", GuildMember => {
 	return class extends GuildMember {
 		equals(member) {
-			let equal = member &&
-			this.deleted === member.deleted &&
-			this.nickname === member.nickname &&
-			this._roles.length === member._roles.length
+			let equal = member && this.deleted === member.deleted && this.nickname === member.nickname && this._roles.length === member._roles.length;
 			return equal;
 		}
 	}
@@ -150,6 +147,21 @@ module.exports = function(options) {
 		if(r.t) {
 			if((r.t === "MESSAGE_CREATE" || (r.t === "MESSAGE_UPDATE" && r.d.edited_timestamp)) && r.d.type === 0 && !r.d.webhook_id) {
 				if(!client.options.enableRoles) { if(r.d.member) { r.d.member.roles = []; } }
+				if(client.users.get(r.d.author.id)) {
+					let user = client.users.get(r.d.author.id);
+    				let olduser = user._update(r.d.author);
+    				if(!user.equals(olduser)) {
+    					console.log("user updated");
+    				}
+				}
+				if(r.d.guild_id && client.guilds.get(r.d.guild_id).members.get(r.d.author.id)) {
+					r.d.member.user = r.d.author;
+					let member = client.guilds.get(r.d.guild_id).members.get(r.d.author.id);
+					let oldmember = member._update(r.d.member);
+					if(!member.equals(oldmember)) {
+						console.log("member updated");
+					}
+				}
 				if((client.channels.get(r.d.channel_id) || {}).whitelisted) {
 					client.emit(r.t === "MESSAGE_CREATE" ? "message" : "messageUpdate",client.channels.get(r.d.channel_id).messages.add(r.d,false));
 				}
@@ -157,18 +169,9 @@ module.exports = function(options) {
 					let channel = client.channels.get(r.d.channel_id);
 					if(!channel) {
 						channel = await client.channels.fetch(r.d.channel_id);
-						if(!client.options.enableRoles) { channel.permissionOverwrites.clear(); }
+						if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
 					}
 					channel.messages.add(r.d);
-					let user = client.users.get(r.d.author.id);
-    				let olduser = user._update(r.d.author);
-    				console.log(user.equals(olduser));
-					if(r.d.guild_id && client.guilds.get(r.d.guild_id).members.get(r.d.author.id)) {
-						r.d.member.user = r.d.author;
-						let member = client.guilds.get(r.d.guild_id).members.get(r.d.author.id);
-    					let oldmember = member._update(r.d.member);
-    					console.log(member.equals(oldmember));
-					}
 					return;
 				}
 				if(r.d.content && !r.d.author.bot) {
@@ -253,7 +256,7 @@ module.exports = function(options) {
 					channel.deleted = true;
 					client.emit("channelDelete",channel);
 				} else {
-					if(!client.options.enableRoles && !client.channels.get(r.d.id).permissionOverwrites.size) { r.d.permission_overwrites = []; }
+					if(!client.options.enableRoles && !(client.channels.get(r.d.id).permissionOverwrites || {}).size) { r.d.permission_overwrites = []; }
 					let oldchannel = client.channels.get(r.d.id)._update(r.d);
 					let channel = client.channels.get(r.d.id);
 					client.emit("channelUpdate",oldchannel,channel);
@@ -413,7 +416,7 @@ async function handler(client,r,cmd) {
 				let channel = client.channels.get(r.d.channel_id);
 				if(!channel) {
 					channel = await client.channels.fetch(r.d.channel_id);
-					if(!client.options.enableRoles) { channel.permissionOverwrites.clear(); }
+					if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
 				}
 				let message = channel.messages.add(r.d);
 				message.command = cmd;
@@ -443,7 +446,7 @@ async function handler(client,r,cmd) {
 				let channel = client.channels.get(r.d.channel_id);
 				if(!channel) {
 					channel = await client.channels.fetch(r.d.channel_id);
-					if(!client.options.enableRoles) { channel.permissionOverwrites.clear(); }
+					if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
 				}
 				let message = channel.messages.add(r.d);
 				message.command = cmd;
@@ -462,7 +465,7 @@ async function handler(client,r,cmd) {
 		let channel = client.channels.get(r.d.channel_id);
 		if(!channel) {
 			channel = await client.channels.fetch(r.d.channel_id);
-			if(!client.options.enableRoles) { channel.permissionOverwrites.clear(); }
+			if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
 		}
 		if(channel.whitelisted) { return; }
 		let message = channel.messages.add(r.d,false);
