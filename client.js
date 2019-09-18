@@ -7,9 +7,9 @@ Structures.extend("Message", Message => {
 	class xMessage extends Message {
 		async send(content,options) {
 			try {
-				if(!content) { content = ""; }
 				content = await Promise.resolve(content);
 				if(typeof content === "object") { content = util.inspect(content); }
+				if(typeof content !== "string") { content = content+""; }
 				if(content.length > 1950 && (!options || !options.split)) {
 					content = content.substring(0, 1950) + "\n...";
 				} else if(!content && (!options || (!options.content && !options.embed && !options.files))) {
@@ -23,7 +23,7 @@ Structures.extend("Message", Message => {
 				}
 				if(!this.commandResponse) { this.commandResponse = response; }
 				response.commandMessage = this;
-				response.commandResponseTime = response.createdTimestamp - (this.editedTimestamp || this.createdTimestamp);
+				response.commandResponseTime = (response.editedTimestamp || response.createdTimestamp) - (this.editedTimestamp || this.createdTimestamp);
 				if(this.client.options.enableLogger) {
 					if(this.guild) {
 						console.log(`[${new Date().toISOString()}][Process ${this.client.options.process}][Shard ${this.guild.shardID}][${this.guild.name}][${this.channel.name}] Responded to ${this.author.tag} in ${response.commandResponseTime} ms`);
