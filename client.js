@@ -44,6 +44,9 @@ Structures.extend("Message", Message => {
 		get isOwner() {
 			return this.client.options.owners.includes(this.author.id);
 		}
+		asyncEval = f => {
+			return Promise.resolve(eval(`(async() => {return ${f}})()`));
+		}
 	}
 	return xMessage;
 });
@@ -306,9 +309,6 @@ module.exports = function(options) {
 		setTimeout(() => { process.exit(s); },4000);
 		return true;
 	};
-	client.asyncEval = async f => {
-		return Promise.resolve(eval(`(async() => {return ${f}})()`));
-	}
 	if(process.env.exec_mode === "cluster_mode") {
 		client.pm2shutdown = () => {
 			for(let i = 0; i < client.options.neighbors.length; i++) {
