@@ -4,7 +4,7 @@ const lockfile = require("lockfile");
 const util = require('util');
 
 Structures.extend("Message", Message => {
-	class xMessage extends Message {
+	return class extends Message {
 		async send(content,options) {
 			try {
 				content = await Promise.resolve(content);
@@ -53,11 +53,10 @@ Structures.extend("Message", Message => {
 			}
 		}
 	}
-	return xMessage;
 });
 
 Structures.extend("TextChannel", TextChannel => {
-	class xTextChannel extends TextChannel {
+	return class extends TextChannel {
 		awaitMessages(filter, options = {}) {
 			return new Promise((resolve, reject) => {
 				const collector = this.createCollector(filter, options);
@@ -78,7 +77,18 @@ Structures.extend("TextChannel", TextChannel => {
 			return c;
 		}
 	}
-	return xTextChannel;
+});
+
+Structures.extend("GuildMember", GuildMember => {
+	return class extends GuildMember {
+		equals(member) {
+			let equal = member &&
+			this.deleted === member.deleted &&
+			this.nickname === member.nickname &&
+			this.roles.size === member.roles.size
+			return equal;
+		}
+	}
 });
 
 module.exports = function(options) {
