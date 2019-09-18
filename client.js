@@ -261,6 +261,8 @@ module.exports = function(options) {
 					let channel = client.channels.get(r.d.id);
 					client.emit("channelUpdate",oldchannel,channel);
 				}
+			} else if(r.t === "USER_UPDATE") {
+				console.log(r.d)
 			} else if(r.t === "READY") {
 				if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${r.d.shard[0]}] Connected. Fetching ${r.d.guilds.length} guilds`)}
 				if(process.env.exec_mode === "cluster_mode" && (r.d.shard[0]+1) % client.options.shardsPerProcess === 0) {
