@@ -85,7 +85,7 @@ Structures.extend("GuildMember", GuildMember => {
 			let equal = member &&
 			this.deleted === member.deleted &&
 			this.nickname === member.nickname &&
-			this.roles.size === member.roles.size
+			this._roles.length === member._roles.length
 			return equal;
 		}
 	}
