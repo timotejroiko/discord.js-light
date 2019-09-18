@@ -151,7 +151,7 @@ module.exports = function(options) {
 					let user = client.users.get(r.d.author.id);
     				let olduser = user._update(r.d.author);
     				if(!user.equals(olduser)) {
-    					console.log("user updated");
+    					client.emit("userUpdate",olduser,user);
     				}
 				}
 				if(r.d.guild_id && client.guilds.get(r.d.guild_id).members.get(r.d.author.id)) {
@@ -159,7 +159,7 @@ module.exports = function(options) {
 					let member = client.guilds.get(r.d.guild_id).members.get(r.d.author.id);
 					let oldmember = member._update(r.d.member);
 					if(!member.equals(oldmember)) {
-						console.log("member updated");
+						client.emit("memberUpdate",oldmember,member);
 					}
 				}
 				if((client.channels.get(r.d.channel_id) || {}).whitelisted) {
@@ -261,8 +261,6 @@ module.exports = function(options) {
 					let channel = client.channels.get(r.d.id);
 					client.emit("channelUpdate",oldchannel,channel);
 				}
-			} else if(r.t === "USER_UPDATE") {
-				console.log(r.d)
 			} else if(r.t === "READY") {
 				if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${r.d.shard[0]}] Connected. Fetching ${r.d.guilds.length} guilds`)}
 				if(process.env.exec_mode === "cluster_mode" && (r.d.shard[0]+1) % client.options.shardsPerProcess === 0) {
