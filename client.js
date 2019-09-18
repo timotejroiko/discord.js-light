@@ -139,14 +139,28 @@ module.exports = function(options) {
 	client.on("raw", async r => {
 		if(r.t) {
 			if((r.t === "MESSAGE_CREATE" || (r.t === "MESSAGE_UPDATE" && r.d.edited_timestamp)) && r.d.type === 0 && !r.d.webhook_id) {
+				if(!client.options.enableRoles) { if(r.d.member) { r.d.member.roles = []; } }
 				if((client.channels.get(r.d.channel_id) || {}).whitelisted) {
 					client.emit(r.t === "MESSAGE_CREATE" ? "message" : "messageUpdate",client.channels.get(r.d.channel_id).messages.add(r.d,false));
 				}
 				if(r.d.author.id === client.user.id) {
-					(client.channels.get(r.d.channel_id) || await client.channels.fetch(r.d.channel_id)).messages.add(r.d);
+					let channel = client.channels.get(r.d.channel_id);
+					if(!channel) {
+						channel = await client.channels.fetch(r.d.channel_id);
+						if(!client.options.enableRoles) { channel.permissionOverwrites.clear(); }
+					}
+					channel.messages.add(r.d);
+					let user = client.users.get(r.d.author.id);
+    				let olduser = user._update(r.d.author);
+    				console.log(user.equals(olduser));
+					if(r.d.guild_id && client.guilds.get(r.d.guild_id).members.get(r.d.author.id)) {
+						r.d.member.user = r.d.author;
+						let member = client.guilds.get(r.d.guild_id).members.get(r.d.author.id);
+    					let oldmember = member._update(r.d.member);
+    					console.log(member.equals(oldmember));
+					}
 					return;
 				}
-				if(!client.options.enableRoles) { if(r.d.member) { r.d.member.roles = []; } }
 				if(r.d.content && !r.d.author.bot) {
 					let prefix = r.d.guild_id ? client.options.guildPrefixes[r.d.guild_id] || (client.options.guildPrefixes[r.d.guild_id] = await client.options.customPrefix(r.d.guild_id) || client.options.defaultPrefix) : client.options.defaultPrefix;
 					if(r.d.content.startsWith(prefix)) {
@@ -197,7 +211,7 @@ module.exports = function(options) {
 				if(!client.guilds.get(r.d.id)) {
 					r.d.members = [];
 					r.d.channels = [];
-					if(!client.options.enableEmojis) { r.d.emojis = []; }
+					r.d.emojis = [];
 					if(!client.options.enableRoles) { r.d.roles = []; }
 				} else {
 					r.d.channels = client.guilds.get(r.d.id).channels.array();
