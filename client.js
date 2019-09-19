@@ -401,6 +401,7 @@ module.exports = function(options) {
 		});
 	}
 	client.getInfo = async (bypass) => {
+		const statuses = ["READY","CONNECTING","RECONNECTING","IDLE","NEARLY","DISCONNECTED"];
 		if(process.env.exec_mode === "cluster_mode" && !bypass) {
 			let data = await client.survey("client.getInfo(true)");
 			let total = {
@@ -410,15 +411,15 @@ module.exports = function(options) {
 				totalUsersAtLogin:data.reduce((a,t) => t.usersAtLogin ? a += t.usersAtLogin : a,0),
 				totalActiveUsers:data.reduce((a,t) => t.activeUsers ? a += t.activeUsers : a,0),
 				totalActiveChannels:data.reduce((a,t) => t.activeChannels ? a += t.activeChannels : a,0),
-				details:data
+				processDetails:data
 			}
 			return total;
 		} else {
 			if(client.readyTimestamp) {
 				let shards = new Array(client.options.shardsPerProcess).fill(0).map((t,i) => { return {
 					shardID:i,
-					status:client.ws.shards.get(i).status,
-					ping:client.ws.shards.get(i).ping,
+					status:statuses[client.ws.shards.get(i).status],
+					ping:Math.round(client.ws.shards.get(i).ping),
 					guilds:client.guilds.filter(t => t.shardID === i).size,
 					usersAtLogin:client.guilds.reduce((a,t) => t.shardID === i ? a += t.memberCount : a,0),
 					activeUsers:client.guilds.reduce((a,t) => t.shardID === i ? a += t.members.filter(a => a.id !== client.user.id).size : a,0),
@@ -427,14 +428,14 @@ module.exports = function(options) {
 				let proc = {
 					processID:client.options.process,
 					shards:shards.length,
-					status:client.ws.status,
+					status:statuses[client.ws.status],
 					upTime:client.uptime,
 					ping:client.ws.ping,
 					guilds:client.guilds.size,
 					usersAtLogin:shards.reduce((a,t) => a += t.usersAtLogin,0),
 					activeUsers:shards.reduce((a,t) => a += t.activeUsers,0),
 					activeChannels:shards.reduce((a,t) => a += t.activeChannels,0),
-					details:shards
+					shardDetails:shards
 				}
 				return proc;
 			} else {
