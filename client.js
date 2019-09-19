@@ -147,14 +147,14 @@ module.exports = function(options) {
 		if(r.t) {
 			if((r.t === "MESSAGE_CREATE" || (r.t === "MESSAGE_UPDATE" && r.d.edited_timestamp)) && r.d.type === 0 && !r.d.webhook_id) {
 				if(!client.options.enableRoles) { if(r.d.member) { r.d.member.roles = []; } }
-				if(client.users.get(r.d.author.id)) {
+				if(client.users.has(r.d.author.id)) {
 					let user = client.users.get(r.d.author.id);
     				let olduser = user._update(r.d.author);
     				if(!user.equals(olduser)) {
     					client.emit("userUpdate",olduser,user);
     				}
 				}
-				if(r.d.guild_id && client.guilds.get(r.d.guild_id).members.get(r.d.author.id)) {
+				if(r.d.guild_id && client.guilds.get(r.d.guild_id).members.has(r.d.author.id)) {
 					r.d.member.user = r.d.author;
 					let member = client.guilds.get(r.d.guild_id).members.get(r.d.author.id);
 					let oldmember = member._update(r.d.member);
@@ -171,7 +171,7 @@ module.exports = function(options) {
 						channel = await client.channels.fetch(r.d.channel_id);
 						if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
 					}
-					channel.messages.add(r.d);
+					if(channel.messages.has(r.d.id)) { channel.messages.get(r.d.id).patch(r.d); } else { channel.messages.add(r.d); }
 					return;
 				}
 				if(r.d.content && !r.d.author.bot) {
@@ -184,18 +184,10 @@ module.exports = function(options) {
 						let cmd = (r.d.content.split(" ")[1] || "").toLowerCase();
 						if(!cmd) { cmd = "nocommand"; }
 						handler(client,r,cmd);
-					} else {
-						if(client.users.get(r.d.author.id)) {
-							client.users.add(r.d.author);
-						}
-						if(r.d.guild_id && client.guilds.get(r.d.guild_id).members.get(r.d.author.id)) {
-							r.d.member.user = r.d.author;
-							client.guilds.get(r.d.guild_id).members.add(r.d.member);
-						}
 					}
 				}
 			} else if(r.t === "MESSAGE_DELETE" || r.t === "MESSAGE_DELETE_BULK") {
-				if((client.channels.get(r.d.channel_id) || {}).whitelisted) {
+				if((client.channels.has(r.d.channel_id) || {}).whitelisted) {
 					if(r.t === "MESSAGE_DELETE") {
 						let channel = client.channels.get(r.d.channel_id);
 						let deleted = channel.messages.get(r.d.id) || channel.messages.add({id:r.d.id},false);
@@ -213,27 +205,27 @@ module.exports = function(options) {
 			} else if(r.t.indexOf("MESSAGE_REACTION") > -1) {
 				let reaction = {};
 				reaction.channel = client.channels.get(r.d.channel_id) || {id:r.d.channel_id};
-				reaction.message = reaction.channel.messages ? reaction.channel.messages.get(r.d.message_id) : {id:r.d.message_id};
-				reaction.guild = client.guilds.get(r.d.guild_id) || null;
+				reaction.message = reaction.channel.messages && reaction.channel.messages.has(r.d.message_id) ? reaction.channel.messages.get(r.d.message_id) : {id:r.d.message_id};
+				reaction.guild = r.d.guild_id ? client.guilds.get(r.d.guild_id) : null;
 				reaction.user = client.users.get(r.d.user_id) || {id:r.d.user_id};
 				reaction.emoji = r.d.emoji;
 				client.emit(r.t.split("_").map((t,i) => i ? t[0]+t.slice(1).toLowerCase() : t.toLowerCase()).join(""),reaction,reaction.user);
 			} else if(r.t === "GUILD_CREATE" || r.t === "GUILD_UPDATE") {
 				r.d.voice_states = [];
 				r.d.presences = [];
-				if(!client.guilds.get(r.d.id)) {
+				if(!client.guilds.has(r.d.id)) {
 					r.d.members = [];
 					r.d.channels = [];
 					r.d.emojis = [];
 					if(!client.options.enableRoles) { r.d.roles = []; }
 				} else {
-					r.d.channels = client.guilds.get(r.d.id).channels.array();
-					r.d.members = client.guilds.get(r.d.id).members.array();
+					r.d.channels = r.d.channels.filter(t => client.guilds.get(r.d.id).channels.has(t.id));
+					r.d.members = r.d.members.filter(t => client.guilds.get(r.d.id).members.has(t.user.id));
 					if(!(client.guilds.get(r.d.id).roles || {size:0}).size) { r.d.roles = []; }
 					if(!(client.guilds.get(r.d.id).emojis || {size:0}).size) { r.d.emojis = []; }
 				}
 			} else if(r.t.indexOf("GUILD_ROLE") > -1) {
-				if(client.options.enableRoles) {
+				if(client.options.enableRoles || (client.guilds.get(r.d.guild_id).roles || {size:0}).size) {
 					let guild = client.guilds.get(r.d.guild_id);
 					if(r.t === "GUILD_ROLE_CREATE") {
 						let role = guild.roles.add(r.d.role);
@@ -249,7 +241,7 @@ module.exports = function(options) {
 						client.emit("roleDelete",role);
 					}
 				}
-			} else if(client.channels.get(r.d.id) && (r.t === "CHANNEL_UPDATE" || r.t === "CHANNEL_DELETE")) {
+			} else if(client.channels.has(r.d.id) && (r.t === "CHANNEL_UPDATE" || r.t === "CHANNEL_DELETE")) {
 				if(r.t === "CHANNEL_DELETE") {
 					let channel = client.channels.get(r.d.id);
 					client.channels.remove(channel.id);
@@ -455,13 +447,13 @@ module.exports = function(options) {
 async function handler(client,r,cmd) {
 	if(client.options.enableHandler) {
 		if(typeof client.options.enableHandler === "string") {
-			if(client.commands.get(cmd)) {
+			if(client.commands.has(cmd)) {
 				let channel = client.channels.get(r.d.channel_id);
 				if(!channel) {
 					channel = await client.channels.fetch(r.d.channel_id);
 					if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
 				}
-				let message = channel.messages.add(r.d);
+				let message = channel.messages.has(r.d.id) ? channel.messages.get(r.d.id).patch(r.d) : channel.messages.add(r.d);
 				message.command = cmd;
 				message.argument = message.content.split(" ").slice(1).join(" ");
 				if(client.options.enableLogger) {
@@ -491,7 +483,7 @@ async function handler(client,r,cmd) {
 					channel = await client.channels.fetch(r.d.channel_id);
 					if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
 				}
-				let message = channel.messages.add(r.d);
+				let message = channel.messages.has(r.d.id) ? channel.messages.get(r.d.id).patch(r.d) : channel.messages.add(r.d);
 				message.command = cmd;
 				message.argument = message.content.split(" ").slice(1).join(" ");
 				if(client.options.enableLogger) {
