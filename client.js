@@ -46,25 +46,12 @@ Structures.extend("Message", Message => {
 		}
 		async asyncEval(f) {
 			let client = this.client;
-			try {
-				return Promise.resolve(eval(`(async () => {
-					if("${f}".indexOf("return") === -1) {
-						try {
-							if(typeof (${f}) === "object" && typeof (${f}).then === "function") {
-								return {Promise:await ${f}}
-							} else {
-								return ${f}
-							}
-						} catch(e) {
-							return "Evaluating complex code requires a \`return\`"
-						}
-					} else {
-						${f}
-					}
-				})()`));
-			} catch(e) {
-				return e;
-			}
+			try { let _TEST_ = eval(`(()=>{return ${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
+				try { let _TEST_ = await eval(`(async()=>{return ${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
+					try { let _TEST_ = eval(`(()=>{${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
+						try { let _TEST_ = await eval(`(async() => {${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
+							return e;
+			}}}}
 		}
 	}
 });
