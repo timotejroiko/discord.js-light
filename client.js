@@ -7,7 +7,7 @@ Structures.extend("Message", Message => {
 	return class extends Message {
 		async send(content,options) {
 			try {
-				if(typeof content.then === "function") { content = {Promise:await content}; }
+				content = await Promise.resolve(content);
 				if(typeof content === "object") { content = util.inspect(content,{ maxArrayLength: 10, getters: true, depth: 1 }).replace(/  /g,"\t\t"); }
 				if(typeof content !== "string") { content = content+""; }
 				if(content.length > 1950 && (!options || !options.split)) {
@@ -47,7 +47,13 @@ Structures.extend("Message", Message => {
 		async asyncEval(f) {
 			let client = this.client;
 			try {
-				return await Promise.resolve(eval(`(async() => {return ${f}})()`));
+				return await Promise.resolve(eval(`(async() => {
+					if(typeof (${f}) === "object" && typeof (${f}).then === "function") {
+						return {Promise:${f}}
+					} else {
+						return ${f}
+					}
+				})()`));
 			} catch(e) {
 				return e;
 			}
