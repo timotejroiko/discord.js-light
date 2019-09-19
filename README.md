@@ -167,7 +167,7 @@ djs-shenanigans has some extra functions built in for convenience:
 
 | Func/Prop | Returns | Description |
 | ------------- | ------------- | ------------- |
-| message.send(content,options) | promise>message | This function is the same as message.channel.send() but adds several improvements: automatically resolves promises and converts objects to text, truncates large strings if no split options are provided, detects and warns about errors and failures when sending, logs response time and errors if logging is enabled, adds request and response pairing if messages are cached, if possible sends responses as edits when triggered by message edits |
+| message.send(content,options) | promise>message | This function is the same as message.channel.send() but adds several improvements: can send unresolved promises, objects, falsey values and other non-string types, truncates large strings if no split options are provided, logs response times and sending errors/warnings if logging is enabled, adds request-response pairing if messages are cached and if possible sends responses as edits when triggered by message edits |
 | message.asyncEval(string) | promise>anything | An eval function compatible with promises and async/await syntax. Can access the client via `client` and the message object via `this` |
 | message.isOwner | boolean | Quickly check if the user who sent the message is a bot owner. Uses the array of owners from options.owners |
 | message.commandResponse | message | The message object that was sent as a response to this command. Only available if it was sent with message.send() and the message is cached |
@@ -221,7 +221,7 @@ Since this library tampers with discord.js's functions and caches, there is a lo
 | Events | Changes |
 | ------------- | ------------- |
 | events | Many events are modified or disabled |
-| messageUpdate | The message update event is disabled, but message updates are processed by the command handler and sent as new messages. To differentiate between them check for the existance of message.editedTimestamp |
+| messageUpdate | The messageUpdate event is fired only in whitelisted channels. Message updates that contain valid commands are processed by the command handler and sent as new messages and contain message.editedTimestamp and a history of changes in message.edits if cached |
 | messageDelete / messageDeleteBulk | Message delete events are fired only in whitelisted channels |
 | memberUpdate / userUpdate | These events are unavailable as a side effect of disabling guild subscriptions, however, as a workaround, all messages sent by cached users/members will be checked for updated user/member data and will fire userUpdate/memberUpdate events when changes are detected |
 | memberCreate / memberDelete | These events are unavailable as a side effect of disabling guild subscriptions. Detecting member joins and leaves is currently not possible without guild subscriptions |
