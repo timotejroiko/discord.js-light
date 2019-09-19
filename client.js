@@ -229,7 +229,7 @@ module.exports = function(options) {
 				} else {
 					r.d.channels = client.guilds.get(r.d.id).channels.array();
 					r.d.members = client.guilds.get(r.d.id).members.array();
-					if(!client.options.enableRoles) { r.d.roles = []; }
+					if(!(client.guilds.get(r.d.id).roles || {size:0}).size) { r.d.roles = []; }
 					if(!(client.guilds.get(r.d.id).emojis || {size:0}).size) { r.d.emojis = []; }
 				}
 			} else if(r.t.indexOf("GUILD_ROLE") > -1) {
@@ -399,6 +399,48 @@ module.exports = function(options) {
 				try { eval(packet.d); } catch(e) { logger(e,client); }
 			}
 		});
+	}
+	client.getInfo = async (bypass) => {
+		if(process.env.exec_mode === "cluster_mode" && !bypass) {
+			let data = await client.survey("client.getInfo(true)");
+			let total = {
+				totalProcesses:data.length,
+				totalShards:data.reduce((a,t) => t.shards ? a += t.shards : a,0),
+				totalGuilds:data.reduce((a,t) => t.guild ? a += t.guilds : a,0),
+				totalUsersAtLogin:data.reduce((a,t) => t.usersAtLogin ? a += t.usersAtLogin : a,0),
+				totalActiveUsers:data.reduce((a,t) => t.activeUsers ? a += t.activeUsers : a,0),
+				totalActiveChannels:data.reduce((a,t) => t.activeChannels ? a += t.activeChannels : a,0),
+				details:data
+			}
+			return total;
+		} else {
+			if(client.readyTimestamp) {
+				let shards = shards:new Array(client.options.shardsPerProcess).fill(0).map((t,i) => {
+					shardID:i,
+					status:client.ws.shards.get(i).status,
+					ping:client.ws.shards.get(i).ping,
+					guilds:client.guilds.filter(t => t.shardID === i).size,
+					usersAtLogin:client.guilds.reduce((a,t) => t.shardID === i ? a += t.memberCount : a,0),
+					activeUsers:client.guilds.reduce((a,t) => t.shardID === i ? a += t.members.filter(a => a.id !== client.user.id).size : a,0),
+					activeChannels:client.guilds.reduce((a,t) => t.shardID === i ? a += t.channels.size : a,0)
+				});
+				let proc = {
+					processID:client.options.process,
+					shards:shards.length,
+					status:client.ws.status,
+					upTime:client.uptime,
+					ping:client.ws.ping,
+					guilds:client.guilds.size,
+					usersAtLogin:shards.reduce((a,t) => a += t.usersAtLogin,0),
+					activeUsers:shards.reduce((a,t) => a += t.activeUsers,0),
+					activeChannels:shards.reduce((a,t) => a += t.activeChannels,0),
+					details:shards
+				}
+				return proc;
+			} else {
+				return {status:"not ready"}
+			}
+		}
 	}
 	process.on('SIGHUP', () => client.shutdown(128 + 1));
 	process.on('SIGINT', () => client.shutdown(128 + 2));
