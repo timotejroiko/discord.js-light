@@ -16,7 +16,7 @@ Pros:
 
 Cons:
 
-* Most events are disabled, are handled differently or require additional handling (see non-standard behavior section)
+* Most events are either disabled, handled differently or require additional handling (see non-standard behavior section)
 * Presences, typing and guild member events are unavailable due to disabling guild subscriptions (see non-standard behavior section)
 * Some features have not been tested (ie: voice)
 
