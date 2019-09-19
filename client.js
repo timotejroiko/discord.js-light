@@ -8,7 +8,7 @@ Structures.extend("Message", Message => {
 		async send(content,options) {
 			try {
 				content = await Promise.resolve(content);
-				if(typeof content === "object") { content = util.inspect(content,{ maxArrayLength: 10, getters: true }).replace(/  /g,"\t\t"); }
+				if(typeof content === "object") { content = util.inspect(content,{ maxArrayLength: 10, getters: true, depth: 1 }).replace(/  /g,"\t\t"); }
 				if(typeof content !== "string") { content = content+""; }
 				if(content.length > 1950 && (!options || !options.split)) {
 					content = content.substring(0, 1950) + "\n...";
