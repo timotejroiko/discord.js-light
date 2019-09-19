@@ -49,7 +49,7 @@ Structures.extend("Message", Message => {
 			try {
 				return await Promise.resolve(eval(`(async() => {
 					if(typeof (${f}) === "object" && typeof (${f}).then === "function") {
-						return {Promise:${f}}
+						return {Promise:await ${f}}
 					} else {
 						return ${f}
 					}
