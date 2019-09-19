@@ -415,7 +415,7 @@ module.exports = function(options) {
 			return total;
 		} else {
 			if(client.readyTimestamp) {
-				let shards = new Array(client.options.shardsPerProcess).fill(0).map((t,i) => {
+				let shards = new Array(client.options.shardsPerProcess).fill(0).map((t,i) => { return {
 					shardID:i,
 					status:client.ws.shards.get(i).status,
 					ping:client.ws.shards.get(i).ping,
@@ -423,7 +423,7 @@ module.exports = function(options) {
 					usersAtLogin:client.guilds.reduce((a,t) => t.shardID === i ? a += t.memberCount : a,0),
 					activeUsers:client.guilds.reduce((a,t) => t.shardID === i ? a += t.members.filter(a => a.id !== client.user.id).size : a,0),
 					activeChannels:client.guilds.reduce((a,t) => t.shardID === i ? a += t.channels.size : a,0)
-				});
+				}});
 				let proc = {
 					processID:client.options.process,
 					shards:shards.length,
