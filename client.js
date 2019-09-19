@@ -415,7 +415,7 @@ module.exports = function(options) {
 			return total;
 		} else {
 			if(client.readyTimestamp) {
-				let shards = shards:new Array(client.options.shardsPerProcess).fill(0).map((t,i) => {
+				let shards = new Array(client.options.shardsPerProcess).fill(0).map((t,i) => {
 					shardID:i,
 					status:client.ws.shards.get(i).status,
 					ping:client.ws.shards.get(i).ping,
