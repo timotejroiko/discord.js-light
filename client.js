@@ -453,7 +453,13 @@ async function handler(client,r,cmd) {
 					channel = await client.channels.fetch(r.d.channel_id);
 					if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
 				}
-				let message = channel.messages.has(r.d.id) ? channel.messages.get(r.d.id).patch(r.d) : channel.messages.add(r.d);
+				let message;
+				if(channel.messages.has(r.d.id)) {
+					message = channel.messages.get(r.d.id);
+					message.patch(r.d);
+				} else {
+					message = channel.messages.add(r.d);
+				}
 				message.command = cmd;
 				message.argument = message.content.split(" ").slice(1).join(" ");
 				if(client.options.enableLogger) {
@@ -483,7 +489,13 @@ async function handler(client,r,cmd) {
 					channel = await client.channels.fetch(r.d.channel_id);
 					if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
 				}
-				let message = channel.messages.has(r.d.id) ? channel.messages.get(r.d.id).patch(r.d) : channel.messages.add(r.d);
+				let message;
+				if(channel.messages.has(r.d.id)) {
+					message = channel.messages.get(r.d.id);
+					message.patch(r.d);
+				} else {
+					message = channel.messages.add(r.d);
+				}
 				message.command = cmd;
 				message.argument = message.content.split(" ").slice(1).join(" ");
 				if(client.options.enableLogger) {
