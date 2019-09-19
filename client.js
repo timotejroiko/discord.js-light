@@ -47,11 +47,19 @@ Structures.extend("Message", Message => {
 		async asyncEval(f) {
 			let client = this.client;
 			try {
-				return await Promise.resolve(eval(`(async() => {
-					if(typeof (${f}) === "object" && typeof (${f}).then === "function") {
-						return {Promise:await ${f}}
+				return Promise.resolve(eval(`(async () => {
+					if("${f}".indexOf("return") === -1) {
+						try {
+							if(typeof (${f}) === "object" && typeof (${f}).then === "function") {
+								return {Promise:await ${f}}
+							} else {
+								return ${f}
+							}
+						} catch(e) {
+							return "Evaluating complex code requires a \`return\`"
+						}
 					} else {
-						return ${f}
+						${f}
 					}
 				})()`));
 			} catch(e) {
@@ -225,8 +233,8 @@ module.exports = function(options) {
 					r.d.emojis = [];
 					if(!client.options.enableRoles) { r.d.roles = []; }
 				} else {
-					r.d.channels = r.d.channels.filter(t => client.guilds.get(r.d.id).channels.has(t.id));
-					r.d.members = r.d.members.filter(t => client.guilds.get(r.d.id).members.has(t.user.id));
+					if(r.d.channels) { r.d.channels = r.d.channels.filter(t => client.guilds.get(r.d.id).channels.has(t.id)); }
+					if(r.d.members) { r.d.members = r.d.members.filter(t => client.guilds.get(r.d.id).members.has(t.user.id)); }
 					if(!(client.guilds.get(r.d.id).roles || {size:0}).size) { r.d.roles = []; }
 					if(!(client.guilds.get(r.d.id).emojis || {size:0}).size) { r.d.emojis = []; }
 				}
