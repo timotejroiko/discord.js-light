@@ -188,7 +188,7 @@ module.exports = function(options) {
 					}
 				}
 			} else if(r.t === "MESSAGE_DELETE" || r.t === "MESSAGE_DELETE_BULK") {
-				if((client.channels.has(r.d.channel_id) || {}).whitelisted) {
+				if((client.channels.get(r.d.channel_id) || {}).whitelisted) {
 					if(r.t === "MESSAGE_DELETE") {
 						let channel = client.channels.get(r.d.channel_id);
 						let deleted = channel.messages.get(r.d.id) || channel.messages.add({id:r.d.id},false);
