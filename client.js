@@ -50,12 +50,12 @@ Structures.extend("Message", Message => {
 		get isOwner() {
 			return this.client.options.owners.includes(this.author.id);
 		}
-		async asyncEval(f) {
+		asyncEval(f) {
 			let client = this.client;
 			try { return eval(`(()=>{return ${f}})()`); } catch(e) {
-				try { return await eval(`(async()=>{return ${f}})()`); } catch(e) {
+				try { return eval(`(async()=>{return ${f}})()`); } catch(e) {
 					try { return eval(`(()=>{${f}})()`); } catch(e) {
-						try { return await eval(`(async() => {${f}})()`); } catch(e) {
+						try { return eval(`(async() => {${f}})()`); } catch(e) {
 							return e;
 			}}}}
 		}
