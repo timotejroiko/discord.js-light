@@ -437,7 +437,7 @@ module.exports = function(options) {
 					cpu:Number(Math.round((await new Promise(async r => {
 						let start = [process.hrtime(),process.cpuUsage()];
 						await new Promise(r => setTimeout(() => r(),100));
-						let elap = [process.hrtime(startTime),process.cpuUsage(startUsage)];
+						let elap = [process.hrtime(start[0]),process.cpuUsage(start[1])];
 						r(100.0 * (elap[0][0] * 1000.0 + elap[0][1] / 1000000.0) / ((elap[1].user / 1000.0) + (elap[1].system / 1000.0)));
 					}))+'e2')+'e-2'),
 					guilds:client.guilds.size,
