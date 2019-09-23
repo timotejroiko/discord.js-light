@@ -7,13 +7,19 @@ Structures.extend("Message", Message => {
 	return class extends Message {
 		async send(content,options) {
 			try {
-				content = await Promise.resolve(content);
-				if(typeof content === "object") { content = util.inspect(content,{ maxArrayLength: 10, getters: true, depth: 1 }).replace(/  /g,"\t\t"); }
+				if(typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
+				if(typeof content === "object") {
+					if(content.Promise) {
+						content = "```js\n<Promise> " + util.inspect(content.Promise,{getters: true, depth: 1 }).replace(/  /g,"\t\t") + "```";
+					} else {
+						content = "```js\n" + util.inspect(content,{getters: true, depth: 1 }).replace(/  /g,"\t\t") + "```";
+					}
+				}
 				if(typeof content !== "string") { content = content+""; }
 				if(content.length > 1950 && (!options || !options.split)) {
 					content = content.substring(0, 1950) + `\n\n ... and ${content.slice(1950).split("\n").length} more lines`;
 				} else if(!content && (!options || (!options.content && !options.embed && !options.files))) {
-					content = "cannot send empty message";
+					content = "⠀";
 				}
 				let response;
 				if(this.editedTimestamp && this.commandResponse) {
@@ -398,7 +404,9 @@ module.exports = function(options) {
 		if(process.env.exec_mode === "cluster_mode" && !bypass) {
 			let data = await client.survey("client.getInfo(true)");
 			let total = {
-				totalProcesses:data.length,
+				activeProcesses:data.length,
+				totalProcesses:client.options.processes,
+				totalMemory:Number(Math.round(data.reduce((a,t) => t.memory ? a += t.memory : a,0)+'e2')+'e-2'),
 				totalShards:data.reduce((a,t) => t.shards ? a += t.shards : a,0),
 				totalGuilds:data.reduce((a,t) => t.guild ? a += t.guilds : a,0),
 				totalUsersAtLogin:data.reduce((a,t) => t.usersAtLogin ? a += t.usersAtLogin : a,0),
@@ -424,6 +432,13 @@ module.exports = function(options) {
 					status:statuses[client.ws.status],
 					upTime:client.uptime,
 					ping:client.ws.ping,
+					memory:Number(Math.round((processes.memoryUsage().rss/1048576)+'e2')+'e-2'),
+					cpu:Number(Math.round((await new Promise(async r => {
+						let start = [process.hrtime(),process.cpuUsage()];
+						await new Promise(r => setTimeout(() => r(),100));
+						let elap = [process.hrtime(startTime),process.cpuUsage(startUsage)];
+						r(100.0 * (elap[0][0] * 1000.0 + elap[0][1] / 1000000.0) / ((elap[1].user / 1000.0) + (elap[1].system / 1000.0)));
+					}))+'e2')+'e-2'),
 					guilds:client.guilds.size,
 					usersAtLogin:shards.reduce((a,t) => a += t.usersAtLogin,0),
 					activeUsers:shards.reduce((a,t) => a += t.activeUsers,0),
