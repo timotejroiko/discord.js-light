@@ -168,7 +168,7 @@ djs-shenanigans has some extra functions built in for convenience:
 | Func/Prop | Returns | Description |
 | ------------- | ------------- | ------------- |
 | message.send(content,options) | promise>message | This function is the same as message.channel.send() but adds several improvements: can send unresolved promises, objects, falsey values and other non-string types, truncates large strings if no split options are provided, logs response times and sending errors/warnings if logging is enabled, adds request-response pairing if messages are cached and if possible sends responses as edits when triggered by message edits |
-| message.asyncEval(string) | promise>anything | An eval function compatible with promises and async/await syntax. Can access the client via `client` and the message object via `this` |
+| message.asyncEval(string) | promise>anything | An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this` (should be locked to owners only) |
 | message.isOwner | boolean | Quickly check if the user who sent the message is a bot owner. Uses the array of owners from options.owners |
 | message.commandResponse | message | The message object that was sent as a response to this command. Only available if it was sent with message.send() and the message is cached |
 | message.commandMessage | message | The message object that triggered this response. Only available if this response was sent with message.send() and the triggering message is cached |
@@ -177,7 +177,7 @@ djs-shenanigans has some extra functions built in for convenience:
 | message.argument | string | The message content without prefix and command. Only available with the command handler in router or file mode |
 | channel.whitelisted | boolean | If set to true, this channel will fire "message" events for all messages, instead of only messages that start with a valid prefix or command. Whitelisted channels also fire "messageDelete" and "messageDeleteBulk" events |
 | channel.createCollector(filter,options) | messageCollector | The same as channel.createMessageCollector() but whitelists the channel during the duration of the collector |
-| client.getInfo() | promise>object | Gather several statistics about the client including all shards and, if running in pm2 cluster mode, all processes. Statistics include total guild count, total user count at login, total active users and channels, websocket pings, uptimes and more |
+| client.getInfo() | promise>object | Gather several statistics about the client including all shards and, if running in pm2 cluster mode, all processes. Statistics include total guild count, total user count at login, total active users and channels, websocket pings, uptimes, cpu usage, memory usage and more |
 | client.shutdown() | boolean | Begins graceful shutdown in this process, replaces all functions and commands with a temporary message and exits the process after a few seconds |
 | client.pm2shutdown() | boolean | Sends a shutdown signal to all processes in the pm2 cluster. Only available when running in pm2 cluster mode |
 | client.survey(string) | promise>array | Similar to broadcastEval() but for pm2 clusters. Sends a string to be evaluated by all processes in the cluster and returns an array of responses indexed by process number. Only available when running in pm2 cluster mode |
