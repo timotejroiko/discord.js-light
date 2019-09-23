@@ -407,6 +407,7 @@ module.exports = function(options) {
 				activeProcesses:data.length,
 				totalProcesses:client.options.processes,
 				totalMemory:Number(Math.round(data.reduce((a,t) => t.memory ? a += t.memory : a,0)+'e2')+'e-2'),
+				totalCpu:Number(Math.round(data.reduce((a,t) => t.cpu ? a += t.cpu : a,0)+'e2')+'e-2'),
 				totalShards:data.reduce((a,t) => t.shards ? a += t.shards : a,0),
 				totalGuilds:data.reduce((a,t) => t.guild ? a += t.guilds : a,0),
 				totalUsersAtLogin:data.reduce((a,t) => t.usersAtLogin ? a += t.usersAtLogin : a,0),
@@ -432,7 +433,7 @@ module.exports = function(options) {
 					status:statuses[client.ws.status],
 					upTime:client.uptime,
 					ping:client.ws.ping,
-					memory:Number(Math.round((processes.memoryUsage().rss/1048576)+'e2')+'e-2'),
+					memory:Number(Math.round((process.memoryUsage().rss/1048576)+'e2')+'e-2'),
 					cpu:Number(Math.round((await new Promise(async r => {
 						let start = [process.hrtime(),process.cpuUsage()];
 						await new Promise(r => setTimeout(() => r(),100));
