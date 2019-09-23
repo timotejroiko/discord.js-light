@@ -50,12 +50,12 @@ Structures.extend("Message", Message => {
 		get isOwner() {
 			return this.client.options.owners.includes(this.author.id);
 		}
-		asyncEval(f) {
+		async asyncEval(f) {
 			let client = this.client;
-			try { return eval(`(()=>{return ${f}})()`); } catch(e) {
-				try { return eval(`(async()=>{return ${f}})()`); } catch(e) {
-					try { return eval(`(()=>{${f}})()`); } catch(e) {
-						try { return eval(`(async() => {${f}})()`); } catch(e) {
+			try { let _TEST_ = eval(`(()=>{return ${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
+				try { return await eval(`(async()=>{return ${f}})()`); } catch(e) {
+					try { let _TEST_ = eval(`(()=>{${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
+						try { return await eval(`(async() => {${f}})()`); } catch(e) {
 							return e;
 			}}}}
 		}
@@ -438,7 +438,7 @@ module.exports = function(options) {
 						let start = [process.hrtime(),process.cpuUsage()];
 						await new Promise(r => setTimeout(() => r(),100));
 						let elap = [process.hrtime(start[0]),process.cpuUsage(start[1])];
-						r(100.0 * (elap[0][0] * 1000.0 + elap[0][1] / 1000000.0) / ((elap[1].user / 1000.0) + (elap[1].system / 1000.0)));
+						r(100.0 * ((elap[1].user / 1000) + (elap[1].system / 1000)) / (elap[0][0] * 1000 + elap[0][1] / 1000000));
 					}))+'e2')+'e-2'),
 					guilds:client.guilds.size,
 					usersAtLogin:shards.reduce((a,t) => a += t.usersAtLogin,0),
