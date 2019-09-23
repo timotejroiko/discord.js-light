@@ -52,10 +52,10 @@ Structures.extend("Message", Message => {
 		}
 		async asyncEval(f) {
 			let client = this.client;
-			try { let _TEST_ = eval(`(()=>{return ${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
-				try { let _TEST_ = await eval(`(async()=>{return ${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
-					try { let _TEST_ = eval(`(()=>{${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
-						try { let _TEST_ = await eval(`(async() => {${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
+			try { return eval(`(()=>{return ${f}})()`); } catch(e) {
+				try { return await eval(`(async()=>{return ${f}})()`); } catch(e) {
+					try { return eval(`(()=>{${f}})()`); } catch(e) {
+						try { return await eval(`(async() => {${f}})()`); } catch(e) {
 							return e;
 			}}}}
 		}
