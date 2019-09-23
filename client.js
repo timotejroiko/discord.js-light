@@ -432,7 +432,7 @@ module.exports = function(options) {
 					shards:shards.length,
 					status:statuses[client.ws.status],
 					upTime:client.uptime,
-					ping:client.ws.ping,
+					ping:Math.round(client.ws.ping),
 					memory:Number(Math.round((process.memoryUsage().rss/1048576)+'e2')+'e-2'),
 					cpu:Number(Math.round((await new Promise(async r => {
 						let start = [process.hrtime(),process.cpuUsage()];
@@ -448,7 +448,7 @@ module.exports = function(options) {
 				}
 				return proc;
 			} else {
-				return {status:"not ready"}
+				return {status:statuses[client.ws.status]}
 			}
 		}
 	}
