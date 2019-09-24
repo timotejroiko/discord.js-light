@@ -17,7 +17,7 @@ Structures.extend("Message", Message => {
 				}
 				if(typeof content !== "string") { content = content+""; }
 				if(content.length > 1950 && (!options || !options.split)) {
-					content = content.substring(0, 1950) + `\n\n ... and ${content.slice(1950).split("\n").length} more lines`;
+					content = content.substring(0, 1950) + `\n\n ... and ${content.slice(1950).split("\n").length} more lines` + content.startsWith("```") ? "```" : "";
 				} else if(!content && (!options || (!options.content && !options.embed && !options.files))) {
 					content = "⠀";
 				}
@@ -424,7 +424,7 @@ module.exports = function(options) {
 					ping:Math.round(client.ws.shards.get(i).ping),
 					guilds:client.guilds.filter(t => t.shardID === i).size,
 					usersAtLogin:client.guilds.reduce((a,t) => t.shardID === i ? a += t.memberCount : a,0),
-					activeUsers:client.guilds.reduce((a,t) => t.shardID === i ? a += t.members.filter(a => a.id !== client.user.id).size : a,0),
+					activeUsers:client.guilds.reduce((a,t) => t.shardID === i ? a += t.members.filter(a => a.id !== client.user.id).size : a,0) + (client.options.process && !i ? client.channels.filter(t => t.type === "dm").size : 0),
 					activeChannels:client.guilds.reduce((a,t) => t.shardID === i ? a += t.channels.size : a,0)
 				}});
 				let proc = {
@@ -442,8 +442,8 @@ module.exports = function(options) {
 					}))+'e2')+'e-2'),
 					guilds:client.guilds.size,
 					usersAtLogin:shards.reduce((a,t) => a += t.usersAtLogin,0),
-					activeUsers:shards.reduce((a,t) => a += t.activeUsers,0),
-					activeChannels:shards.reduce((a,t) => a += t.activeChannels,0),
+					activeUsers:client.users.size,
+					activeChannels:client.channels.size,
 					shardDetails:shards
 				}
 				return proc;
