@@ -442,7 +442,7 @@ module.exports = function(options) {
 					}))+'e2')+'e-2'),
 					guilds:client.guilds.size,
 					usersAtLogin:shards.reduce((a,t) => a += t.usersAtLogin,0),
-					activeUsers:client.users.size,
+					activeUsers:client.users.filter(t => t.id !== client.user.id).size,
 					activeChannels:client.channels.size,
 					shardDetails:shards
 				}
