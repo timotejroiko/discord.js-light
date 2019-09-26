@@ -419,14 +419,18 @@ module.exports = function(options) {
 		} else {
 			if(client.readyTimestamp) {
 				let shards = new Array(client.options.shardsPerProcess).fill(0).map((t,i) => { return {
-					shardID:i,
+					shardID:client.options.process*client.options.shardsPerProcess+i,
 					status:statuses[client.ws.shards.get(i).status],
 					ping:Math.round(client.ws.shards.get(i).ping),
 					guilds:client.guilds.filter(t => t.shardID === i).size,
 					usersAtLogin:client.guilds.reduce((a,t) => t.shardID === i ? a += t.memberCount : a,0),
-					activeUsers:client.guilds.reduce((a,t) => t.shardID === i ? a += t.members.filter(a => a.id !== client.user.id).size : a,0) + (client.options.process && !i ? client.channels.filter(t => t.type === "dm").size : 0),
-					activeChannels:client.guilds.reduce((a,t) => t.shardID === i ? a += t.channels.size : a,0)
+					activeUsers:client.guilds.reduce((a,t) => t.shardID === i ? a += t.members.filter(a => a.id !== client.user.id).size : a,0),
+					activeGuildChannels:client.guilds.reduce((a,t) => t.shardID === i ? a += t.channels.size : a,0)
 				}});
+				if(client.options.process === 0) {
+					shards[0].activeUsers += client.users.filter(t => t.id !== client.user.id).filter(t => !client.guilds.filter(a => a.shardID === 0).some(a => a.members.has(t.id))).size;
+					shards[0].activeDMChannels = client.channels.filter(t => t.type === "dm").size;
+				}
 				let proc = {
 					processID:client.options.process,
 					shards:shards.length,
