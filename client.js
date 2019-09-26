@@ -428,7 +428,7 @@ module.exports = function(options) {
 					activeGuildChannels:client.guilds.reduce((a,t) => t.shardID === i ? a += t.channels.size : a,0)
 				}});
 				if(client.options.process === 0) {
-					shards[0].activeUsers += client.users.filter(t => t.id !== client.user.id).filter(t => !client.guilds.filter(a => a.shardID === 0).some(a => a.members.has(t.id))).size;
+					shards[0].activeUsers += client.users.filter(t => t.id !== client.user.id).some(a => a.members.has(t.id))).size;
 					shards[0].activeDMChannels = client.channels.filter(t => t.type === "dm").size;
 				}
 				let proc = {
