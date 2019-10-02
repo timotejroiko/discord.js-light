@@ -10,9 +10,15 @@ Structures.extend("Message", Message => {
 				if(typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
 				if(typeof content === "object") {
 					if(content.Promise) {
-						content = "```js\n<Promise> " + util.inspect(content.Promise,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`") + "```";
+						let obj = util.inspect(content.Promise,{getters: true, depth: 2 }).replace(/  /g,"\t\t").replace(/`/g,"\\`");
+						if(obj.length > 1950) { obj = util.inspect(content.Promise,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
+						if(obj.length > 1950) { obj = util.inspect(content.Promise,{getters: true, depth: 0 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
+						content = "```js\n<Promise> " + obj + "```";
 					} else {
-						content = "```js\n" + util.inspect(content,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`") + "```";
+						let obj = util.inspect(content,{getters: true, depth: 2 }).replace(/  /g,"\t\t").replace(/`/g,"\\`");
+						if(obj.length > 1950) { obj = util.inspect(content,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
+						if(obj.length > 1950) { obj = util.inspect(content,{getters: true, depth: 0 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
+						content = "```js\n" + obj + "```";
 					}
 				}
 				if(typeof content !== "string") { content = content+""; }
