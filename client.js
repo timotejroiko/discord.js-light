@@ -10,9 +10,9 @@ Structures.extend("Message", Message => {
 				if(typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
 				if(typeof content === "object") {
 					if(content.Promise) {
-						content = "```js\n<Promise> " + util.inspect(content.Promise,{getters: true, depth: 1 }).replace(/  /g,"\t\t") + "```";
+						content = "```js\n<Promise> " + util.inspect(content.Promise,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`") + "```";
 					} else {
-						content = "```js\n" + util.inspect(content,{getters: true, depth: 1 }).replace(/  /g,"\t\t") + "```";
+						content = "```js\n" + util.inspect(content,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`") + "```";
 					}
 				}
 				if(typeof content !== "string") { content = content+""; }
