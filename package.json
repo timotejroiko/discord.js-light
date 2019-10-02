@@ -1,7 +1,7 @@
 {
 	"name": "djs-shenanigans",
-	"version": "1.1.0",
-	"description": "A modified Discord client built on top of discord.js",
+	"version": "1.2.0",
+	"description": "A modified Discord client built on top of discord.js that implements techniques to massively reduce resource usage",
 	"main": "client.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
@@ -15,7 +15,9 @@
 		"bot",
 		"client",
 		"node",
-		"shenanigans"
+		"shenanigans",
+		"discord.js",
+		"djs"
 	],
 	"author": "Timotej Valentin Rojko",
 	"license": "Apache-2.0",
