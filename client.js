@@ -22,9 +22,10 @@ Structures.extend("Message", Message => {
 					}
 				}
 				if(typeof content !== "string") { content = content+""; }
-				if(content.length > 1950 && (!options || !options.split)) {
-					content = content.substring(0, 1950) + `\n\n ... and ${content.slice(1950).split("\n").length} more lines` + content.startsWith("```") ? "```" : "";
-				} else if(!content && (!options || (!options.content && !options.embed && !options.files))) {
+				if(content.length > 1960 && (!options || !options.split)) {
+					content = `${content.substring(0, 1960)}\n\n ... and ${content.slice(1960).split("\n").length} more lines ${content.startsWith("```") ? "```" : ""}`;
+				}
+				if(!content && (!options || (!options.content && !options.embed && !options.files))) {
 					content = "⠀";
 				}
 				let response;
