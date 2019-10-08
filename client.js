@@ -34,7 +34,7 @@ Structures.extend("Message", Message => {
 				} else {
 					response = await this.channel.send(content,options);
 				}
-				if(!this.commandResponse) { this.commandResponse = response; }
+				this.commandResponse = response;
 				response.commandMessage = this;
 				response.commandResponseTime = (response.editedTimestamp || response.createdTimestamp) - (this.editedTimestamp || this.createdTimestamp);
 				if(this.client.options.enableLogger) {
