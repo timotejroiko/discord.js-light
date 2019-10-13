@@ -1,6 +1,6 @@
 {
 	"name": "djs-shenanigans",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "A modified Discord client built on top of discord.js that implements techniques to massively reduce resource usage",
 	"main": "client.js",
 	"scripts": {

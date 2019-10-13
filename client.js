@@ -7,8 +7,8 @@ Structures.extend("Message", Message => {
 	return class extends Message {
 		async send(content,options) {
 			try {
-				if(typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
-				if(typeof content === "object") {
+				if(content && typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
+				if(content && typeof content === "object") {
 					if(content.Promise) {
 						let obj = util.inspect(content.Promise,{getters: true, depth: 2 }).replace(/  /g,"\t\t").replace(/`/g,"\\`");
 						if(obj.length > 1950) { obj = util.inspect(content.Promise,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
@@ -34,9 +34,9 @@ Structures.extend("Message", Message => {
 				} else {
 					response = await this.channel.send(content,options);
 				}
-				this.commandResponse = response;
 				response.commandMessage = this;
 				response.commandResponseTime = (response.editedTimestamp || response.createdTimestamp) - (this.editedTimestamp || this.createdTimestamp);
+				this.commandResponse = response;
 				if(this.client.options.enableLogger) {
 					if(this.guild) {
 						console.log(`[${new Date().toISOString()}][Process ${this.client.options.process}][Shard ${this.guild.shardID}][${this.guild.name}][${this.channel.name}] Responded to ${this.author.tag} in ${response.commandResponseTime} ms`);
@@ -59,9 +59,9 @@ Structures.extend("Message", Message => {
 		}
 		async asyncEval(f) {
 			let client = this.client;
-			try { let _TEST_ = eval(`(()=>{return ${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
+			try { let _TEST_ = eval(`(()=>{return ${f}})()`); return _TEST_ && typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
 				try { return await eval(`(async()=>{return ${f}})()`); } catch(e) {
-					try { let _TEST_ = eval(`(()=>{${f}})()`); return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
+					try { let _TEST_ = eval(`(()=>{${f}})()`); return _TEST_ && typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
 						try { return await eval(`(async() => {${f}})()`); } catch(e) {
 							return e;
 			}}}}
