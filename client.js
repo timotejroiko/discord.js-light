@@ -327,6 +327,20 @@ module.exports = function(options) {
 					}
 				}
 			}
+			client.commands.disable = cmd => {
+				try {
+					if(client.commands.get(cmd)) {
+						client.commands.delete(cmd);
+						return true;
+					} else {
+						return false;
+					}
+				} catch(e) {
+					if(client.options.enableLogger) {
+						logger(e,client);
+					}
+				}
+			}
 		}
 	}
 	client.shutdown = s => {
