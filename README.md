@@ -1,6 +1,6 @@
 # djs-shenanigans
 
-A modified Discord client built on top of [discord.js](https://github.com/discordjs/discord.js) 12.0.0, Shenanigans aims to drastically reduce discord.js's resource usage while also adding its own set of utilities aimed primarily for reactive message-based bots. This package is very experimental and should be used with caution and lots of testing, as it may disable or break some of discord.js's features.
+A modified Discord client built on top of [discord.js](https://github.com/discordjs/discord.js) 12.0.0, Shenanigans aims to drastically reduce discord.js's resource usage while also adding its own set of utilities aimed primarily for reactive message-based bots. This library is very experimental and should be used with caution and lots of testing, as it may disable or break some of discord.js's features.
 
 ## Features
 
@@ -9,8 +9,11 @@ djs-shenanigans tweaks discord.js by removing some of its features for performan
 Pros:
 
 * Drastically lower cpu, memory and network usage (see performance section)
-* Built-in automatic sharding, command handlers, error handlers, custom prefix handlers and discordbots.org updater
-* On-demand caching (data is cached only when used, say goodbye to sweeping)
+* Automatic sharding with support for multiple processes and multiple shards per process
+* On-demand caching (data is cached only when required, say goodbye to sweeping)
+* Built-in command handlers with error handling
+* Built-in custom prefix handler
+* Built-in discordbots.org guild count updater
 * Designed to run as replicable independent instances (compatible with pm2 clusters)
 * Some additional functions and methods for convenience (see non-standard API section)
 
@@ -183,7 +186,8 @@ djs-shenanigans has some extra functions built in for convenience:
 | client.survey(string) | promise>array | Similar to broadcastEval() but for pm2 clusters. Sends a string to be evaluated by all processes in the cluster and returns an array of responses indexed by process number. Only available when running in pm2 cluster mode |
 | client.broadcast(string) | promise>array | Same as client.survey() but it does not wait for a response. It returns an array of booleans representing whether the message was received by the target processes or not. Only available when running in pm2 cluster mode |
 | client.commands | map | Where commands are stored when running the command handler in file mode |
-| client.commands.reload(command) | boolean | Function to reload a command managed by the command handler in file mode. Can be used to add/change command files without restarting the bot |
+| client.commands.reload(command) | boolean | Function to reload a command managed by the command handler in file mode. Can be used to add/re-enable/reload commands without restarting the bot |
+| client.commands.disable(command) | boolean | Function to disable a command managed by the command handler in file mode |
 
 ## Non-standard behavior
 
