@@ -356,13 +356,15 @@ module.exports = function(options) {
 				}
 			}
 		}
-		client.commands.forEach((v,k) => {
-			client.commands.set(k,{run:m => {
-				if(m instanceof Message) {
-					m.send("Temporarily unavailable. Try again shortly.");
-				}
-			}});
-		});
+		if(client.commands) {
+			client.commands.forEach((v,k) => {
+				client.commands.set(k,{run:m => {
+					if(m instanceof Message) {
+						m.send("Temporarily unavailable. Try again shortly.");
+					}
+				}});
+			});
+		}
 		setTimeout(() => { process.exit(s); },4000);
 		return true;
 	}
@@ -622,7 +624,7 @@ async function login(client,token,dblToken) {
 			}
 			client.options.shards = new Array(client.options.shardsPerProcess).fill().map((_,i) => client.options.process*client.options.shardsPerProcess+i);
 			client.options.totalShardCount = client.options.processes*client.options.shardsPerProcess;
-			console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Connecting ${client.options.shardsPerProcess} shard(s)`);
+			if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Connecting ${client.options.shardsPerProcess} shard(s)`)}
 			await client.login(token);
 			if(dblToken) {
 				if(client.options.dblTest) {
