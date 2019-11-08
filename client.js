@@ -110,7 +110,7 @@ module.exports = function(options) {
 		messageCacheLifetime:86400,
 		messageSweepInterval:86400,
 		disableEveryone:true,
-		ws:{compress:true,large_threshold:50},
+		ws:{compress:false,large_threshold:50},
 		disabledEvents:[
 			"GUILD_MEMBER_ADD",
 			"GUILD_MEMBER_REMOVE",
