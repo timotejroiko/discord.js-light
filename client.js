@@ -154,11 +154,13 @@ module.exports = function(options) {
 	client.options.enableRoles = options.enableRoles;
 	client.options.sendErrors = options.sendErrors;
 	client.options.dblTest = options.dblTest;
+	client.options.rateLimiter = options.rateLimiter;
 	client.options.guildPrefixes = {};
 	client.options.surveys = {};
 	client.options.ws.guild_subscriptions = false;
 	client.on("raw", async r => {
 		if(r.t) {
+			if(client.options.rateLimiter && r.d.channel_id && (client.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue.length > 5) { return; }
 			if((r.t === "MESSAGE_CREATE" || (r.t === "MESSAGE_UPDATE" && r.d.edited_timestamp)) && r.d.type === 0 && !r.d.webhook_id) {
 				if(!client.options.enableRoles) { if(r.d.member) { r.d.member.roles = []; } }
 				if(client.users.has(r.d.author.id)) {
