@@ -594,7 +594,7 @@ async function login(client,token,dblToken) {
 					client.options.shardsPerProcess = options.shardsPerProcess || 1;
 				}
 				client.options.shards = new Array(client.options.shardsPerProcess).fill().map((_,i) => client.options.process*client.options.shardsPerProcess+i);
-				client.options.totalShardCount = client.options.processes*client.options.shardsPerProcess;
+				client.options.shardCount = client.options.processes*client.options.shardsPerProcess;
 				if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Connecting ${client.options.shardsPerProcess} shard(s)`)}
 				await client.login(token);
 				if(dblToken) {
@@ -625,7 +625,7 @@ async function login(client,token,dblToken) {
 				client.options.shardsPerProcess = Math.ceil(await Util.fetchRecommendedShards(token)/client.options.processes);
 			}
 			client.options.shards = new Array(client.options.shardsPerProcess).fill().map((_,i) => client.options.process*client.options.shardsPerProcess+i);
-			client.options.totalShardCount = client.options.processes*client.options.shardsPerProcess;
+			client.options.shardCount = client.options.processes*client.options.shardsPerProcess;
 			if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Connecting ${client.options.shardsPerProcess} shard(s)`)}
 			await client.login(token);
 			if(dblToken) {
