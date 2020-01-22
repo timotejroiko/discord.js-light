@@ -30,7 +30,12 @@ Structures.extend("Message", Message => {
 				}
 				let response;
 				if(this.editedTimestamp && this.commandResponse) {
-					response = await this.commandResponse.edit(content,options);
+					if(options.files) {
+						await this.commandResponse.delete();
+						response = await this.channel.send(content,options);
+					} else {
+						response = await this.commandResponse.edit(content,options);
+					}
 				} else {
 					response = await this.channel.send(content,options);
 				}
@@ -512,7 +517,7 @@ async function handler(client,r,cmd) {
 					if(message.guild) {
 						console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${message.guild.shardID}][${message.guild.name}][${channel.name}] ${message.author.tag} -> ${message.command}`);
 					} else {
-						console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard 0][DM] ${message.author.tag} -> ${message.cmd}`);
+						console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard 0][DM] ${message.author.tag} -> ${message.command}`);
 					}
 				}
 				try {
