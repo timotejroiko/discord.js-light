@@ -30,7 +30,7 @@ Structures.extend("Message", Message => {
 				}
 				let response;
 				if(this.editedTimestamp && this.commandResponse) {
-					if(options.files) {
+					if(options && options.files) {
 						await this.commandResponse.delete();
 						response = await this.channel.send(content,options);
 					} else {
