@@ -201,7 +201,7 @@ module.exports = function(options) {
 						let cmd = (r.d.content.slice(prefix.length).split(" ")[0] || "").toLowerCase();
 						if(!cmd) { cmd = "nocommand"; }
 						handler(client,r,cmd);
-					} else if(r.d.content.startsWith(`<!@${client.user.id}>`) || r.d.content.startsWith(`<@${client.user.id}>`)) {
+					} else if(r.d.content.startsWith(`<@!${client.user.id}>`) || r.d.content.startsWith(`<@${client.user.id}>`)) {
 						let cmd = (r.d.content.split(" ")[1] || "").toLowerCase();
 						if(!cmd) { cmd = "nocommand"; }
 						handler(client,r,cmd);
