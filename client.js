@@ -160,7 +160,6 @@ module.exports = function(options) {
 	client.options.sendErrors = options.sendErrors;
 	client.options.dblTest = options.dblTest;
 	client.options.rateLimiter = options.rateLimiter;
-	client.options.guildPrefixes = {};
 	client.options.surveys = {};
 	client.options.ws.guild_subscriptions = false;
 	client.on("raw", async r => {
@@ -196,7 +195,7 @@ module.exports = function(options) {
 					return;
 				}
 				if(r.d.content && !r.d.author.bot) {
-					let prefix = r.d.guild_id ? client.options.guildPrefixes[r.d.guild_id] || (client.options.guildPrefixes[r.d.guild_id] = await client.options.customPrefix(r.d.guild_id) || client.options.defaultPrefix) : client.options.defaultPrefix;
+					let prefix = r.d.guild_id ? (await client.options.customPrefix(r.d.guild_id) || client.options.defaultPrefix) : client.options.defaultPrefix;
 					if(r.d.content.startsWith(prefix)) {
 						let cmd = (r.d.content.slice(prefix.length).split(" ")[0] || "").toLowerCase();
 						if(!cmd) { cmd = "nocommand"; }
