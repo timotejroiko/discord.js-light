@@ -30,11 +30,9 @@ Structures.extend("Message", Message => {
 				}
 				if(this.editedTimestamp && this.commandResponse) {
 					if(options && options.files) {
-						if(this.busy) return;
-						this.busy = true;
-						await this.commandResponse.delete().catch(console.log);
-						this.commandResponse = await this.channel.send(content,options).catch(console.log);
-						this.busy = false;
+						let response = await this.channel.send(content,options);
+						this.commandResponse.delete().catch(e => console.log(e));
+						this.commandResponse = response;
 					} else {
 						this.commandResponse = await this.commandResponse.edit(content,options);
 					}
@@ -194,7 +192,7 @@ module.exports = function(options) {
 					if(channel.messages.has(r.d.id)) { channel.messages.get(r.d.id).patch(r.d); } else { channel.messages.add(r.d); }
 					return;
 				}
-				if(client.options.rateLimiter && r.d.channel_id && (client.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue.length > 5) { return; }
+				if(client.options.rateLimiter && r.d.channel_id && (client.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue.length > 5) { console.log((client.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue); return; }
 				if((client.channels.get(r.d.channel_id) || {}).whitelisted) {
 					client.emit(r.t === "MESSAGE_CREATE" ? "message" : "messageUpdate",client.channels.get(r.d.channel_id).messages.add(r.d,false));
 				}
