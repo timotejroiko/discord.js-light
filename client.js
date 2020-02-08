@@ -41,16 +41,16 @@ Structures.extend("Message", Message => {
 				} else {
 					this.commandResponse = await this.channel.send(content,options);
 				}
-				this.commandMessage = this;
-				this.commandResponseTime = (this.commandResponse.editedTimestamp || this.commandResponse.createdTimestamp) - (this.editedTimestamp || this.createdTimestamp);
+				this.commandResponse.commandMessage = this;
+				this.commandResponse.commandResponseTime = (this.commandResponse.editedTimestamp || this.commandResponse.createdTimestamp) - (this.editedTimestamp || this.createdTimestamp);
 				if(this.client.options.enableLogger) {
 					if(this.guild) {
-						console.log(`[${new Date().toISOString()}][Process ${this.client.options.process}][Shard ${this.guild.shardID}][${this.guild.name}][${this.channel.name}] Responded to ${this.author.tag} in ${response.commandResponseTime} ms`);
+						console.log(`[${new Date().toISOString()}][Process ${this.client.options.process}][Shard ${this.guild.shardID}][${this.guild.name}][${this.channel.name}] Responded to ${this.author.tag} in ${this.commandResponse.commandResponseTime} ms`);
 					} else {
-						console.log(`[${new Date().toISOString()}][Process ${this.client.options.process}][Shard 0][DM] Responded to ${this.author.tag} in ${response.commandResponseTime} ms`);
+						console.log(`[${new Date().toISOString()}][Process ${this.client.options.process}][Shard 0][DM] Responded to ${this.author.tag} in ${this.commandResponse.commandResponseTime} ms`);
 					}
 				}
-				return response;
+				return this.commandResponse;
 			} catch(e) {
 				if(this.client.options.enableLogger) {
 					logger(e,this.client);
