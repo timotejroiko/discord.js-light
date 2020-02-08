@@ -111,7 +111,7 @@ module.exports = function(options) {
 	if(!options.defaultPrefix) { options.defaultPrefix = ""; }
 	if(!options.customPrefix) { options.customPrefix = () => ""; }
 	const client = new Client({
-		messageCacheMaxSize:-1,
+		messageCacheMaxSize:100,
 		messageCacheLifetime:86400,
 		messageSweepInterval:86400,
 		disableEveryone:true,
@@ -167,7 +167,6 @@ module.exports = function(options) {
 	client.options.ws.guild_subscriptions = false;
 	client.on("raw", async r => {
 		if(r.t) {
-			if(client.options.rateLimiter && r.d.channel_id && (client.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue.length > 5) { return; }
 			if((r.t === "MESSAGE_CREATE" || (r.t === "MESSAGE_UPDATE" && r.d.edited_timestamp)) && r.d.type === 0 && !r.d.webhook_id) {
 				if(!client.options.enableRoles) { if(r.d.member) { r.d.member.roles = []; } }
 				if(client.users.has(r.d.author.id)) {
@@ -498,6 +497,7 @@ module.exports = function(options) {
 }
 
 async function handler(client,r,cmd) {
+	if(client.options.rateLimiter && r.d.channel_id && (client.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue.length > 5) { return; }
 	if(client.options.enableHandler) {
 		if(typeof client.options.enableHandler === "string") {
 			if(client.commands.has(cmd)) {
