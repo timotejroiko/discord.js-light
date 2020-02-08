@@ -7,8 +7,6 @@ Structures.extend("Message", Message => {
 	return class extends Message {
 		async send(content,options) {
 			try {
-				if(this.busy) return;
-				this.busy = true;
 				if(content && typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
 				if(content && typeof content === "object") {
 					if(content.Promise) {
@@ -30,21 +28,21 @@ Structures.extend("Message", Message => {
 				if(!content && (!options || (!options.content && !options.embed && !options.files))) {
 					content = "⠀";
 				}
-				let response;
 				if(this.editedTimestamp && this.commandResponse) {
 					if(options && options.files) {
-						await this.commandResponse.delete();
-						response = await this.channel.send(content,options);
+						if(this.busy) return;
+						this.busy = true;
+						await this.commandResponse.delete().catch(console.log);
+						this.commandResponse = await this.channel.send(content,options).catch(console.log);
+						this.busy = false;
 					} else {
-						response = await this.commandResponse.edit(content,options);
+						this.commandResponse = await this.commandResponse.edit(content,options);
 					}
 				} else {
-					response = await this.channel.send(content,options);
+					this.commandResponse = await this.channel.send(content,options);
 				}
-				response.commandMessage = this;
-				response.commandResponseTime = (response.editedTimestamp || response.createdTimestamp) - (this.editedTimestamp || this.createdTimestamp);
-				this.commandResponse = response;
-				this.busy = false;
+				this.commandMessage = this;
+				this.commandResponseTime = (this.commandResponse.editedTimestamp || this.commandResponse.createdTimestamp) - (this.editedTimestamp || this.createdTimestamp);
 				if(this.client.options.enableLogger) {
 					if(this.guild) {
 						console.log(`[${new Date().toISOString()}][Process ${this.client.options.process}][Shard ${this.guild.shardID}][${this.guild.name}][${this.channel.name}] Responded to ${this.author.tag} in ${response.commandResponseTime} ms`);
