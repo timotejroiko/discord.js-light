@@ -31,7 +31,7 @@ Structures.extend("Message", Message => {
 				if(this.editedTimestamp && this.commandResponse) {
 					if(options && options.files) {
 						let response = await this.channel.send(content,options);
-						this.commandResponse.delete().catch(e => console.log(e));
+						if(!this.commandResponse.deleted) { this.commandResponse.delete().catch(e => {}); }
 						this.commandResponse = response;
 					} else {
 						this.commandResponse = await this.commandResponse.edit(content,options);
