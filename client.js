@@ -7,6 +7,8 @@ Structures.extend("Message", Message => {
 	return class extends Message {
 		async send(content,options) {
 			try {
+				if(this.busy) return;
+				this.busy = true;
 				if(content && typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
 				if(content && typeof content === "object") {
 					if(content.Promise) {
@@ -42,6 +44,7 @@ Structures.extend("Message", Message => {
 				response.commandMessage = this;
 				response.commandResponseTime = (response.editedTimestamp || response.createdTimestamp) - (this.editedTimestamp || this.createdTimestamp);
 				this.commandResponse = response;
+				this.busy = false;
 				if(this.client.options.enableLogger) {
 					if(this.guild) {
 						console.log(`[${new Date().toISOString()}][Process ${this.client.options.process}][Shard ${this.guild.shardID}][${this.guild.name}][${this.channel.name}] Responded to ${this.author.tag} in ${response.commandResponseTime} ms`);
@@ -184,9 +187,6 @@ module.exports = function(options) {
 						client.emit("memberUpdate",oldmember,member);
 					}
 				}
-				if((client.channels.get(r.d.channel_id) || {}).whitelisted) {
-					client.emit(r.t === "MESSAGE_CREATE" ? "message" : "messageUpdate",client.channels.get(r.d.channel_id).messages.add(r.d,false));
-				}
 				if(r.d.author.id === client.user.id) {
 					let channel = client.channels.get(r.d.channel_id);
 					if(!channel) {
@@ -195,6 +195,10 @@ module.exports = function(options) {
 					}
 					if(channel.messages.has(r.d.id)) { channel.messages.get(r.d.id).patch(r.d); } else { channel.messages.add(r.d); }
 					return;
+				}
+				if(client.options.rateLimiter && r.d.channel_id && (client.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue.length > 5) { return; }
+				if((client.channels.get(r.d.channel_id) || {}).whitelisted) {
+					client.emit(r.t === "MESSAGE_CREATE" ? "message" : "messageUpdate",client.channels.get(r.d.channel_id).messages.add(r.d,false));
 				}
 				if(r.d.content && !r.d.author.bot) {
 					let prefix = r.d.guild_id ? (await client.options.customPrefix(r.d.guild_id) || client.options.defaultPrefix) : client.options.defaultPrefix;
@@ -497,7 +501,6 @@ module.exports = function(options) {
 }
 
 async function handler(client,r,cmd) {
-	if(client.options.rateLimiter && r.d.channel_id && (client.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue.length > 5) { return; }
 	if(client.options.enableHandler) {
 		if(typeof client.options.enableHandler === "string") {
 			if(client.commands.has(cmd)) {
