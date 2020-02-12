@@ -22,7 +22,7 @@
 	"author": "Timotej Valentin Rojko",
 	"license": "Apache-2.0",
 	"dependencies": {
-		"discord.js": "github:discordjs/discord.js",
+		"discord.js": "github:discordjs/discord.js#fe7df708e44e0280dfaf0f8e457b154781bb5140",
 		"lockfile": "^1.0.4",
 		"pm2": "^3.5.1"
 	},
