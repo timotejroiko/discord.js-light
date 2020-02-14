@@ -1,13 +1,13 @@
 {
-	"name": "djs-shenanigans",
-	"version": "1.2.1",
-	"description": "A modified Discord client built on top of discord.js that implements techniques to massively reduce resource usage",
+	"name": "djs-light",
+	"version": "2.0.0",
+	"description": "Lightweight Discord.js framework",
 	"main": "client.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"repository": {
-		"url": "https://github.com/timotejroiko/djs-shenanigans.git"
+		"url": "https://github.com/timotejroiko/djs-light.git"
 	},
 	"keywords": [
 		"discord",
@@ -15,19 +15,12 @@
 		"bot",
 		"client",
 		"node",
-		"shenanigans",
-		"discord.js",
 		"djs"
 	],
 	"author": "Timotej Valentin Rojko",
 	"license": "Apache-2.0",
 	"dependencies": {
-		"discord.js": "github:discordjs/discord.js",
-		"lockfile": "^1.0.4",
-		"pm2": "^3.5.1"
-	},
-	"peerDependencies": {
-		"utf-8-validate": "^5.0.2"
+		"discord.js": "github:discordjs/discord.js#fe7df708e44e0280dfaf0f8e457b154781bb5140"
 	},
 	"engines": {
 		"node": ">=10.0.0"

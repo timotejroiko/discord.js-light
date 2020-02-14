@@ -1,67 +1,93 @@
-const {Client,Structures,Message,Util,Collection} = require('discord.js');
-const pm2 = require("pm2");
-const lockfile = require("lockfile");
+const Discord = require('discord.js');
 const util = require('util');
 
-Structures.extend("Message", Message => {
-	return class extends Message {
-		async send(content,options) {
-			try {
-				if(content && typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
-				if(content && typeof content === "object") {
-					if(content.Promise) {
-						let obj = util.inspect(content.Promise,{getters: true, depth: 2 }).replace(/  /g,"\t\t").replace(/`/g,"\\`");
-						if(obj.length > 1950) { obj = util.inspect(content.Promise,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
-						if(obj.length > 1950) { obj = util.inspect(content.Promise,{getters: true, depth: 0 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
-						content = "```js\n<Promise> " + obj + "```";
-					} else {
-						let obj = util.inspect(content,{getters: true, depth: 2 }).replace(/  /g,"\t\t").replace(/`/g,"\\`");
-						if(obj.length > 1950) { obj = util.inspect(content,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
-						if(obj.length > 1950) { obj = util.inspect(content,{getters: true, depth: 0 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
-						content = "```js\n" + obj + "```";
-					}
-				}
-				if(typeof content !== "string") { content = content+""; }
-				if(content.length > 1960 && (!options || !options.split)) {
-					content = `${content.substring(0, 1960)}\n\n ... and ${content.slice(1960).split("\n").length} more lines ${content.startsWith("```") ? "```" : ""}`;
-				}
-				if(!content && (!options || (!options.content && !options.embed && !options.files))) {
-					content = "⠀";
-				}
-				if(this.editedTimestamp && this.commandResponse) {
-					if(options && options.files) {
-						let response = await this.channel.send(content,options);
-						if(!this.commandResponse.deleted) { this.commandResponse.delete().catch(e => {}); }
-						this.commandResponse = response;
-					} else {
-						this.commandResponse = await this.commandResponse.edit(content,options);
-					}
+Discord.Structures.extend("Message", M => {
+	return class Message extends M {
+		constructor(client, data, channel) {
+			let d = {};
+			let list = ["author","member","reactions","mentions"];
+			for(let i in data) {
+				if(!list.includes(i)) { d[i] = data[i]; }
+			}
+			super(client, d, channel);
+			if(data.author) {
+				if(data.author instanceof Discord.User) {
+					this.author = data.author;
 				} else {
-					this.commandResponse = await this.channel.send(content,options);
+					this.author = client.users.cache.get(data.author.id) || client.users.add(data.author,false);
 				}
-				this.commandResponse.commandMessage = this;
-				this.commandResponse.commandResponseTime = (this.commandResponse.editedTimestamp || this.commandResponse.createdTimestamp) - (this.editedTimestamp || this.createdTimestamp);
-				if(this.client.options.enableLogger) {
-					if(this.guild) {
-						console.log(`[${new Date().toISOString()}][Process ${this.client.options.process}][Shard ${this.guild.shardID}][${this.guild.name}][${this.channel.name}] Responded to ${this.author.tag} in ${this.commandResponse.commandResponseTime} ms`);
-					} else {
-						console.log(`[${new Date().toISOString()}][Process ${this.client.options.process}][Shard 0][DM] Responded to ${this.author.tag} in ${this.commandResponse.commandResponseTime} ms`);
+			}
+			if(data.member && this.guild && !this.guild.members.cache.has(data.author.id)) {
+				if(data.member instanceof Discord.GuildMember) {
+					this._member = data.member;
+				} else {
+					this._member = this.guild.members.add(Object.assign(data.member,{user:this.author}),false);
+				}
+			}
+			if(data.mentions && data.mentions.length) {
+				for(let mention of data.mentions) {
+					this.mentions.users.set(mention.id,client.users.cache.get(mention.id) || client.users.add(mention,false))
+					if(mention.member && this.guild) {
+						this.mentions.members.set(mention.id,this.guild.members.cache.get(mention.id) || this.guild.members.add(Object.assign(mention.member,{user:this.author}),false));
 					}
-				}
-				return this.commandResponse;
-			} catch(e) {
-				if(this.client.options.enableLogger) {
-					logger(e,this.client);
-				}
-				if(this.client.options.sendErrors) {
-					this.send(e);
 				}
 			}
 		}
-		get isOwner() {
-			return this.client.options.owners.includes(this.author.id);
+		get member() {
+			return this.guild ? this.guild.members.cache.get((this.author || {}).id) || this._member || null : null;
 		}
-		async asyncEval(f) {
+		async reply(content,options) {
+			if(content && typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
+			if(content && typeof content === "object") {
+				if(content.Promise) {
+					let obj = util.inspect(content.Promise,{getters: true, depth: 2 }).replace(/  /g,"\t\t").replace(/`/g,"\\`");
+					if(obj.length > 1950) { obj = util.inspect(content.Promise,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
+					if(obj.length > 1950) { obj = util.inspect(content.Promise,{getters: true, depth: 0 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
+					content = "```js\n<Promise> " + obj + "```";
+				} else {
+					let obj = util.inspect(content,{getters: true, depth: 2 }).replace(/  /g,"\t\t").replace(/`/g,"\\`");
+					if(obj.length > 1950) { obj = util.inspect(content,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
+					if(obj.length > 1950) { obj = util.inspect(content,{getters: true, depth: 0 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
+					content = "```js\n" + obj + "```";
+				}
+			}
+			if(content && typeof content !== "string") { content = content+""; }
+			if(content && content.length > 1960 && (!options || !options.split)) {
+				content = `${content.substring(0, 1960)}\n\n ... and ${content.slice(1960).split("\n").length} more lines ${content.startsWith("```") ? "```" : ""}`;
+			}
+			if(!content && (!options || (!options.content && !options.embed && !options.files))) {
+				content = "⠀";
+			}
+			if(!this.client.channels.cache.has(this.channel.id)) {
+				this.channel = await this.client.channels.fetch(this.channel.id);
+				if(this.guild) { this.guild.channels.add(this.channel); }
+			}
+			if(!this.client.users.cache.has(this.author.id)) {
+				this.author = this.client.users.add(this.author);
+				if(this.member) { this.guild.members.add(this.member); }
+			}
+			if(!this.channel.messages.cache.has(this.id)) {
+				this.channel.messages.cache.set(this.id,this);
+			}
+			if(this.editedTimestamp && this.commandResponse) {
+				if(options && options.files) {
+					let response = await this.channel.send(content,options);
+					if(!this.commandResponse.deleted) { this.commandResponse.delete().catch(e => {}); }
+					this.commandResponse = response;
+				} else {
+					this.commandResponse = await this.commandResponse.edit(content,options);
+				}
+			} else {
+				this.commandResponse = await this.channel.send(content,options);
+			}
+			this.commandResponse.commandMessage = this;
+			this.commandResponse.commandResponseTime = (this.commandResponse.editedTimestamp || this.commandResponse.createdTimestamp) - (this.editedTimestamp || this.createdTimestamp);
+			this.channel.lastActive = Date.now();
+			this.author.lastActive = Date.now();
+
+			return this.commandResponse;
+		}
+		async eval(f) {
 			let client = this.client;
 			try { let _TEST_ = eval(`(()=>{return ${f}})()`); return _TEST_ && typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_ } catch(e) {
 				try { return await eval(`(async()=>{return ${f}})()`); } catch(e) {
@@ -73,32 +99,22 @@ Structures.extend("Message", Message => {
 	}
 });
 
-Structures.extend("TextChannel", TextChannel => {
-	return class extends TextChannel {
-		awaitMessages(filter, options = {}) {
-			return new Promise((resolve, reject) => {
-				const collector = this.createCollector(filter, options);
-				collector.once('end', (collection, reason) => {
-					if (options.errors && options.errors.includes(reason)) {
-						reject(collection);
-					} else {
-						resolve(collection);
-					}
-				});
-			});
+Discord.Structures.extend("GuildMember", G => {
+	return class GuildMember extends G {
+		constructor(client, data, guild) {
+			let d = {};
+			for(let i in data) {
+				if(i !== "user") { d[i] = data[i]; }
+			}
+			super(client, d, guild);
+			if(data.user) {
+				if(data.user instanceof Discord.User) {
+					this.user = data.user;
+				} else {
+					this.user = client.users.cache.get(data.user.id) || client.users.add(data.user,false);
+				}
+			}
 		}
-		createCollector(filter, options = {}) {
-			let c = this.createMessageCollector(filter, options);
-			if(isNaN(this.whitelisted)) { this.whitelisted = 0; }
-			this.whitelisted++;
-			c.once("end", () => { this.whitelisted--; });
-			return c;
-		}
-	}
-});
-
-Structures.extend("GuildMember", GuildMember => {
-	return class extends GuildMember {
 		equals(member) {
 			let equal = member && this.deleted === member.deleted && this.nickname === member.nickname && this._roles.length === member._roles.length;
 			return equal;
@@ -106,593 +122,473 @@ Structures.extend("GuildMember", GuildMember => {
 	}
 });
 
-module.exports = function(options) {
-	if(!options.defaultPrefix) { options.defaultPrefix = ""; }
-	if(!options.customPrefix) { options.customPrefix = () => ""; }
-	const client = new Client({
-		messageCacheMaxSize:100,
-		messageCacheLifetime:86400,
-		messageSweepInterval:86400,
-		disableEveryone:true,
-		ws:{compress:false,large_threshold:50},
-		disabledEvents:[
-			"GUILD_MEMBER_ADD",
-			"GUILD_MEMBER_REMOVE",
-			"GUILD_MEMBER_UPDATE",
-			"GUILD_MEMBERS_CHUNK",
-			"GUILD_INTEGRATIONS_UPDATE",
-			"GUILD_ROLE_CREATE",
-			"GUILD_ROLE_DELETE",
-			"GUILD_ROLE_UPDATE",
-			"GUILD_BAN_ADD",
-			"GUILD_BAN_REMOVE",
-			"GUILD_EMOJIS_UPDATE",
-			"CHANNEL_PINS_UPDATE",
-			"CHANNEL_CREATE",
-			"CHANNEL_DELETE",
-			"CHANNEL_UPDATE",
-			"MESSAGE_CREATE",
-			"MESSAGE_DELETE",
-			"MESSAGE_UPDATE",
-			"MESSAGE_DELETE_BULK",
-			"MESSAGE_REACTION_ADD",
-			"MESSAGE_REACTION_REMOVE",
-			"MESSAGE_REACTION_REMOVE_ALL",
-			"MESSAGE_REACTION_REMOVE_EMOJI",
-			"USER_UPDATE",
-			"USER_SETTINGS_UPDATE",
-			"PRESENCE_UPDATE",
-			"TYPING_START",
-			"VOICE_STATE_UPDATE",
-			"VOICE_SERVER_UPDATE",
-			"INVITE_CREATE",
-			"INVITE_DELETE",
-			"WEBHOOKS_UPDATE"
-		]
-	});
-	client.options.processes = options.processes;
-	client.options.process = options.process;
-	client.options.shardsPerProcess = options.shardsPerProcess;
-	client.options.owners = options.owners;
-	client.options.defaultPrefix = options.defaultPrefix;
-	client.options.customPrefix = options.customPrefix;
-	client.options.enableLogger = options.enableLogger;
-	client.options.enableHandler = options.enableHandler;
-	client.options.enableRoles = options.enableRoles;
-	client.options.sendErrors = options.sendErrors;
-	client.options.dblTest = options.dblTest;
-	client.options.rateLimiter = options.rateLimiter;
-	client.options.surveys = {};
-	client.options.ws.guild_subscriptions = false;
-	client.on("raw", async r => {
-		if(r.t) {
-			if((r.t === "MESSAGE_CREATE" || (r.t === "MESSAGE_UPDATE" && r.d.edited_timestamp)) && r.d.type === 0 && !r.d.webhook_id) {
-				if(!client.options.enableRoles) { if(r.d.member) { r.d.member.roles = []; } }
-				if(client.users.has(r.d.author.id)) {
-					let user = client.users.get(r.d.author.id);
-    				let olduser = user._update(r.d.author);
-    				if(!user.equals(olduser)) {
-    					client.emit("userUpdate",olduser,user);
-    				}
+Discord.Structures.extend("TextChannel", C => {
+	return class TextChannel extends C {
+		createMessageCollector(filter,options = {}) {
+			if(isNaN(this.whitelisted)) { this.whitelisted = 0; }
+			this.whitelisted++;
+			let c = super.createMessageCollector(filter, options);
+			c.once("end", () => { this.whitelisted--; });
+			return c;
+		}
+	}
+});
+
+Discord.Structures.extend("DMChannel", D => {
+	return class DMChannel extends D {
+		_patch(data) {
+			let d = {}
+			for(let i in data) {
+				if(i !== "recipients") { d[i] = data[i]; }
+			}
+			super._patch(d);
+			if (data.recipients) {
+				this.recipient = this.client.users.cache.get(data.recipients[0].id) || this.client.users.add(data.recipients[0],false);
+			}
+		}
+	}
+});
+
+Discord.Channel.create = (client, data, guild) => {
+	let channel;
+	if(data.type === Discord.Constants.ChannelTypes.DM || (data.type !== Discord.Constants.ChannelTypes.GROUP && !data.guild_id && !guild)) {
+		let DMChannel = Discord.Structures.get('DMChannel');
+		channel = new DMChannel(client, data);
+	} else {
+		guild = guild || client.guilds.cache.get(data.guild_id);
+		if(guild) {
+			switch (data.type) {
+				case Discord.Constants.ChannelTypes.TEXT: {
+					let TextChannel = Discord.Structures.get('TextChannel');
+					channel = new TextChannel(guild, data);
+					break;
 				}
-				if(r.d.guild_id && client.guilds.get(r.d.guild_id).members.has(r.d.author.id)) {
-					r.d.member.user = r.d.author;
-					let member = client.guilds.get(r.d.guild_id).members.get(r.d.author.id);
-					let oldmember = member._update(r.d.member);
-					if(!member.equals(oldmember)) {
-						client.emit("memberUpdate",oldmember,member);
-					}
+					case Discord.Constants.ChannelTypes.VOICE: {
+					let VoiceChannel = Discord.Structures.get('VoiceChannel');
+					channel = new VoiceChannel(guild, data);
+					break;
 				}
-				if(r.d.author.id === client.user.id) {
-					let channel = client.channels.get(r.d.channel_id);
-					if(!channel) {
-						channel = await client.channels.fetch(r.d.channel_id);
-						if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
-					}
-					if(channel.messages.has(r.d.id)) { channel.messages.get(r.d.id).patch(r.d); } else { channel.messages.add(r.d); }
-					return;
+					case Discord.Constants.ChannelTypes.CATEGORY: {
+					let CategoryChannel = Discord.Structures.get('CategoryChannel');
+					channel = new CategoryChannel(guild, data);
+					break;
 				}
-				if(client.options.rateLimiter && r.d.channel_id && (client.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue.length > 5) { console.log((client.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue); return; }
-				if((client.channels.get(r.d.channel_id) || {}).whitelisted) {
-					client.emit(r.t === "MESSAGE_CREATE" ? "message" : "messageUpdate",client.channels.get(r.d.channel_id).messages.add(r.d,false));
+					case Discord.Constants.ChannelTypes.NEWS: {
+					let NewsChannel = Discord.Structures.get('NewsChannel');
+					channel = new NewsChannel(guild, data);
+					break;
 				}
-				if(r.d.content && !r.d.author.bot) {
-					let prefix = r.d.guild_id ? (await client.options.customPrefix(r.d.guild_id) || client.options.defaultPrefix) : client.options.defaultPrefix;
-					if(r.d.content.startsWith(prefix)) {
-						let cmd = (r.d.content.slice(prefix.length).split(" ")[0] || "").toLowerCase();
-						if(!cmd) { cmd = "nocommand"; }
-						handler(client,r,cmd);
-					} else if(r.d.content.startsWith(`<@!${client.user.id}>`) || r.d.content.startsWith(`<@${client.user.id}>`)) {
-						let cmd = (r.d.content.split(" ")[1] || "").toLowerCase();
-						if(!cmd) { cmd = "nocommand"; }
-						handler(client,r,cmd);
-					}
+					case Discord.Constants.ChannelTypes.STORE: {
+					let StoreChannel = Discord.Structures.get('StoreChannel');
+					channel = new StoreChannel(guild, data);
+					break;
 				}
-			} else if(r.t === "MESSAGE_DELETE" || r.t === "MESSAGE_DELETE_BULK") {
-				if((client.channels.get(r.d.channel_id) || {}).whitelisted) {
-					if(r.t === "MESSAGE_DELETE") {
-						let channel = client.channels.get(r.d.channel_id);
-						let deleted = channel.messages.get(r.d.id) || channel.messages.add({id:r.d.id},false);
-						client.emit("messageDelete",deleted);
-					} else {
-						let channel = client.channels.get(r.d.channel_id);
-						let deleted = new Collection();
-						for(let i = 0; i < r.d.id.length; i++) {
-							deleted.set(r.d.id[i],channel.messages.get(r.d.id[i]) || channel.messages.add({id:r.d.id[i]},false));
+			}
+			if(channel && client.channels.cache.has(channel.id)) { guild.channels.cache.set(channel.id, channel); }
+		}
+	}
+	return channel;
+}
+
+Discord.Client = class Client extends Discord.Client {
+	constructor(options = {}) {
+		options = Object.assign(
+			{
+				shards: "auto",
+				messageCacheMaxSize: 10,
+				messageCacheLifetime: 86400,
+				messageSweepInterval: 86400,
+				disableEveryone: true,
+				ws:{
+					large_threshold:50,
+					intents:1+4+512+1024+4096+8192
+				}
+			},
+			options
+		);
+		options.disabledEvents = [
+			"CHANNEL_CREATE", // 1 // 4096 for dm
+			"CHANNEL_DELETE", // 1
+			"CHANNEL_PINS_UPDATE", // 1 // 4096 for dm
+			"CHANNEL_UPDATE", // 1
+			"GUILD_BAN_ADD", // 4
+			"GUILD_BAN_REMOVE", // 4
+			//"GUILD_CREATE", // 1
+			//"GUILD_DELETE", // 1
+			"GUILD_EMOJIS_UPDATE", // 8
+			"GUILD_INTEGRATIONS_UPDATE", // 16
+			//"GUILD_MEMBERS_CHUNK", ?
+			"GUILD_MEMBER_ADD", // 2
+			"GUILD_MEMBER_REMOVE", // 2
+			"GUILD_MEMBER_UPDATE", // 2
+			"GUILD_ROLE_CREATE", // 1
+			"GUILD_ROLE_DELETE", // 1
+			"GUILD_ROLE_UPDATE", // 1
+			//"GUILD_UPDATE", // ^ ?
+			"INVITE_CREATE", // 64
+			"INVITE_DELETE", // 64
+			"MESSAGE_CREATE", // 512 // 4096 for dm
+			"MESSAGE_DELETE", // 512 // 4096 for dm
+			"MESSAGE_DELETE_BULK", // ^ ?
+			"MESSAGE_REACTION_ADD", // 1024 // 8192 for dm
+			"MESSAGE_REACTION_REMOVE", // 1024 // 8192 for dm
+			"MESSAGE_REACTION_REMOVE_ALL", // 1024 // 8192 for dm
+			"MESSAGE_REACTION_REMOVE_EMOJI", // 1024 // 8192 for dm
+			"MESSAGE_UPDATE", // 512 // 4096 for dm
+			"PRESENCE_UPDATE", // 256
+			//"READY",
+			//"RESUMED",
+			"TYPING_START", // 2048 // 16384 for dm
+			"USER_UPDATE", // ?
+			"VOICE_SERVER_UPDATE", // ?
+			"VOICE_STATE_UPDATE", // 128
+			"WEBHOOKS_UPDATE" // 32
+		];
+		super(options);
+		this.on("ready", () => {
+			console.log(`[${new Date().toISOString()}] Client Ready`);
+		});
+		this.on("rateLimit", e => {
+			console.log(`[${new Date().toISOString()}] Rate Limited`,e);
+		});
+		this.on("warn", e => {
+			console.log(`[${new Date().toISOString()}] Warning`,e);
+		});
+		this.on("error", e => {
+			console.log(`[${new Date().toISOString()}] Error`,e);
+		});
+		this.on("shardDisconnect", (e,id) => {
+			console.log(`[${new Date().toISOString()}][Shard ${id}] Died`,e);
+		});
+		this.on("shardError", (e,id) => {
+			console.log(`[${new Date().toISOString()}][Shard ${id}] Error`,e);
+		});
+		this.on("shardReconnecting", e => {
+			console.log(`[${new Date().toISOString()}][Shard ${e}] Reconnecting`,e);
+		});
+		this.on("shardResume", (e,evts) => {
+			console.log(`[${new Date().toISOString()}][Shard ${e}] Resumed`,e,evts);
+		});
+		this.on("raw", async r => {
+			switch(r.t) {
+				case "MESSAGE_CREATE": case "MESSAGE_UPDATE": {
+					if(r.t === "MESSAGE_UPDATE" && !r.d.edited_timestamp) { break; }
+					if(this.users.cache.has(r.d.author.id)) {
+						let user = this.users.cache.get(r.d.author.id);
+						let olduser = user._update(r.d.author);
+						if(!user.equals(olduser)) {
+							this.emit("userUpdate",olduser,user);
 						}
-						client.emit("messageDeleteBulk",deleted);
 					}
-					
-				}
-			} else if(r.t.indexOf("MESSAGE_REACTION") > -1) {
-				let reaction = {};
-				reaction.channel = client.channels.get(r.d.channel_id) || {id:r.d.channel_id};
-				reaction.message = reaction.channel.messages && reaction.channel.messages.has(r.d.message_id) ? reaction.channel.messages.get(r.d.message_id) : {id:r.d.message_id};
-				reaction.guild = r.d.guild_id ? client.guilds.get(r.d.guild_id) : null;
-				reaction.user = client.users.get(r.d.user_id) || {id:r.d.user_id};
-				reaction.emoji = r.d.emoji;
-				client.emit(r.t.split("_").map((t,i) => i ? t[0]+t.slice(1).toLowerCase() : t.toLowerCase()).join(""),reaction,reaction.user);
-			} else if(r.t === "GUILD_CREATE" || r.t === "GUILD_UPDATE") {
-				r.d.voice_states = [];
-				r.d.presences = [];
-				if(!client.guilds.has(r.d.id)) {
-					r.d.members = [];
-					r.d.channels = [];
-					r.d.emojis = [];
-					if(!client.options.enableRoles) { r.d.roles = []; }
-				} else {
-					if(r.d.channels) { r.d.channels = r.d.channels.filter(t => client.guilds.get(r.d.id).channels.has(t.id)); }
-					if(r.d.members) { r.d.members = r.d.members.filter(t => client.guilds.get(r.d.id).members.has(t.user.id)); }
-					if(!(client.guilds.get(r.d.id).roles || {size:0}).size) { r.d.roles = []; }
-					if(!(client.guilds.get(r.d.id).emojis || {size:0}).size) { r.d.emojis = []; }
-				}
-			} else if(r.t.indexOf("GUILD_ROLE") > -1) {
-				if(client.options.enableRoles || (client.guilds.get(r.d.guild_id).roles || {size:0}).size) {
-					let guild = client.guilds.get(r.d.guild_id);
-					if(r.t === "GUILD_ROLE_CREATE") {
-						let role = guild.roles.add(r.d.role);
-						client.emit("roleCreate",role);
-					} else if(r.t === "GUILD_ROLE_UPDATE") {
-						let role = guild.roles.get(r.d.role.id);
-						let oldrole = role._update(r.d.role);
-						client.emit("roleUpdate",oldrole,role);
-					} else if(r.t === "GUILD_ROLE_DELETE") {
-						let role = guild.roles.get(r.d.role.id);
-						guild.roles.remove(r.d.role.id);
-						role.deleted = true;
-						client.emit("roleDelete",role);
+					if(r.d.guild_id && this.guilds.cache.get(r.d.guild_id).members.cache.has(r.d.author.id)) {
+						r.d.member.user = r.d.author;
+						let member = this.guilds.cache.get(r.d.guild_id).members.cache.get(r.d.author.id);
+						let oldmember = member._update(r.d.member);
+						if(!member.equals(oldmember)) {
+							client.emit("memberUpdate",oldmember,member);
+						}
 					}
-				}
-			} else if(client.channels.has(r.d.id) && (r.t === "CHANNEL_UPDATE" || r.t === "CHANNEL_DELETE")) {
-				if(r.t === "CHANNEL_DELETE") {
-					let channel = client.channels.get(r.d.id);
-					client.channels.remove(channel.id);
-					channel.deleted = true;
-					client.emit("channelDelete",channel);
-				} else {
-					if(!client.options.enableRoles && !(client.channels.get(r.d.id).permissionOverwrites || {}).size) { r.d.permission_overwrites = []; }
-					let oldchannel = client.channels.get(r.d.id)._update(r.d);
-					let channel = client.channels.get(r.d.id);
-					client.emit("channelUpdate",oldchannel,channel);
-				}
-			} else if(r.t === "READY") {
-				if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${r.d.shard[0]}] Connected. Fetching ${r.d.guilds.length} guilds`)}
-				if(process.env.exec_mode === "cluster_mode" && (r.d.shard[0]+1) % client.options.shardsPerProcess === 0) {
-					setTimeout(() => {
-						lockfile.unlockSync("login.lock");
-					},5500);
-				}
-			}
-		}
-	});
-	if(client.options.enableLogger) {
-		client.on("ready", () => {
-			console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Client Ready`);
-		});
-		client.on("rateLimit", e => {
-			console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Rate Limited`,e);
-		});
-		client.on("warn", e => {
-			console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Warning: ${e}`);
-		});
-		client.on("error", e => {
-			logger(e,client);
-		});
-		client.on("shardDisconnect", (e,id) => {
-			console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${id}] Died`,e);
-		});
-		client.on("shardError", (e,id) => {
-			console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${id}] Error`,e);
-		});
-		client.on("shardReconnecting", e => {
-			console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${e}] Reconnecting`);
-		});
-		client.on("shardResume", (e,evts) => {
-			console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${e}] Resumed`);
-		});
-	}
-	if(client.options.enableHandler) {
-		if(typeof client.options.enableHandler === "string") {
-			const fs = require("fs");
-			client.commands = new Map();
-			client.options.enableHandler = process.cwd()+"/"+client.options.enableHandler;
-			fs.readdirSync(client.options.enableHandler).forEach(t => {
-				let cmd = t.split(".")[0].toLowerCase();
-				client.commands.set(cmd,require(`${client.options.enableHandler}/${cmd}`));
-			});
-			client.commands.reload = cmd => {
-				try {
-					if(client.commands.get(cmd) || fs.existsSync(`${client.options.enableHandler}/${cmd}.js`)) {
-						delete require.cache[require.resolve(`${client.options.enableHandler}/${cmd}`)];
-						client.commands.set(cmd,require(`${client.options.enableHandler}/${cmd}`));
-						return true;
-					} else {
-						return false;
-					}
-				} catch(e) {
-					if(client.options.enableLogger) {
-						logger(e,client);
-					}
-				}
-			}
-			client.commands.disable = cmd => {
-				try {
-					if(client.commands.get(cmd)) {
-						client.commands.delete(cmd);
-						return true;
-					} else {
-						return false;
-					}
-				} catch(e) {
-					if(client.options.enableLogger) {
-						logger(e,client);
-					}
-				}
-			}
-		}
-	}
-	client.shutdown = s => {
-		console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Signal recived, gracefully shutting down shortly`);
-		client.options.shardsPerProcess = "shutdown";
-		lockfile.unlockSync("login.lock");
-		for(event in client._events) {
-			if(event !== "raw") {
-				client._events[event] = m => {
-					if(m instanceof Message) {
-						m.send("Temporarily unavailable. Try again shortly.");
-					}
-				}
-			}
-		}
-		if(client.commands) {
-			client.commands.forEach((v,k) => {
-				client.commands.set(k,{run:m => {
-					if(m instanceof Message) {
-						m.send("Temporarily unavailable. Try again shortly.");
-					}
-				}});
-			});
-		}
-		setTimeout(() => { process.exit(s); },4000);
-		return true;
-	}
-	if(process.env.exec_mode === "cluster_mode") {
-		client.pm2shutdown = () => {
-			for(let i = 0; i < client.options.neighbors.length; i++) {
-				require("child_process").exec(`pm2 sendSignal SIGINT ${client.options.neighbors[i]}`);
-			}
-			return true;
-		}
-		client.survey = async script => {
-			if(!client.options.neighbors) { client.options.neighbors = await pm2Info(true); }
-			let requestID = Date.now().toString(36) + Math.random().toString(36).slice(2);
-			let survey = client.options.surveys[requestID] = {result:[],resolvers:[]};
-			for(let i = 0; i < client.options.neighbors.length; i++) {
-				survey.result[i] = new Promise(r => {
-					survey.resolvers[i] = r;
-					setImmediate(() => {
-						pm2.sendDataToProcessId(client.options.neighbors[i],{data:true,d:script,topic:"request",survey:requestID,from:process.env.pm_id,process:client.options.process},(err) => {
-							if(err) {
-								r(null);
-							} else {
-								setTimeout(() => { r(null); },4000);
+					if(r.d.author.id === this.user.id) {
+						let channel = this.channels.cache.get(r.d.channel_id);
+						if(!channel) {
+							channel = await this.channels.fetch(r.d.channel_id);
+							if(channel.guild) {
+								if(channel.permissionOverwrites && !channel.guild.roles.cache.size) { channel.permissionOverwrites.clear(); }
+								channel.guild.channels.cache.set(channel.id,channel);
 							}
-						});
-					});
-				});
-			}
-			let r = await Promise.all(survey.result);
-			setTimeout(() => { delete client.options.surveys[requestID]; },5000);
-			return r;
-		}
-		client.broadcast = async script => {
-			if(!client.options.neighbors) { client.options.neighbors = await pm2Info(true); }
-			let messages = [];
-			for(let i = 0; i < client.options.neighbors.length; i++) {
-				messages[i] = new Promise(r => {
-					pm2.sendDataToProcessId(client.options.neighbors[i],{data:true,d:script,topic:"broadcast",from:process.env.pm_id,process:client.options.process},(err) => {
-						if(err) { r(false) } else { r(true) }
-					});
-				});
-			}
-			return await Promise.all(messages);
-		}
-		process.on("message", async packet => {
-			if(packet.topic === "request") {
-				let reply;
-				try { reply = eval(packet.d); } catch(e) { reply = e.toString(); }
-				await pm2Info();
-				pm2.sendDataToProcessId(packet.from,{data:true,d:reply,topic:"response",survey:packet.survey,from:process.env.pm_id,process:client.options.process},() => {});
-			} else if(packet.topic === "response") {
-				client.options.surveys[packet.survey].resolvers[packet.process](packet.d);
-			} else if(packet.topic === "broadcast") {
-				try { eval(packet.d); } catch(e) { logger(e,client); }
+						}
+						if(channel.messages.cache.has(r.d.id)) { channel.messages.cache.get(r.d.id).patch(r.d); } else { channel.messages.add(r.d); }
+						channel.lastActive = Date.now();
+						if(channel.type === "dm") { channel.recipient.lastActive = Date.now(); }
+						break;
+					}
+					if(r.d.channel_id && (this.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue.length > 5) {
+						console.log("rate limited",(this.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue);
+						break;
+					}
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
+					let message;
+					if(channel.messages.cache.has(r.d.id)) {
+						message = channel.messages.cache.get(r.d.id);
+						message.patch(r.d);
+					} else {
+						message = channel.messages.add(r.d,false);
+					}
+					this.emit("message",message);
+					break;
+				}
+				case "MESSAGE_DELETE": {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
+					let message;
+					if(channel.messages.cache.has(r.d.id)) {
+						message = channel.messages.cache.get(r.d.id);
+						channel.messages.cache.delete(r.d.id);
+					} else {
+						message = channel.messages.add(r.d,false);
+						message.system = null;
+						message.createdTimestamp = null;
+						message.author = {};
+					}
+					message.deleted = true
+					this.emit("messageDelete",message);
+					break;
+				}
+				case "MESSAGE_DELETE_BULK": {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
+					let deleted = new Discord.Collection();
+					for(let i = 0; i < r.d.ids.length; i++) {
+						let message;
+						if(channel.messages.cache.has(r.d.ids[i])) {
+							message = channel.messages.cache.get(r.d.ids[i]);
+							channel.messages.cache.delete(message.id);
+						} else {
+							message = channel.messages.add({id:r.d.ids[i]},false);
+							message.system = null;
+							message.createdTimestamp = null;
+							message.author = {};
+						}
+						message.deleted = true;
+						deleted.set(r.d.ids[i],message);
+					}
+					if(deleted.size > 0) {
+						this.emit("messageDeleteBulk",deleted);
+					}
+					break;
+				}
+				case "MESSAGE_REACTION_ADD": {
+					if(r.d.member && r.d.member.user && this.users.cache.has(r.d.member.user.id)) {
+						let user = this.users.cache.get(r.d.member.user.id);
+						let olduser = user._update(r.d.member.user);
+						if(!user.equals(olduser)) {
+							this.emit("userUpdate",olduser,user);
+						}
+					}
+					if(r.d.member && this.guilds.cache.get(r.d.guild_id).members.cache.has(r.d.member.user.id)) {
+						let member = this.guilds.cache.get(r.d.guild_id).members.cache.get(r.d.member.user.id);
+						let oldmember = member._update(r.d.member);
+						if(!member.equals(oldmember)) {
+							client.emit("memberUpdate",oldmember,member);
+						}
+					}
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
+					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
+					let user = this.users.cache.get(r.d.user_id) || this.users.add((r.d.member || {}).user || {id:r.d.user_id},false);
+					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:r.d.user_id === this.user.id},channel.messages.cache.has(r.d.message_id));
+					if(channel.messages.cache.has(message.id)) {
+						reaction.users.cache.set(user.id, user);
+						reaction.count = reaction.users.cache.size;
+					}
+					this.emit("messageReactionAdd",reaction,user);
+					break;
+				}
+				case "MESSAGE_REACTION_REMOVE":  {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
+					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
+					let user = this.users.cache.get(r.d.user_id) || this.users.add((r.d.member || {}).user || {id:r.d.user_id},false);
+					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:r.d.user_id === this.user.id},channel.messages.cache.has(r.d.message_id));
+					if(channel.messages.cache.has(message.id)) {
+						reaction.users.cache.delete(user.id);
+						reaction.count = reaction.users.cache.size;
+					}
+					this.emit("messageReactionRemove",reaction,user);
+					break;
+				}
+				case "MESSAGE_REACTION_REMOVE_ALL": {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
+					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
+					this.emit("messageReactionRemoveAll",message);
+					break;
+				}
+				case "MESSAGE_REACTION_REMOVE_EMOJI": {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
+					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
+					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:r.d.user_id === this.user.id},channel.messages.cache.has(r.d.message_id));
+					message.reactions.cache.delete(r.d.emoji.id || r.d.emoji.name);
+					this.emit("messageReactionRemoveEmoji",reaction.emoji);
+					break;
+				}
+				case "CHANNEL_CREATE": {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let channel = this.channels.cache.get(r.d.id);
+					if(!channel) {
+						channel = this.channels.add(r.d,guild,false);
+						this.emit("channelCreate",channel);
+					}
+					break;
+				}
+				case "CHANNEL_UPDATE": {
+					if(this.channels.cache.has(r.d.id)) {
+						let oldchannel = this.channels.cache.get(r.d.id);
+						if(oldchannel.guild && !oldchannel.guild.roles.cache.size) { r.d.permission_overwrites = []; }
+						oldchannel = oldchannel._update(r.d);
+						let newchannel = this.channels.cache.get(r.d.id);
+						if(Discord.Constants.ChannelTypes[oldchannel.type.toUpperCase()] !== r.d.type) {
+							let newchannel = this.channels.add(r.d,this.guilds.cache.get(r.d.guild_id),false);
+							for(let [id, message] of oldchannel.messages.cache) { newchannel.messages.cache.set(id, message); }
+							this.client.channels.cache.set(newchannel.id, newchannel);
+						}
+						this.emit("channelUpdate",oldchannel,newchannel);
+					} else {
+						let channel = this.channels.cache.get(r.d.channel_id);
+						let guild = this.guilds.cache.get(r.d.guild_id);
+						if(!channel) {
+							if(guild && !guild.roles.cache.size) { r.d.permission_overwrites = []; }
+							channel = this.channels.add(r.d,guild,false);
+						}
+						this.emit("channelUpdate",null,channel);
+					}
+					break;
+				}
+				case "CHANNEL_PINS_UPDATE": {
+					let channel = this.channels.cache.get(r.d.channel_id);
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					if(!channel) {
+						channel = this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
+					}
+					let date = new Date(r.d.last_pin_timestamp);
+					this.emit("channelPinsUpdate",channel,date);
+					break;
+				}
+				case "CHANNEL_DELETE": {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let channel = this.channels.cache.get(r.d.id);
+					if(channel) {
+						for(let message of channel.messages.cache.values()) { message.deleted = true; }
+						this.channels.remove(channel.id);
+						channel.deleted = true;
+					} else {
+						channel = this.channels.add(r.d,guild,false);
+					}
+					this.emit("channelDelete",channel);
+					break;
+				}
+				case "GUILD_ROLE_CREATE": {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					if (guild) {
+						let role = guild.roles.add(r.d.role, Boolean(guild.roles.cache.size));
+						this.emit("roleCreate", role);
+					}
+					break;
+				}
+				case "GUILD_ROLE_UPDATE": {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					if (guild) {
+						if(guild.roles.cache.size) {
+							let role = guild.roles.cache.get(r.d.role.id);
+							let old = role ? role._update(r.d.role) : null;
+							this.emit("roleUpdate", old, role);
+						} else {
+							let role = guild.roles.add(r.d.role,false);
+							this.emit("roleUpdate", null, role);
+						}
+					}
+					break;
+				}
+				case "GUILD_BAN_ADD": {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let user = this.users.cache.get(r.d.user_id) || this.users.add(r.d.user,false);
+					this.emit("guildBanAdd", guild, user);
+					break;
+				}
+				case "GUILD_BAN_REMOVE": {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let user = this.users.cache.get(r.d.user_id) || this.users.add(r.d.user,false);
+					this.emit("guildBanRemove", guild, user);
+					break;
+				}
+				case "GUILD_ROLE_DELETE": {
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					if (guild) {
+						let role = guild.roles.cache.get(r.d.role_id) || guild.roles.add({id:r.d.role_id}, false);
+						guild.roles.cache.delete(r.d.role_id);
+        				role.deleted = true;
+						this.emit("roleDelete", role);
+					}
+					break;
+				}
+				case "GUILD_CREATE": case "GUILD_UPDATE": {
+					r.d.voice_states = [];
+					r.d.presences = [];
+					let guild = this.guilds.cache.get(r.d.id);
+					if(!guild || !guild.available) {
+						r.d.members = [];
+						r.d.channels = [];
+						r.d.emojis = [];
+						r.d.roles = [];
+					} else {
+						if(r.d.channels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
+						if(r.d.members) { r.d.members = r.d.members.filter(t => guild.members.cache.has(t.user.id)); }
+						if(!guild.roles.cache.size) { r.d.roles = []; }
+						if(!guild.emojis.cache.size) { r.d.emojis = []; }
+					}
+					break;
+				}
+				case "GUILD_DELETE":
+					break;
+				case "RESUMED":
+					break;
+				case "READY": {
+					console.log(`[${new Date().toISOString()}][Shard ${r.d.shard[0]}] Connected! Fetching ${r.d.guilds.length} Guilds`);
+					break;
+				}
+				default:
+					if(r.t) { console.log(r); }
+					break;
 			}
 		});
-	}
-	client.getInfo = async (bypass) => {
-		const statuses = ["READY","CONNECTING","RECONNECTING","IDLE","NEARLY","DISCONNECTED"];
-		if(process.env.exec_mode === "cluster_mode" && !bypass) {
-			let data = await client.survey("client.getInfo(true)");
-			let total = {
-				activeProcesses:data.length,
-				totalProcesses:client.options.processes,
-				totalMemory:Number(Math.round(data.reduce((a,t) => t.memory ? a += t.memory : a,0)+'e2')+'e-2'),
-				totalCpu:Number(Math.round(data.reduce((a,t) => t.cpu ? a += t.cpu : a,0)+'e2')+'e-2'),
-				totalShards:data.reduce((a,t) => t.shards ? a += t.shards : a,0),
-				totalGuilds:data.reduce((a,t) => t.guild ? a += t.guilds : a,0),
-				totalUsersAtLogin:data.reduce((a,t) => t.usersAtLogin ? a += t.usersAtLogin : a,0),
-				totalActiveUsers:data.reduce((a,t) => t.activeUsers ? a += t.activeUsers : a,0),
-				totalActiveChannels:data.reduce((a,t) => t.activeChannels ? a += t.activeChannels : a,0),
-				processDetails:data
-			}
-			return total;
-		} else {
-			if(client.readyTimestamp) {
-				let shards = new Array(client.options.shardsPerProcess).fill(0).map((t,i) => { return {
-					shardID:client.options.process*client.options.shardsPerProcess+i,
-					status:statuses[client.ws.shards.get(i).status],
-					ping:Math.round(client.ws.shards.get(i).ping),
-					guilds:client.guilds.filter(t => t.shardID === i).size,
-					usersAtLogin:client.guilds.reduce((a,t) => t.shardID === i ? a += t.memberCount : a,0),
-					activeUsers:client.guilds.reduce((a,t) => t.shardID === i ? a += t.members.filter(a => a.id !== client.user.id).size : a,0),
-					activeGuildChannels:client.guilds.reduce((a,t) => t.shardID === i ? a += t.channels.size : a,0)
-				}});
-				if(client.options.process === 0) {
-					shards[0].activeUsers += client.users.filter(t => t.id !== client.user.id).filter(t => !client.guilds.some(a => a.members.has(t.id))).size;
-					shards[0].activeDMChannels = client.channels.filter(t => t.type === "dm").size;
-				}
-				let proc = {
-					processID:client.options.process,
-					shards:shards.length,
-					status:statuses[client.ws.status],
-					upTime:client.uptime,
-					ping:Math.round(client.ws.ping),
-					memory:Number(Math.round((process.memoryUsage().rss/1048576)+'e2')+'e-2'),
-					cpu:Number(Math.round((await new Promise(async r => {
-						let start = [process.hrtime(),process.cpuUsage()];
-						await new Promise(r => setTimeout(() => r(),100));
-						let elap = [process.hrtime(start[0]),process.cpuUsage(start[1])];
-						r(100.0 * ((elap[1].user / 1000) + (elap[1].system / 1000)) / (elap[0][0] * 1000 + elap[0][1] / 1000000));
-					}))+'e2')+'e-2'),
-					guilds:client.guilds.size,
-					usersAtLogin:shards.reduce((a,t) => a += t.usersAtLogin,0),
-					activeUsers:client.users.filter(t => t.id !== client.user.id).size,
-					activeChannels:client.channels.size,
-					shardDetails:shards
-				}
-				return proc;
-			} else {
-				return {status:statuses[client.ws.status]}
-			}
-		}
-	}
-	process.on('SIGHUP', () => client.shutdown(128 + 1));
-	process.on('SIGINT', () => client.shutdown(128 + 2));
-	process.on('SIGTERM', () => client.shutdown(128 + 15));
-	if(typeof options.token === "string") {
-		login(client,options.token,options.dblToken).catch(console.log);
-	}
-	return client;
-}
-
-async function handler(client,r,cmd) {
-	if(client.options.enableHandler) {
-		if(typeof client.options.enableHandler === "string") {
-			if(client.commands.has(cmd)) {
-				let channel = client.channels.get(r.d.channel_id);
-				if(!channel) {
-					channel = await client.channels.fetch(r.d.channel_id);
-					if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
-				}
-				let message;
-				if(channel.messages.has(r.d.id)) {
-					message = channel.messages.get(r.d.id);
-					message.patch(r.d);
-				} else {
-					message = channel.messages.add(r.d);
-				}
-				message.command = cmd;
-				message.argument = message.content.split(" ").slice(1).join(" ");
-				if(client.options.enableLogger) {
-					if(message.guild) {
-						console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${message.guild.shardID}][${message.guild.name}][${channel.name}] ${message.author.tag} -> ${message.command}`);
-					} else {
-						console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard 0][DM] ${message.author.tag} -> ${message.command}`);
-					}
-				}
-				try {
-					await Promise.resolve(client.commands.get(cmd).run(message));
-				} catch(e) {
-					logger(e,client);
-					if(client.options.sendErrors) {
-						message.send(e).catch(e => {
-							if(client.options.enableLogger) {
-								logger(e,client);
-							}
-						});
-					}
-				}
-			}
-		} else {
-			if(typeof client._events[`/${cmd}`] === "function") {
-				let channel = client.channels.get(r.d.channel_id);
-				if(!channel) {
-					channel = await client.channels.fetch(r.d.channel_id);
-					if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
-				}
-				let message;
-				if(channel.messages.has(r.d.id)) {
-					message = channel.messages.get(r.d.id);
-					message.patch(r.d);
-				} else {
-					message = channel.messages.add(r.d);
-				}
-				message.command = cmd;
-				message.argument = message.content.split(" ").slice(1).join(" ");
-				if(client.options.enableLogger) {
-					if(message.guild) {
-						console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard ${message.guild.shardID}][${message.guild.name}][${channel.name}] ${message.author.tag} -> ${message.command}`);
-					} else {
-						console.log(`[${new Date().toISOString()}][Process ${client.options.process}][Shard 0][DM] ${message.author.tag} -> ${message.cmd}`);
-					}
-				}
-				client.emit(`/${cmd}`,message);
-			}
-		}
-	} else {
-		let channel = client.channels.get(r.d.channel_id);
-		if(!channel) {
-			channel = await client.channels.fetch(r.d.channel_id);
-			if(!client.options.enableRoles && channel.permissionOverwrites) { channel.permissionOverwrites.clear(); }
-		}
-		if(channel.whitelisted) { return; }
-		let message = channel.messages.add(r.d,false);
-		client.emit("message",message);
-	}
-}
-
-async function login(client,token,dblToken) {
-	if(process.env.exec_mode === "cluster_mode") {
-		if(!client.options.neighbors) {	client.options.neighbors = await pm2Info(true);	}
-		client.options.processes = client.options.neighbors.length;
-		client.options.process = client.options.neighbors.findIndex(t => t == process.env.pm_id);
-		if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Waiting for lock file`)}
-		lockfile.lock("login.lock", {wait:120000*client.options.processes}, async err => {
-			try {
-				if(err) {
-					console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Unable to secure lock. Retrying...`,err);
-					lockfile.unlockSync("login.lock");
-					process.exit(0);
-				}
-				if(client.options.shardsPerProcess === "shutdown") {
-					lockfile.unlockSync("login.lock");
-					return;
-				}
-				if(client.options.shardsPerProcess === "auto") {
-					let survey = (await client.survey(`if(client.options.processes && client.options.recommendedShards) { if(client.options.processes === ${client.options.processes}) { client.options.recommendedShards } else { client.shutdown(0); 0 } } else { 0 }`)).find(Boolean);
-					if(survey) {
-						client.options.shardsPerProcess = client.options.recommendedShards = survey;
-					} else {
-						client.options.shardsPerProcess = client.options.recommendedShards = Math.ceil(await Util.fetchRecommendedShards(token)/client.options.processes);
-					}
-				} else {
-					client.options.shardsPerProcess = options.shardsPerProcess || 1;
-				}
-				client.options.shards = new Array(client.options.shardsPerProcess).fill().map((_,i) => client.options.process*client.options.shardsPerProcess+i);
-				client.options.shardCount = client.options.processes*client.options.shardsPerProcess;
-				if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Connecting ${client.options.shardsPerProcess} shard(s)`)}
-				await client.login(token);
-				if(dblToken) {
-					if(client.options.dblTest) {
-						dbl(client.user.id,dblToken,client.guilds.size,client.options.process,client.options.processes).then(status => {
-							console.log(`[${new Date().toISOString()}][Process ${client.options.process}][DBL] ${status === 200 ? "Posted server count" : "Failed to post server count"}`);
-							if(status.error) { console.log(status.error); }
-						});
-					}
-					setInterval(() => {
-						dbl(client.user.id,dblToken,client.guilds.size,client.options.process,client.options.processes).then(status => {
-							console.log(`[${new Date().toISOString()}][Process ${client.options.process}][DBL] ${status === 200 ? "Posted server count" : "Failed to post server count"}`);
-							if(status.error) { console.log(status.error); }
-						});
-					},86400000);
-				}
-			} catch(e) {
-				lockfile.unlockSync("login.lock");
-				if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Login failed`,e)}
-			}
-		});
-	} else {
-		try {
-			if(!client.options.processes) { client.options.processes = 1; client.options.process = 0; }
-			if(!client.options.process) { client.options.process = 0; }
-			if(!client.options.shardsPerProcess) { client.shardsPerProcess = "auto"; }
-			if(client.options.shardsPerProcess === "auto") {
-				client.options.shardsPerProcess = Math.ceil(await Util.fetchRecommendedShards(token)/client.options.processes);
-			}
-			client.options.shards = new Array(client.options.shardsPerProcess).fill().map((_,i) => client.options.process*client.options.shardsPerProcess+i);
-			client.options.shardCount = client.options.processes*client.options.shardsPerProcess;
-			if(client.options.enableLogger) {console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Connecting ${client.options.shardsPerProcess} shard(s)`)}
-			await client.login(token);
-			if(dblToken) {
-				if(client.options.dblTest) {
-					dbl(client.user.id,dblToken,client.guilds.size,client.options.process,client.options.processes).then(status => {
-						console.log(`[${new Date().toISOString()}][Process ${client.options.process}][DBL] ${status === 200 ? "Posted server count" : "Failed to post server count"}`);
-						if(status.error) { console.log(status.error); }
-					});
-				}
-				setInterval(() => {
-					dbl(client.user.id,dblToken,client.guilds.size,client.options.process,client.options.processes).then(status => {
-						console.log(`[${new Date().toISOString()}][Process ${client.options.process}][DBL] ${status === 200 ? "Posted server count" : "Failed to post server count"}`);
-						if(status.error) { console.log(status.error); }
-					});
-				},86400000);
-			}
-		} catch(e) {
-			console.log(`[${new Date().toISOString()}][Process ${client.options.process}] Login failed`,e);
-		}
-	}
-}
-
-function dbl(id,token,guilds,current,total) {
-	return new Promise(r => {
-		let https = require("https");
-		let req = https.request({
-			hostname: 'discordbots.org',
-			port: 443,
-			path: `/api/bots/${id}/stats`,
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': token
-			}
-		}, res => r(res.statusCode));
-		req.on('error', e => r({error:e}));
-		req.write(JSON.stringify({
-			server_count:guilds,
-			shard_id:current,
-			shard_count:total
-		}));
-		req.end();
-	});
-}
-
-async function logger(e,client) {
-	let name = e.name || "?";
-	let msg = e.message || "??";
-	let channel = e.path ? client.channels.get((e.path).split("/")[2]) || await client.channels.fetch((e.path).split("/")[2],false) : null;
-	let guild = channel && channel.guild ? channel.guild : null;
-	console.log(`[${new Date().toISOString()}][Process ${client.options.process}]${guild ? `[Shard ${guild.shardID}][${guild.name}][${channel.name}]` : channel ? `[Shard 0][DM]` : ""} Error:`,name,msg,e);
-}
-
-async function pm2Info(ret) {
-	if(!pm2.Client.client_sock) { await new Promise(r => { pm2.connect(() => r()); }); }
-	if(ret) {
-		return new Promise(r => {
-			pm2.list((err, processes) => {
-				r(processes.filter(t => t.pm2_env.pm_exec_path === process.env.pm_exec_path).map(t => t.pm2_env.pm_id));
+		setInterval(() => {
+			this.users.cache.sweep(t => !t.lastActive || t.lastActive < Date.now() - 86400000);
+			this.channels.cache.sweep(t => !t.lastActive || t.lastActive < Date.now() - 86400000);
+			this.guilds.cache.forEach(t => {
+				t.members.sweep(m => !this.users.cache.has(m.id));
+				t.channels.sweep(m => !this.channels.cache.has(m.id));
 			});
-		});
+		},86400000);
+		if(this.options.token) {
+			console.log(`[${new Date().toISOString()}] Connecting...`);
+			this.login(this.options.token).catch(e => { throw e; });
+		}
 	}
-	return;
+	async getInfo() {
+		const statuses = Object.keys(Discord.Constants.Status);
+		if(!this.readyTimestamp) { return {status:statuses[this.ws.status]}; }
+		let shards = new Array(this.options.shardCount).fill(0).map((t,i) => { return {
+			shardID:i,
+			status:statuses[this.ws.shards.get(i).status],
+			ping:Math.round(this.ws.shards.get(i).ping),
+			guilds:this.guilds.cache.filter(t => t.shardID === i).size,
+			usersAtLogin:this.guilds.cache.reduce((a,t) => t.shardID === i ? a += t.memberCount : a,0),
+			activeGuildMembers:this.guilds.cache.reduce((a,t) => t.shardID === i ? a += t.members.cache.filter(a => a.id !== this.user.id).size : a,0),
+			activeGuildChannels:this.guilds.cache.reduce((a,t) => t.shardID === i ? a += t.channels.cache.size : a,0)
+		}});
+		shards[0].activeDMUsers = this.users.cache.filter(t => t.id !== this.user.id && !this.guilds.cache.some(a => a.members.cache.has(t.id))).size;
+		shards[0].activeDMChannels = this.channels.cache.filter(t => t.type === "dm").size;
+		return {
+			shards:shards.length,
+			status:statuses[this.ws.status],
+			upTime:this.uptime,
+			ping:Math.round(this.ws.ping),
+			memory:Number(Math.round((process.memoryUsage().rss/1048576)+'e2')+'e-2'),
+			cpu:Number(Math.round((await new Promise(async r => {
+				let start = [process.hrtime(),process.cpuUsage()];
+				await new Promise(r => setTimeout(() => r(),100));
+				let elap = [process.hrtime(start[0]),process.cpuUsage(start[1])];
+				r(100.0 * ((elap[1].user / 1000) + (elap[1].system / 1000)) / (elap[0][0] * 1000 + elap[0][1] / 1000000));
+			}))+'e2')+'e-2'),
+			guilds:this.guilds.cache.size,
+			usersAtLogin:shards.reduce((a,t) => a += t.usersAtLogin,0),
+			activeUsers:this.users.cache.filter(t => t.id !== this.user.id).size,
+			activeChannels:this.channels.cache.size,
+			shardDetails:shards
+		}
+	}
 }
+
+module.exports = Discord;
