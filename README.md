@@ -68,7 +68,8 @@ This library alters caching behavior by extending and modifying a few of discord
 * Guild Roles are not cached and not synced. They can be cached by using `guild.fetch()`. This will also enable them to sync.
 * Guild Members are not cached. Relevant events contain a temporary Member object or partial instead. Members can be manually cached by using `guild.members.fetch(id)`. This will not cache the user.
 * Guild Channels are not cached. Guild Channels can be cached in the guild by fetching it and then linking it using `guild.channels.cache.set(fetchedChannel.id,fetchedChannel)`.
-* Guild Channel Permission Overwrites are not cached and not synced. They can only be cached by fetching the guild to enable role syncing, then fetching the channel and linking it to the guild. This will also enable them to sync. This is required to enable many permission checking functions.
+* Guild Channel Permission Overwrites are not cached and not synced. They can only be cached by fetching the guild to enable role syncing, then fetching the channel and linking it to the guild. This will also enable them to sync. This might be required to enable many permission checking functions.
+* Guild Presences and VoiceStates are disabled.
 
 Cached Users, Channels and their Member and GuildChannel counterparts get automatically sweeped after 24 hours of inactivity. To disable sweeping of a User or Channel, give them a custom `noSweep` property set to `true`. This will also disable sweeping of their Member and GuildChannel counterparts.
 
