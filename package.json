@@ -7,7 +7,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"repository": {
-		"url": "https://github.com/timotejroiko/djs-light.git"
+		"url": "https://github.com/timotejroiko/discord.js-light.git"
 	},
 	"keywords": [
 		"discord",
@@ -21,7 +21,7 @@
 	"author": "Timotej Valentin Rojko",
 	"license": "Apache-2.0",
 	"dependencies": {
-		"discord.js": "github:discordjs/discord.js#fe7df708e44e0280dfaf0f8e457b154781bb5140"
+		"discord.js": "github:discordjs/discord.js#21d37ed0cc71b227be0feadc4ffbcd522ca4f00e"
 	},
 	"engines": {
 		"node": ">=10.0.0"

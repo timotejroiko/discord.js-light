@@ -5,7 +5,7 @@ Discord.Structures.extend("Message", M => {
 	return class Message extends M {
 		constructor(client, data, channel) {
 			let d = {};
-			let list = ["author","member","reactions","mentions"];
+			let list = ["author","member","mentions"];
 			for(let i in data) {
 				if(!list.includes(i)) { d[i] = data[i]; }
 			}
@@ -118,18 +118,6 @@ Discord.Structures.extend("GuildMember", G => {
 		equals(member) {
 			let equal = member && this.deleted === member.deleted && this.nickname === member.nickname && this._roles.length === member._roles.length;
 			return equal;
-		}
-	}
-});
-
-Discord.Structures.extend("TextChannel", C => {
-	return class TextChannel extends C {
-		createMessageCollector(filter,options = {}) {
-			if(isNaN(this.whitelisted)) { this.whitelisted = 0; }
-			this.whitelisted++;
-			let c = super.createMessageCollector(filter, options);
-			c.once("end", () => { this.whitelisted--; });
-			return c;
 		}
 	}
 });
@@ -469,6 +457,55 @@ Discord.Client = class Client extends Discord.Client {
 					this.emit("channelDelete",channel);
 					break;
 				}
+				case "GUILD_MEMBER_ADD": {
+					if(this.users.cache.has(r.d.user.id)) {
+						let user = this.users.cache.get(r.d.user.id);
+						let olduser = user._update(r.d.user);
+						if(!user.equals(olduser)) {
+							this.emit("userUpdate",olduser,user);
+						}
+					}
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let member = guild.members.add(r.d,guild.members.cache.has(r.d.user.id));
+					if(!guild.members.cache.has(r.d.user.id)) {
+						this.emit("guildMemberAdd",member);
+					}
+					break;
+				}
+				case "GUILD_MEMBER_REMOVE": {
+					if(this.users.cache.has(r.d.user.id)) {
+						let user = this.users.cache.get(r.d.user.id);
+						let olduser = user._update(r.d.user);
+						if(!user.equals(olduser)) {
+							this.emit("userUpdate",olduser,user);
+						}
+					}
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let member = guild.members.cache.get(r.d.user.id) || guild.members.add(r.d,false);
+					guild.members.cache.delete(r.d.user.id);
+					this.emit("guildMemberRemove",member);
+					break;
+				}
+				case "GUILD_MEMBER_UPDATE": {
+					if(this.users.cache.has(r.d.user.id)) {
+						let user = this.users.cache.get(r.d.user.id);
+						let olduser = user._update(r.d.user);
+						if(!user.equals(olduser)) {
+							this.emit("userUpdate",olduser,user);
+						}
+					}
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					if(guild.members.cache.has(r.d.user.id)) {
+						let member = guild.members.cache.get(r.d.user.id);
+						let oldmember = member._update(r.d);
+						if(!member.equals(oldmember)) {
+							client.emit("memberUpdate",oldmember,member);
+						}
+					}
+					let member = guild.members.cache.get(r.d.user.id) || guild.members.add(r.d,false);
+					this.emit("guildMemberUpdate",null,member);
+					break;
+				}
 				case "GUILD_ROLE_CREATE": {
 					let guild = this.guilds.cache.get(r.d.guild_id);
 					if (guild) {
@@ -491,18 +528,6 @@ Discord.Client = class Client extends Discord.Client {
 					}
 					break;
 				}
-				case "GUILD_BAN_ADD": {
-					let guild = this.guilds.cache.get(r.d.guild_id);
-					let user = this.users.cache.get(r.d.user_id) || this.users.add(r.d.user,false);
-					this.emit("guildBanAdd", guild, user);
-					break;
-				}
-				case "GUILD_BAN_REMOVE": {
-					let guild = this.guilds.cache.get(r.d.guild_id);
-					let user = this.users.cache.get(r.d.user_id) || this.users.add(r.d.user,false);
-					this.emit("guildBanRemove", guild, user);
-					break;
-				}
 				case "GUILD_ROLE_DELETE": {
 					let guild = this.guilds.cache.get(r.d.guild_id);
 					if (guild) {
@@ -511,6 +536,32 @@ Discord.Client = class Client extends Discord.Client {
         				role.deleted = true;
 						this.emit("roleDelete", role);
 					}
+					break;
+				}
+				case "GUILD_BAN_ADD": {
+					if(this.users.cache.has(r.d.user.id)) {
+						let user = this.users.cache.get(r.d.user.id);
+						let olduser = user._update(r.d.user);
+						if(!user.equals(olduser)) {
+							this.emit("userUpdate",olduser,user);
+						}
+					}
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user,false);
+					this.emit("guildBanAdd", guild, user);
+					break;
+				}
+				case "GUILD_BAN_REMOVE": {
+					if(this.users.cache.has(r.d.user.id)) {
+						let user = this.users.cache.get(r.d.user.id);
+						let olduser = user._update(r.d.user);
+						if(!user.equals(olduser)) {
+							this.emit("userUpdate",olduser,user);
+						}
+					}
+					let guild = this.guilds.cache.get(r.d.guild_id);
+					let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user,false);
+					this.emit("guildBanRemove", guild, user);
 					break;
 				}
 				case "GUILD_CREATE": case "GUILD_UPDATE": {
@@ -538,9 +589,6 @@ Discord.Client = class Client extends Discord.Client {
 					console.log(`[${new Date().toISOString()}][Shard ${r.d.shard[0]}] Connected! Fetching ${r.d.guilds.length} Guilds`);
 					break;
 				}
-				default:
-					if(r.t) { console.log(r); }
-					break;
 			}
 		});
 		setInterval(() => {
