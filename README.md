@@ -64,12 +64,13 @@ This library alters caching behavior by extending and modifying a few of discord
 * Channels are not cached. Relevant events contain a temporary Channel object or partial instead. Channels can be manually cached by using `client.channels.fetch(id)`. This will not cache the channel in the guild.
 * Messages are not cached. Relevant events contain a temporary Message object or partial instead. Messages can be manually cached by fetching its channel and then using `channel.messages.fetch(id)`
 * Guilds themselves are always cached and synced, but not its contents. See below
-* Guild Members are not cached. Relevant events contain a temporary Member object or partial instead. Members can be manually cached by using `guild.members.fetch(id)`. This will not cache the user.
-* Guild Channels are not cached. Guild Channels can be cached in the guild by fetching it and then linking it using `guild.channels.cache.set(fetchedChannel.id,fetchedChannel)`.
 * Guild Emojis are not cached and not synced. They can be cached by using `guild.fetch()`. This will also enable them to sync.
 * Guild Roles are not cached and not synced. They can be cached by using `guild.fetch()`. This will also enable them to sync.
+* Guild Members are not cached. Relevant events contain a temporary Member object or partial instead. Members can be manually cached by using `guild.members.fetch(id)`. This will not cache the user.
+* Guild Channels are not cached. Guild Channels can be cached in the guild by fetching it and then linking it using `guild.channels.cache.set(fetchedChannel.id,fetchedChannel)`.
+* Guild Channel Permission Overwrites are not cached and not synced. They can only be cached by fetching the guild to enable role syncing, then fetching the channel and linking it to the guild. This will also enable them to sync. This is required to enable many permission checking functions.
 
-Cached Users, Channels and Members get automatically sweeped after 24 hours of inactivity.
+Cached Users, Channels and their Member and GuildChannel counterparts get automatically sweeped after 24 hours of inactivity. To disable sweeping of a User or Channel, give them a custom `noSweep` property set to `true`. This will also disable sweeping of their Member and GuildChannel counterparts.
 
 ## Events
 
@@ -121,6 +122,10 @@ Some extra functionality is included:
 | message.commandResponse | message | The message object that was sent as a response to this command. Only available if it was sent with message.reply() |
 | message.commandMessage | message | The message object that triggered this response. Only available if this response was sent with message.reply() |
 | message.commandResponseTime | number | Message response time in milliseconds. Only available in response messages if they were sent with message.reply() |
+| channel.lastActive | number | Timestamp of the last time this channel was used by the client |
+| channel.noSweep | boolean | Whether this channel should be automatically sweeped |
+| user.lastActive | number | Timestamp of the last time this user was replied to by message.reply() |
+| user.noSweep | boolean | Whether this user should be automatically sweeped |
 
 ## About
 
