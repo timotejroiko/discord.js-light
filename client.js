@@ -605,8 +605,8 @@ Discord.Client = class Client extends Discord.Client {
 			this.users.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - 86400000) && !t.noSweep);
 			this.channels.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - 86400000) && !t.noSweep);
 			this.guilds.cache.forEach(t => {
-				t.members.sweep(m => !this.users.cache.has(m.id));
-				t.channels.sweep(m => !this.channels.cache.has(m.id));
+				t.members.cache.sweep(m => !this.users.cache.has(m.id));
+				t.channels.cache.sweep(m => !this.channels.cache.has(m.id));
 			});
 		},86400000);
 		if(this.options.token) {
