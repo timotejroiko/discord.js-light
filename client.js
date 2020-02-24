@@ -142,13 +142,23 @@ Discord.Structures.extend("DMChannel", D => {
 
 Discord.Channel.create = (client, data, guild) => {
 	let channel;
-	if(data.type === Discord.Constants.ChannelTypes.DM || (data.type !== Discord.Constants.ChannelTypes.GROUP && !data.guild_id && !guild)) {
-		let DMChannel = Discord.Structures.get('DMChannel');
-		channel = new DMChannel(client, data);
+	if(!data.guild_id && !guild) {
+		switch(data.type) {
+			case Discord.Constants.ChannelTypes.DM: {
+				const DMChannel = Discord.Structures.get('DMChannel');
+				channel = new DMChannel(client, data);
+				break;
+			}
+			case Discord.Constants.ChannelTypes.GROUP: {
+				const PartialGroupDMChannel = require('./PartialGroupDMChannel');
+				channel = new PartialGroupDMChannel(client, data);
+				break;
+			}
+		}
 	} else {
 		guild = guild || client.guilds.cache.get(data.guild_id);
 		if(guild) {
-			switch (data.type) {
+			switch(data.type) {
 				case Discord.Constants.ChannelTypes.TEXT: {
 					let TextChannel = Discord.Structures.get('TextChannel');
 					channel = new TextChannel(guild, data);
