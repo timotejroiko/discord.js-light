@@ -111,12 +111,14 @@ guildMemberAdd and guildMemberRemove are disabled due to discord's new restricti
 | guildMemberUpdate | Provides a full Member object. Replaces the activity-based version mentioned above |
 | guildMemberRemove | Provides a partial Member object |
 
-To disable or modify Intents, pass them to the client options like this: ```js
+To disable or modify Intents, pass them to the client options like this:
+```js
 client = new Client({
 	ws: {
 		intents:<bitmask> // new bitmask to include GUILD_MEMBER packets, or false to disable intents
 	}
-})```
+});
+```
 
 All other events, except connection events, are disabled. Additionally, there might be bugs or inconsistencies due to being unable to test all possible situations that might occur, so thread carefully.
 
