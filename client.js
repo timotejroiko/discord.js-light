@@ -199,7 +199,7 @@ Discord.Client = class Client extends Discord.Client {
 				messageCacheMaxSize: 10,
 				messageCacheLifetime: 86400,
 				messageSweepInterval: 86400,
-				disableEveryone: true,
+				disableMentions: true,
 			},
 			options
 		);
