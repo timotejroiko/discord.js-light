@@ -2,7 +2,7 @@
 
 A minimalistic [discord.js](https://discord.js.org) framework that disables the original library's aggressive caching behavior and prevents excessive resource usage.
 
-This library is a rewrite of the old "djs-shenanigans" found in the folders above, dropping most of its experimental features and focusing mostly on anti-caching. It is powered by discord.js v12.0.0dev on a [fixed commit](https://github.com/discordjs/discord.js/tree/9cb306c823216130e5bddc268ba3aee025a5b98f) basis so it wont be affected by updates until approved.
+This library is a rewrite of the old "djs-shenanigans" found in the folders above, dropping most of its experimental features and focusing mostly on anti-caching. It is powered by discord.js v12.0.0dev on a [fixed commit](https://github.com/discordjs/discord.js/tree/713309e7bb87b10ca7432fdbbd7ca65fcddd4882) basis so it wont be affected by updates until approved.
 
 ## Why?
 
