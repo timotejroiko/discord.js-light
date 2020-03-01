@@ -26,7 +26,7 @@ Several solutions have been presented so far, such as regular cache sweeping, i 
 
 Installation:
 
-```npm install timotejroiko/discord.js-light```
+```npm install discord.js-light```
 
 optional packages (recommended to improve performance, especially zlib-sync)
 
