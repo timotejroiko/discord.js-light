@@ -21,9 +21,9 @@
 	"author": "Timotej Valentin Rojko",
 	"license": "Apache-2.0",
 	"dependencies": {
-		"discord.js": "github:discordjs/discord.js#713309e7bb87b10ca7432fdbbd7ca65fcddd4882"
+		"discord.js": "12.0.0"
 	},
 	"engines": {
-		"node": ">=10.0.0"
+		"node": "12.0.0"
 	}
 }
