@@ -199,7 +199,7 @@ Discord.Client = class Client extends Discord.Client {
 				messageCacheMaxSize: 10,
 				messageCacheLifetime: 86400,
 				messageSweepInterval: 86400,
-				disableMentions: true,
+				disableMentions: "all",
 			},
 			options
 		);
@@ -221,7 +221,7 @@ Discord.Client = class Client extends Discord.Client {
 			//"GUILD_DELETE", // 1
 			"GUILD_EMOJIS_UPDATE", // 8
 			"GUILD_INTEGRATIONS_UPDATE", // 16
-			//"GUILD_MEMBERS_CHUNK", ?
+			//"GUILD_MEMBERS_CHUNK", // ?
 			"GUILD_MEMBER_ADD", // 2
 			"GUILD_MEMBER_REMOVE", // 2
 			"GUILD_MEMBER_UPDATE", // 2
@@ -582,6 +582,10 @@ Discord.Client = class Client extends Discord.Client {
 					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false);
 					let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user,false);
 					this.emit("guildBanRemove", guild, user);
+					break;
+				}
+				case "GUILD_MEMBERS_CHUNK": {
+					r.d.presences = [];
 					break;
 				}
 				case "GUILD_CREATE": case "GUILD_UPDATE": {
