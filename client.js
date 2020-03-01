@@ -58,7 +58,7 @@ Discord.Structures.extend("Message", M => {
 			if(!content && (!options || (!options.content && !options.embed && !options.files))) {
 				content = "⠀";
 			}
-			if(this.channel.type === "text" && !this.client.guils.cache.has(this.channel.guild.id)) {
+			if(this.channel.type === "text" && !this.client.guilds.cache.has(this.channel.guild.id)) {
 				this.channel.guild = await this.client.guilds.add({id:this.channel.guild.id});
 			}
 			if(!this.client.channels.cache.has(this.channel.id)) {
