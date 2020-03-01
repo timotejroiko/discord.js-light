@@ -1,3 +1,47 @@
+const PacketHandlers = require(require.resolve("discord.js").replace("index.js","")+"client/websocket/handlers");
+const disabledEvents = [
+	"CHANNEL_CREATE", // 1 // 4096 for dm
+	"CHANNEL_DELETE", // 1
+	"CHANNEL_PINS_UPDATE", // 1 // 4096 for dm
+	"CHANNEL_UPDATE", // 1
+	"GUILD_BAN_ADD", // 4
+	"GUILD_BAN_REMOVE", // 4
+	//"GUILD_CREATE", // 1
+	//"GUILD_DELETE", // 1
+	"GUILD_EMOJIS_UPDATE", // 8
+	"GUILD_INTEGRATIONS_UPDATE", // 16
+	//"GUILD_MEMBERS_CHUNK", // ?
+	"GUILD_MEMBER_ADD", // 2
+	"GUILD_MEMBER_REMOVE", // 2
+	"GUILD_MEMBER_UPDATE", // 2
+	"GUILD_ROLE_CREATE", // 1
+	"GUILD_ROLE_DELETE", // 1
+	"GUILD_ROLE_UPDATE", // 1
+	//"GUILD_UPDATE", // ^ ?
+	"INVITE_CREATE", // 64
+	"INVITE_DELETE", // 64
+	"MESSAGE_CREATE", // 512 // 4096 for dm
+	"MESSAGE_DELETE", // 512 // 4096 for dm
+	"MESSAGE_DELETE_BULK", // ^ ?
+	"MESSAGE_REACTION_ADD", // 1024 // 8192 for dm
+	"MESSAGE_REACTION_REMOVE", // 1024 // 8192 for dm
+	"MESSAGE_REACTION_REMOVE_ALL", // 1024 // 8192 for dm
+	"MESSAGE_REACTION_REMOVE_EMOJI", // 1024 // 8192 for dm
+	"MESSAGE_UPDATE", // 512 // 4096 for dm
+	"PRESENCE_UPDATE", // 256
+	//"READY",
+	//"RESUMED",
+	"TYPING_START", // 2048 // 16384 for dm
+	"USER_UPDATE", // ?
+	"VOICE_SERVER_UPDATE", // ?
+	"VOICE_STATE_UPDATE", // 128
+	"WEBHOOKS_UPDATE" // 32
+];
+
+for(event of disabledEvents) {
+	delete PacketHandlers[event];
+}
+
 const Discord = require('discord.js');
 const util = require('util');
 
@@ -210,44 +254,6 @@ Discord.Client = class Client extends Discord.Client {
 			},
 			options.ws
 		);
-		options.disabledEvents = [
-			"CHANNEL_CREATE", // 1 // 4096 for dm
-			"CHANNEL_DELETE", // 1
-			"CHANNEL_PINS_UPDATE", // 1 // 4096 for dm
-			"CHANNEL_UPDATE", // 1
-			"GUILD_BAN_ADD", // 4
-			"GUILD_BAN_REMOVE", // 4
-			//"GUILD_CREATE", // 1
-			//"GUILD_DELETE", // 1
-			"GUILD_EMOJIS_UPDATE", // 8
-			"GUILD_INTEGRATIONS_UPDATE", // 16
-			//"GUILD_MEMBERS_CHUNK", // ?
-			"GUILD_MEMBER_ADD", // 2
-			"GUILD_MEMBER_REMOVE", // 2
-			"GUILD_MEMBER_UPDATE", // 2
-			"GUILD_ROLE_CREATE", // 1
-			"GUILD_ROLE_DELETE", // 1
-			"GUILD_ROLE_UPDATE", // 1
-			//"GUILD_UPDATE", // ^ ?
-			"INVITE_CREATE", // 64
-			"INVITE_DELETE", // 64
-			"MESSAGE_CREATE", // 512 // 4096 for dm
-			"MESSAGE_DELETE", // 512 // 4096 for dm
-			"MESSAGE_DELETE_BULK", // ^ ?
-			"MESSAGE_REACTION_ADD", // 1024 // 8192 for dm
-			"MESSAGE_REACTION_REMOVE", // 1024 // 8192 for dm
-			"MESSAGE_REACTION_REMOVE_ALL", // 1024 // 8192 for dm
-			"MESSAGE_REACTION_REMOVE_EMOJI", // 1024 // 8192 for dm
-			"MESSAGE_UPDATE", // 512 // 4096 for dm
-			"PRESENCE_UPDATE", // 256
-			//"READY",
-			//"RESUMED",
-			"TYPING_START", // 2048 // 16384 for dm
-			"USER_UPDATE", // ?
-			"VOICE_SERVER_UPDATE", // ?
-			"VOICE_STATE_UPDATE", // 128
-			"WEBHOOKS_UPDATE" // 32
-		];
 		super(options);
 		this.on("ready", () => {
 			console.log(`[${new Date().toISOString()}] Client Ready`);
