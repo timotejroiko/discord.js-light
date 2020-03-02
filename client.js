@@ -1,4 +1,4 @@
-const PacketHandlers = require(require.resolve("discord.js").replace("index.js","")+"client/websocket/handlers");
+const PacketHandlers = require(require.resolve("discord.js").replace("index.js","client/websocket/handlers"));
 const disabledEvents = [
 	"CHANNEL_CREATE", // 1 // 4096 for dm
 	"CHANNEL_DELETE", // 1
@@ -38,7 +38,7 @@ const disabledEvents = [
 	"WEBHOOKS_UPDATE" // 32
 ];
 
-for(event of disabledEvents) {
+for(let event of disabledEvents) {
 	delete PacketHandlers[event];
 }
 
@@ -295,7 +295,7 @@ Discord.Client = class Client extends Discord.Client {
 						let member = this.guilds.cache.get(r.d.guild_id).members.cache.get(r.d.author.id);
 						let oldmember = member._update(r.d.member);
 						if(!member.equals(oldmember)) {
-							client.emit("memberUpdate",oldmember,member);
+							this.emit("memberUpdate",oldmember,member);
 						}
 					}
 					if(r.d.author.id === this.user.id) {
@@ -384,7 +384,7 @@ Discord.Client = class Client extends Discord.Client {
 						let member = this.guilds.cache.get(r.d.guild_id).members.cache.get(r.d.member.user.id);
 						let oldmember = member._update(r.d.member);
 						if(!member.equals(oldmember)) {
-							client.emit("memberUpdate",oldmember,member);
+							this.emit("memberUpdate",oldmember,member);
 						}
 					}
 					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
@@ -446,7 +446,7 @@ Discord.Client = class Client extends Discord.Client {
 						if(Discord.Constants.ChannelTypes[oldchannel.type.toUpperCase()] !== r.d.type) {
 							let newchannel = this.channels.add(r.d,this.guilds.cache.get(r.d.guild_id),false);
 							for(let [id, message] of oldchannel.messages.cache) { newchannel.messages.cache.set(id, message); }
-							this.client.channels.cache.set(newchannel.id, newchannel);
+							this.channels.cache.set(newchannel.id, newchannel);
 						}
 						this.emit("channelUpdate",oldchannel,newchannel);
 					} else {
@@ -525,7 +525,7 @@ Discord.Client = class Client extends Discord.Client {
 						let member = guild.members.cache.get(r.d.user.id);
 						let oldmember = member._update(r.d);
 						if(!member.equals(oldmember)) {
-							client.emit("memberUpdate",oldmember,member);
+							this.emit("memberUpdate",oldmember,member);
 						}
 					}
 					let member = guild.members.cache.get(r.d.user.id) || guild.members.add(r.d,false);
