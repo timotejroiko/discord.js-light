@@ -391,7 +391,8 @@ Discord.Client = class Client extends Discord.Client {
 					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
 					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
 					let user = this.users.cache.get(r.d.user_id) || this.users.add((r.d.member || {}).user || {id:r.d.user_id},false);
-					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:r.d.user_id === this.user.id},channel.messages.cache.has(r.d.message_id));
+					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:null},channel.messages.cache.has(r.d.message_id));
+					reaction.me = r.d.user_id === this.user.id;
 					if(channel.messages.cache.has(message.id)) {
 						reaction.users.cache.set(user.id, user);
 						reaction.count = reaction.users.cache.size;
@@ -404,7 +405,8 @@ Discord.Client = class Client extends Discord.Client {
 					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
 					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
 					let user = this.users.cache.get(r.d.user_id) || this.users.add((r.d.member || {}).user || {id:r.d.user_id},false);
-					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:r.d.user_id === this.user.id},channel.messages.cache.has(r.d.message_id));
+					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:null},channel.messages.cache.has(r.d.message_id));
+					reaction.me = r.d.user_id === this.user.id;
 					if(channel.messages.cache.has(message.id)) {
 						reaction.users.cache.delete(user.id);
 						reaction.count = reaction.users.cache.size;
@@ -423,7 +425,8 @@ Discord.Client = class Client extends Discord.Client {
 					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
 					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
 					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
-					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:r.d.user_id === this.user.id},channel.messages.cache.has(r.d.message_id));
+					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:null},channel.messages.cache.has(r.d.message_id));
+					reaction.me = r.d.user_id === this.user.id;
 					message.reactions.cache.delete(r.d.emoji.id || r.d.emoji.name);
 					this.emit("messageReactionRemoveEmoji",reaction.emoji);
 					break;
