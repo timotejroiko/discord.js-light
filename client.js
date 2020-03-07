@@ -117,7 +117,7 @@ Discord.Structures.extend("Message", M => {
 				this.channel.messages.cache.set(this.id,this);
 			}
 			if(this.editedTimestamp && this.commandResponse) {
-				if(this.commandResponse.attachments.size || (options && options.files)) {
+				if(this.commandResponse.attachments.size || (options && (options.files) || this.commandResponse.embeds.length && (!options || !options.embed))) {
 					let response = await this.channel.send(content,options);
 					if(!this.commandResponse.deleted) { this.commandResponse.delete().catch(e => {}); }
 					this.commandResponse = response;

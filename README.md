@@ -1,8 +1,12 @@
 # discord.js-light
 
-A minimalistic [discord.js (v12)](https://discord.js.org) framework that disables the original library's aggressive caching behavior and prevents excessive resource usage.
+A minimalistic [discord.js (v12)](https://discord.js.org) framework that controls the original library's aggressive caching behavior to prevent excessive resource usage. It works by modifying several of discord.js' classes and functions to prevent data from being cached at the source, and introduces several workarounds to keep its data structures intact.
 
-This library is a rewrite of the old "djs-shenanigans" found in the folders above, dropping most of its experimental features and focusing mostly on anti-caching.
+[![npm](https://img.shields.io/npm/v/discord.js-light?label=current%20version)](https://www.npmjs.com/package/discord.js-light)
+[![GitHub Release Date](https://img.shields.io/github/release-date/timotejroiko/discord.js-light?label=last%20updated)](https://github.com/timotejroiko/discord.js-light/releases)
+[![npm (prod) dependency version](https://img.shields.io/npm/dependency-version/discord.js-light/discord.js)](https://discord.js.org)
+[![node](https://img.shields.io/node/v/discord.js-light)](https://nodejs.org)
+[![Discord](https://img.shields.io/discord/581072557512458241?label=support%20server)](https://discord.gg/BpeedKh)
 
 ## Why?
 
@@ -12,7 +16,7 @@ This is due to the fact that discord.js caches EVERYTHING it can in order to avo
 
 This issue has been discussed a few times by the community but ultimately it has been decided that the library is too tightly coupled with its caching systems and seperating them would be unfeasible. Thus the task of taming the monster falls back to us bot developers.
 
-Several solutions have been presented so far, such as regular cache sweeping, i have felt however that the existing solutions were not good enough and decided to investigate it myself. This project later became the base boilerplate for all my bots and it does a wonderful job keeping hosting costs and scaling maintenance in check.
+Several solutions have been presented so far, such as regular cache sweeping. However i felt that the existing methods were lacking and decided to design my own solution. This project later became the base boilerplate for all my bots and it does a wonderful job keeping hosting costs and scaling maintenance in check.
 
 ## Features
 
@@ -54,11 +58,11 @@ client.on("message", message => {
 });
 ```
 
-Unlike its predecessor, discord.js-light does not include prefix managers or command handlers, it does however feature auto-login, auto sharding (via internal sharding) and default logging of connection events and errors. PM2 cluster support was also removed to be reworked as a separate feature in the future.
+Unlike its predecessor, discord.js-light attempts to deliver a cleaner discord.js experience, it does not include prefix managers or command handlers. It does however include a few convenience methods and functions, as well as an optional auto-login, opinionated default client settings (internal sharding, intents, disableMentions, sweeping, etc...) and logging of connection events and errors enabled by default. PM2 cluster support was also removed to be reworked as a separate feature in the future.
 
 ## Caching
 
-This library alters caching behavior by extending and modifying a few of discord.js's original classes as follows:
+This library alters caching behavior by extending and modifying a few of discord.js's original classes and functions as follows:
 
 * Users are not cached. Relevant events contain a temporary User object or partial instead. Users can be manually cached by using `client.users.fetch(id)`. This will not cache the guild member.
 * Channels are not cached. Relevant events contain a temporary Channel object or partial instead. Channels can be manually cached by using `client.channels.fetch(id)`. This will not cache the channel in the guild.
@@ -129,18 +133,20 @@ Some extra functionality is also included:
 | Func/Prop | Returns | Description |
 | ------------- | ------------- | ------------- |
 | client.getInfo() | promise>object | Gather several statistics about the client such as guild count, user count, sharding information, total active (cached) users and channels, websocket pings, uptimes, cpu usage and memory usage |
-| message.eval(string) | promise>anything | An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this` (should be locked to owners only) |
-| message.reply(content,options) | promise>message | This function does the same as message.channel.send() but adds several improvements: handles promises, objects, falsey values and other non-string types, truncates large strings if no split options are provided, automatically caches the guild, channel, author and messages involved, tracks activity for automatic sweeping, logs response times, adds request-response pairing and if possible sends responses as edits when triggered by editing a previous command |
+| message.eval(string) | promise>anything | An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this` (should not be public) |
+| message.reply(content,options) | promise>message | Completely replaces the original message.reply(). It does the same as message.channel.send() but adds several improvements: handles promises, objects, falsey values and other non-string types, truncates large strings if no split options are provided, automatically caches the guild, channel, author and messages involved, tracks activity for automatic sweeping, logs response times, adds request-response pairing and if possible sends responses as edits when triggered by editing a previous command |
 | message.commandResponse | message | The message object that was sent as a response to this command. Only available if it was sent with message.reply() |
 | message.commandMessage | message | The message object that triggered this response. Only available if this response was sent with message.reply() |
 | message.commandResponseTime | number | Message response time in milliseconds. Only available in response messages if they were sent with message.reply() |
 | channel.lastActive | number | Timestamp of the last time this channel was used by the client |
-| channel.noSweep | boolean | Whether this channel should be automatically sweeped |
+| channel.noSweep | boolean | Whether this channel should be cached forever |
 | user.lastActive | number | Timestamp of the last time this user was replied to by message.reply() |
-| user.noSweep | boolean | Whether this user should be automatically sweeped |
+| user.noSweep | boolean | Whether this user should be cached forever |
 
 ## About
 
 This project is somewhat experimental, so there might be bugs and broken features especially in untested scenarios (i have tested only features that my bots need). You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions or contributions you might find.
 
-You can also find me in my [discord](https://discord.gg/BpeedKh) (Tim#2373)
+You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
+
+[![Beerpay](https://img.shields.io/beerpay/timotejroiko/discord.js-light?label=buy%20me%20a%20beer%20%28jk%20i%20dont%20drink%29)](https://beerpay.io/timotejroiko/discord.js-light)
