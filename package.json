@@ -1,6 +1,6 @@
 {
 	"name": "discord.js-light",
-	"version": "2.3.4",
+	"version": "2.3.5",
 	"description": "A minimalistic discord.js framework that disables the original library's aggressive caching behavior and prevents excessive resource usage",
 	"main": "client.js",
 	"scripts": {
