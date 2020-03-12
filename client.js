@@ -80,7 +80,7 @@ Discord.Structures.extend("Message", M => {
 		get member() {
 			return this.guild ? this.guild.members.cache.get((this.author || {}).id) || this._member || null : null;
 		}
-		async reply(content,options) {
+		async reply(content,options = {}) {
 			if(content && typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
 			if(content && typeof content === "object") {
 				if(content.Promise) {
@@ -96,10 +96,10 @@ Discord.Structures.extend("Message", M => {
 				}
 			}
 			if(content && typeof content !== "string") { content = content+""; }
-			if(content && content.length > 1960 && (!options || !options.split)) {
-				content = `${content.substring(0, 1960)}\n\n ... and ${content.slice(1960).split("\n").length} more lines ${content.startsWith("```") ? "```" : ""}`;
+			if(content && content.length > 1950 && !options.split) {
+				content = `${content.substring(0, 1950)}\n\n ... and ${content.slice(1950).split("\n").length} more lines ${content.startsWith("```") ? "```" : ""}`;
 			}
-			if(!content && (!options || (!options.content && !options.embed && !options.files))) {
+			if(!content && !options.content && !options.embed && !options.files) {
 				content = "⠀";
 			}
 			if(this.channel.type === "text" && !this.client.guilds.cache.has(this.channel.guild.id)) {
@@ -117,11 +117,14 @@ Discord.Structures.extend("Message", M => {
 				this.channel.messages.cache.set(this.id,this);
 			}
 			if(this.editedTimestamp && this.commandResponse) {
-				if(this.commandResponse.attachments.size || (options && (options.files) || this.commandResponse.embeds.length && (!options || !options.embed))) {
+				if(this.commandResponse.attachments.size || options.files) {
 					let response = await this.channel.send(content,options);
 					if(!this.commandResponse.deleted) { this.commandResponse.delete().catch(e => {}); }
 					this.commandResponse = response;
 				} else {
+					if(this.commandResponse.embeds.length && !options.embed) {
+						options.embed = null;
+					}
 					this.commandResponse = await this.commandResponse.edit(content,options);
 				}
 			} else {
