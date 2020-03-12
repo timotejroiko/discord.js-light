@@ -1,6 +1,6 @@
 # discord.js-light
 
-A minimalistic [discord.js (v12)](https://discord.js.org) framework that controls the original library's aggressive caching behavior to prevent excessive resource usage. It works by modifying several of discord.js' classes and functions to prevent data from being cached at the source, and introduces several workarounds to keep its data structures intact.
+A minimalistic [discord.js (v12)](https://discord.js.org) framework that controls the original library's aggressive caching behavior to prevent excessive resource usage. It works by modifying a few of discord.js' classes and functions to prevent data from being cached at the source, and introduces workarounds to keep its data structures intact as partials.
 
 [![npm](https://img.shields.io/npm/v/discord.js-light?label=current%20version)](https://www.npmjs.com/package/discord.js-light)
 [![GitHub Release Date](https://img.shields.io/github/release-date/timotejroiko/discord.js-light?label=last%20updated)](https://github.com/timotejroiko/discord.js-light/releases)
@@ -54,7 +54,9 @@ client.on("ready", () => {
 });
 
 client.on("message", message => {
-	// do stuff
+	if(message.content === "?!ping") {
+		message.reply("pong")
+	}
 });
 ```
 
@@ -145,7 +147,7 @@ Some extra functionality is also included:
 
 ## About
 
-This project is somewhat experimental, so there might be bugs and broken features especially in untested scenarios (i have tested only features that my bots need). You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions or contributions you might find.
+This project is somewhat experimental, so there might be bugs and broken features especially in untested scenarios (i have tested only features that my bots need). You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you might find.
 
 You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
