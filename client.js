@@ -277,10 +277,10 @@ Discord.Client = class Client extends Discord.Client {
 			console.log(`[${new Date().toISOString()}][Shard ${id}] Error`,e);
 		});
 		this.on("shardReconnecting", e => {
-			console.log(`[${new Date().toISOString()}][Shard ${e}] Reconnecting`,e);
+			console.log(`[${new Date().toISOString()}][Shard ${e}] Reconnecting`); // e is useless
 		});
 		this.on("shardResume", (e,evts) => {
-			console.log(`[${new Date().toISOString()}][Shard ${e}] Resumed`,e,evts);
+			console.log(`[${new Date().toISOString()}][Shard ${e}] Resumed`); // e and evts are useless
 		});
 		this.on("raw", async r => {
 			switch(r.t) {
@@ -302,7 +302,6 @@ Discord.Client = class Client extends Discord.Client {
 						}
 					}
 					if(r.d.author.id === this.user.id) {
-						let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id});
 						let channel = this.channels.cache.get(r.d.channel_id);
 						if(!channel) {
 							channel = await this.channels.fetch(r.d.channel_id);
@@ -311,13 +310,11 @@ Discord.Client = class Client extends Discord.Client {
 								channel.guild.channels.cache.set(channel.id,channel);
 							}
 						}
-						if(channel.messages.cache.has(r.d.id)) { channel.messages.cache.get(r.d.id).patch(r.d); } else { channel.messages.add(r.d); }
-						channel.lastActive = Date.now();
 						if(channel.type === "dm") {
 							if(!this.users.cache.has(channel.recipient.id)) { this.users.add(channel.recipient); }
 							channel.recipient.lastActive = Date.now();
 						}
-						break;
+						channel.lastActive = Date.now();
 					}
 					if(r.d.channel_id && (this.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue.length > 5) {
 						console.log("rate limited",(this.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue);
@@ -330,7 +327,7 @@ Discord.Client = class Client extends Discord.Client {
 						message = channel.messages.cache.get(r.d.id);
 						message.patch(r.d);
 					} else {
-						message = channel.messages.add(r.d,false);
+						message = channel.messages.add(r.d,r.d.author.id === this.user.id);
 					}
 					this.emit("message",message);
 					break;
