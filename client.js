@@ -95,7 +95,7 @@ Discord.Structures.extend("Message", M => {
 					content = "```js\n" + obj + "```";
 				}
 			}
-			if(content && typeof content !== "string") { content = content+""; }
+			if(typeof content !== "string") { content = content+""; }
 			if(content && content.length > 1950 && !options.split) {
 				content = `${content.substring(0, 1950)}\n\n ... and ${content.slice(1950).split("\n").length} more lines ${content.startsWith("```") ? "```" : ""}`;
 			}
@@ -103,7 +103,7 @@ Discord.Structures.extend("Message", M => {
 				content = "⠀";
 			}
 			if(this.channel.type === "text" && !this.client.guilds.cache.has(this.channel.guild.id)) {
-				this.channel.guild = await this.client.guilds.add({id:this.channel.guild.id});
+				this.channel.guild = this.client.guilds.add({id:this.channel.guild.id});
 			}
 			if(!this.client.channels.cache.has(this.channel.id)) {
 				this.channel = await this.client.channels.fetch(this.channel.id);
@@ -190,20 +190,15 @@ Discord.Structures.extend("DMChannel", D => {
 Discord.Channel.create = (client, data, guild) => {
 	let channel;
 	if(!data.guild_id && !guild) {
-		switch(data.type) {
-			case Discord.Constants.ChannelTypes.DM: {
-				const DMChannel = Discord.Structures.get('DMChannel');
-				channel = new DMChannel(client, data);
-				break;
-			}
-			case Discord.Constants.ChannelTypes.GROUP: {
-				const PartialGroupDMChannel = require('./PartialGroupDMChannel');
-				channel = new PartialGroupDMChannel(client, data);
-				break;
-			}
+		if((data.recipients && data.type !== Discord.Constants.ChannelTypes.GROUP) || data.type === Discord.Constants.ChannelTypes.DM) {
+			const DMChannel = Discord.Structures.get('DMChannel');
+			channel = new DMChannel(client, data);
+		} else if(data.type === Discord.Constants.ChannelTypes.GROUP) {
+			const PartialGroupDMChannel = require('./PartialGroupDMChannel');
+			channel = new PartialGroupDMChannel(client, data);
 		}
 	} else {
-		guild = guild || client.guilds.cache.get(data.guild_id);
+		guild = guild || client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id},false);
 		if(guild) {
 			switch(data.type) {
 				case Discord.Constants.ChannelTypes.TEXT: {
