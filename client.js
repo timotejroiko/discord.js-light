@@ -103,7 +103,7 @@ Discord.Structures.extend("Message", M => {
 				content = "⠀";
 			}
 			if(this.channel.type === "text" && !this.client.guilds.cache.has(this.channel.guild.id)) {
-				this.channel.guild = this.client.guilds.add({id:this.channel.guild.id});
+				this.channel.guild = this.client.guilds.add({id:this.channel.guild.id,shardID:this.channel.guild.shardID});
 			}
 			if(!this.client.channels.cache.has(this.channel.id)) {
 				this.channel = await this.client.channels.fetch(this.channel.id);
@@ -111,7 +111,9 @@ Discord.Structures.extend("Message", M => {
 			}
 			if(!this.client.users.cache.has(this.author.id)) {
 				this.author = this.client.users.add(this.author);
-				if(this.member) { this.guild.members.add(this.member); }
+			}
+			if(this.member && !this.channel.guild.members.cache.has(this.author.id)) {
+				this.guild.members.add(this.member);
 			}
 			if(!this.channel.messages.cache.has(this.id)) {
 				this.channel.messages.cache.set(this.id,this);
@@ -198,7 +200,7 @@ Discord.Channel.create = (client, data, guild) => {
 			channel = new PartialGroupDMChannel(client, data);
 		}
 	} else {
-		guild = guild || client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id},false);
+		guild = guild || client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:data.shardID},false);
 		if(guild) {
 			switch(data.type) {
 				case Discord.Constants.ChannelTypes.TEXT: {
@@ -242,6 +244,8 @@ Discord.Client = class Client extends Discord.Client {
 				messageCacheLifetime: 86400,
 				messageSweepInterval: 86400,
 				disableMentions: "all",
+				clientSweepInterval: 86400,
+				shardCheckInterval: 600
 			},
 			options
 		);
@@ -266,19 +270,29 @@ Discord.Client = class Client extends Discord.Client {
 			console.log(`[${new Date().toISOString()}] Error`,e);
 		});
 		this.on("shardDisconnect", (e,id) => {
-			console.log(`[${new Date().toISOString()}][Shard ${id}] Died`,e);
+			console.log(`[${new Date().toISOString()}][Shard ${id}] Died and will not reconnect. Reason:`,e);
 		});
 		this.on("shardError", (e,id) => {
 			console.log(`[${new Date().toISOString()}][Shard ${id}] Error`,e);
 		});
-		this.on("shardReconnecting", e => {
-			console.log(`[${new Date().toISOString()}][Shard ${e}] Reconnecting`); // e is useless
+		this.on("shardReconnecting", id => {
+			console.log(`[${new Date().toISOString()}][Shard ${id}] Reconnecting`);
 		});
-		this.on("shardResume", (e,evts) => {
-			console.log(`[${new Date().toISOString()}][Shard ${e}] Resumed`); // e and evts are useless
+		this.on("shardResume", (id,evts) => {
+			console.log(`[${new Date().toISOString()}][Shard ${id}] Resumed`); // evts are useless
 		});
-		this.on("raw", async r => {
+		this.on("raw", async (r,shard) => {
+			if(r.op > 0) { return; }
+			if(r.d) { r.d.shardID = shard; }
+			if(r.t !== "READY") {
+				let shard = this.ws.shards.get(r.d.shardID);
+				shard.lastActive = Date.now();
+			}
 			switch(r.t) {
+				case "READY": {
+					console.log(`[${new Date().toISOString()}][Shard ${r.d.shardID}] Connected! Fetching ${r.d.guilds.length} Guilds`);
+					break;
+				}
 				case "MESSAGE_CREATE": case "MESSAGE_UPDATE": {
 					if(r.t === "MESSAGE_UPDATE" && !r.d.edited_timestamp) { break; }
 					if(this.users.cache.has(r.d.author.id)) {
@@ -315,7 +329,7 @@ Discord.Client = class Client extends Discord.Client {
 						console.log("rate limited",(this.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue);
 						break;
 					}
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
 					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
 					let message;
 					if(channel.messages.cache.has(r.d.id)) {
@@ -328,7 +342,7 @@ Discord.Client = class Client extends Discord.Client {
 					break;
 				}
 				case "MESSAGE_DELETE": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
 					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
 					let message;
 					if(channel.messages.cache.has(r.d.id)) {
@@ -345,7 +359,7 @@ Discord.Client = class Client extends Discord.Client {
 					break;
 				}
 				case "MESSAGE_DELETE_BULK": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
 					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
 					let deleted = new Discord.Collection();
 					for(let i = 0; i < r.d.ids.length; i++) {
@@ -382,7 +396,7 @@ Discord.Client = class Client extends Discord.Client {
 							this.emit("memberUpdate",oldmember,member);
 						}
 					}
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
 					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
 					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
 					let user = this.users.cache.get(r.d.user_id) || this.users.add((r.d.member || {}).user || {id:r.d.user_id},false);
@@ -396,7 +410,7 @@ Discord.Client = class Client extends Discord.Client {
 					break;
 				}
 				case "MESSAGE_REACTION_REMOVE":  {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
 					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
 					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
 					let user = this.users.cache.get(r.d.user_id) || this.users.add((r.d.member || {}).user || {id:r.d.user_id},false);
@@ -410,14 +424,14 @@ Discord.Client = class Client extends Discord.Client {
 					break;
 				}
 				case "MESSAGE_REACTION_REMOVE_ALL": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
 					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
 					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
 					this.emit("messageReactionRemoveAll",message);
 					break;
 				}
 				case "MESSAGE_REACTION_REMOVE_EMOJI": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
 					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
 					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
 					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:null},channel.messages.cache.has(r.d.message_id));
@@ -427,7 +441,7 @@ Discord.Client = class Client extends Discord.Client {
 					break;
 				}
 				case "CHANNEL_CREATE": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
 					let channel = this.channels.cache.get(r.d.id);
 					if(!channel) {
 						channel = this.channels.add(r.d,guild,false);
@@ -449,7 +463,7 @@ Discord.Client = class Client extends Discord.Client {
 						this.emit("channelUpdate",oldchannel,newchannel);
 					} else {
 						let channel = this.channels.cache.get(r.d.channel_id);
-						let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
+						let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
 						if(!channel) {
 							if(guild && !guild.roles.cache.size) { r.d.permission_overwrites = []; }
 							channel = this.channels.add(r.d,guild,false);
@@ -460,7 +474,7 @@ Discord.Client = class Client extends Discord.Client {
 				}
 				case "CHANNEL_PINS_UPDATE": {
 					let channel = this.channels.cache.get(r.d.channel_id);
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
 					if(!channel) {
 						channel = this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
 					}
@@ -469,7 +483,7 @@ Discord.Client = class Client extends Discord.Client {
 					break;
 				}
 				case "CHANNEL_DELETE": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false) : undefined;
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
 					let channel = this.channels.cache.get(r.d.id);
 					if(channel) {
 						for(let message of channel.messages.cache.values()) { message.deleted = true; }
@@ -489,7 +503,7 @@ Discord.Client = class Client extends Discord.Client {
 							this.emit("userUpdate",olduser,user);
 						}
 					}
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
 					let member = guild.members.add(r.d,guild.members.cache.has(r.d.user.id));
 					if(!guild.members.cache.has(r.d.user.id)) {
 						this.emit("guildMemberAdd",member);
@@ -504,7 +518,7 @@ Discord.Client = class Client extends Discord.Client {
 							this.emit("userUpdate",olduser,user);
 						}
 					}
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
 					let member = guild.members.cache.get(r.d.user.id) || guild.members.add(r.d,false);
 					guild.members.cache.delete(r.d.user.id);
 					this.emit("guildMemberRemove",member);
@@ -518,7 +532,7 @@ Discord.Client = class Client extends Discord.Client {
 							this.emit("userUpdate",olduser,user);
 						}
 					}
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
 					if(guild.members.cache.has(r.d.user.id)) {
 						let member = guild.members.cache.get(r.d.user.id);
 						let oldmember = member._update(r.d);
@@ -531,7 +545,7 @@ Discord.Client = class Client extends Discord.Client {
 					break;
 				}
 				case "GUILD_ROLE_CREATE": {
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
 					if (guild) {
 						let role = guild.roles.add(r.d.role, Boolean(guild.roles.cache.size));
 						this.emit("roleCreate", role);
@@ -539,7 +553,7 @@ Discord.Client = class Client extends Discord.Client {
 					break;
 				}
 				case "GUILD_ROLE_UPDATE": {
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
 					if (guild) {
 						if(guild.roles.cache.size) {
 							let role = guild.roles.cache.get(r.d.role.id);
@@ -553,7 +567,7 @@ Discord.Client = class Client extends Discord.Client {
 					break;
 				}
 				case "GUILD_ROLE_DELETE": {
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
 					if (guild) {
 						let role = guild.roles.cache.get(r.d.role_id) || guild.roles.add({id:r.d.role_id}, false);
 						guild.roles.cache.delete(r.d.role_id);
@@ -570,7 +584,7 @@ Discord.Client = class Client extends Discord.Client {
 							this.emit("userUpdate",olduser,user);
 						}
 					}
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
 					let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user,false);
 					this.emit("guildBanAdd", guild, user);
 					break;
@@ -583,7 +597,7 @@ Discord.Client = class Client extends Discord.Client {
 							this.emit("userUpdate",olduser,user);
 						}
 					}
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id},false);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
 					let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user,false);
 					this.emit("guildBanRemove", guild, user);
 					break;
@@ -609,28 +623,39 @@ Discord.Client = class Client extends Discord.Client {
 					}
 					break;
 				}
-				case "GUILD_DELETE":
-					break;
-				case "RESUMED":
-					break;
-				case "READY": {
-					console.log(`[${new Date().toISOString()}][Shard ${r.d.shard[0]}] Connected! Fetching ${r.d.guilds.length} Guilds`);
-					break;
-				}
 			}
 		});
-		setInterval(() => {
-			this.users.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - 86400000) && !t.noSweep);
-			this.channels.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - 86400000) && !t.noSweep);
-			this.guilds.cache.forEach(t => {
-				t.members.cache.sweep(m => !this.users.cache.has(m.id));
-				t.channels.cache.sweep(m => !this.channels.cache.has(m.id));
-			});
-		},86400000);
+		if(this.options.clientSweepInterval && !isNaN(this.options.clientSweepInterval)) {
+			setInterval(() => {
+				this.sweepInactive();
+			},this.options.clientSweepInterval * 1000);
+		}
+		if(this.options.shardCheckInterval && !isNaN(this.options.shardCheckInterval)) {
+			setInterval(() => {
+				this.checkShards();
+			},this.options.shardCheckInterval * 1000);
+		}
 		if(this.options.token) {
 			console.log(`[${new Date().toISOString()}] Connecting...`);
 			this.login(this.options.token).catch(e => { throw e; });
 		}
+	}
+	sweepInactive() {
+		this.users.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - 86400000) && !t.noSweep && t.id !== this.user.id);
+		this.channels.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - 86400000) && !t.noSweep);
+		this.guilds.cache.forEach(t => {
+			t.members.cache.sweep(m => !this.users.cache.has(m.id));
+			t.channels.cache.sweep(m => !this.channels.cache.has(m.id));
+		});
+	}
+	checkShards() {
+		let timer = this.options.shardCheckInterval && !isNaN(this.options.shardCheckInterval) ? this.options.shardCheckInterval * 1000 : 600000;
+		this.ws.shards.forEach(shard => {
+			if(shard.lastActive < Date.now() - timer) {
+				console.log(`[${new Date().toISOString()}][Shard ${shard.id}] Possibly dead. Attempting to reconnect`);
+				shard.destroy();
+			}
+		})
 	}
 	async getInfo() {
 		const statuses = Object.keys(Discord.Constants.Status);
@@ -639,10 +664,10 @@ Discord.Client = class Client extends Discord.Client {
 			shardID:i,
 			status:statuses[this.ws.shards.get(i).status],
 			ping:Math.round(this.ws.shards.get(i).ping),
-			guilds:this.guilds.cache.filter(t => Math.abs((t.id >> 22)) % this.options.shardCount === i).size,
-			memberCount:this.guilds.cache.reduce((a,t) => t.memberCount && Math.abs((t.id >> 22)) % this.options.shardCount === i ? a += t.memberCount : a,0),
-			activeGuildMembers:this.guilds.cache.reduce((a,t) => Math.abs((t.id >> 22)) % this.options.shardCount === i ? a += t.members.cache.filter(a => a.id !== this.user.id).size : a,0),
-			activeGuildChannels:this.guilds.cache.reduce((a,t) => Math.abs((t.id >> 22)) % this.options.shardCount === i ? a += t.channels.cache.size : a,0)
+			guilds:this.guilds.cache.filter(t => t.shardID === i).size,
+			memberCount:this.guilds.cache.reduce((a,t) => t.memberCount && t.shardID === i ? a + t.memberCount : a,0),
+			activeGuildMembers:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.members.cache.filter(a => a.id !== this.user.id).size : a,0),
+			activeGuildChannels:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.channels.cache.size : a,0)
 		}});
 		shards[0].activeDMUsers = this.users.cache.filter(t => t.id !== this.user.id && !this.guilds.cache.some(a => a.members.cache.has(t.id))).size;
 		shards[0].activeDMChannels = this.channels.cache.filter(t => t.type === "dm").size;
@@ -659,7 +684,7 @@ Discord.Client = class Client extends Discord.Client {
 				r(100.0 * ((elap[1].user / 1000) + (elap[1].system / 1000)) / (elap[0][0] * 1000 + elap[0][1] / 1000000));
 			}))+'e2')+'e-2'),
 			guilds:this.guilds.cache.size,
-			memberCount:shards.reduce((a,t) => a += t.memberCount,0),
+			memberCount:shards.reduce((a,t) => a + t.memberCount,0),
 			activeUsers:this.users.cache.filter(t => t.id !== this.user.id).size,
 			activeChannels:this.channels.cache.size,
 			shardDetails:shards
