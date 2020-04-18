@@ -1,6 +1,6 @@
 # discord.js-light
 
-A minimalistic [discord.js (v12)](https://discord.js.org) framework that controls the original library's aggressive caching behavior to prevent excessive resource usage. It works by modifying a few of discord.js' classes and functions to prevent data from being cached at the source, and introduces workarounds to keep its data structures intact as partials.
+A minimalistic [discord.js (v12)](https://discord.js.org) framework focused on disabling the original library's aggressive caching behavior to prevent excessive resource usage. It works by modifying a few of discord.js' classes and functions to prevent data from being cached at the source, and introduces workarounds to keep its data structures intact as unofficial partials.
 
 [![npm](https://img.shields.io/npm/v/discord.js-light?label=current%20version)](https://www.npmjs.com/package/discord.js-light)
 [![GitHub Release Date](https://img.shields.io/github/release-date/timotejroiko/discord.js-light?label=last%20updated)](https://github.com/timotejroiko/discord.js-light/releases)
@@ -14,7 +14,7 @@ Discord.js has been THE javascript discord library for a long time now, and succ
 
 This is due to the fact that discord.js caches EVERYTHING it can in order to avoid hitting the Discord API as much as possible. This behavior can however make the library feel bloated for most developers as many times the library is caching and processing data that your bot will never use.
 
-This issue has been discussed a few times by the community but ultimately it has been decided that the library is too tightly coupled with its caching systems and seperating them would be unfeasible. Thus the task of taming the monster falls back to us bot developers.
+This issue has been discussed a few times by the community but ultimately it has been decided that the library is too tightly coupled with its caching systems and seperating them would be unfeasible. Thus the task of scaling falls back to us bot developers.
 
 Several solutions have been presented so far, such as regular cache sweeping. However i felt that the existing methods were lacking and decided to design my own solution. This project later became the base boilerplate for all my bots and it does a wonderful job keeping hosting costs and scaling maintenance in check.
 
@@ -23,7 +23,7 @@ Several solutions have been presented so far, such as regular cache sweeping. Ho
 * Provides most of discord.js's basic events without any automatic caching
 * Most classes have their structures intact and can be used the same way as the original library
 * Partial objects are given when data is missing and can be manually fetched and cached when needed
-* Makes use of Discord's new intents system to receive only data that is actually used
+* Fully compatible with Discord's new intents system to receive only data that is actually used (enabled by default)
 * Uses a fraction of memory, cpu and bandwidth compared to the original library (benchmarks can be found in the djs-shenanigans folder)
 
 ## Getting Started
@@ -60,34 +60,36 @@ client.on("message", message => {
 });
 ```
 
-Unlike its predecessor, discord.js-light attempts to deliver a cleaner discord.js experience, it does not include prefix managers or command handlers. It does however include a few convenience methods and functions, as well as an optional auto-login, opinionated default client settings (internal sharding, intents, disableMentions, sweeping, etc...) and logging of connection events and errors enabled by default. PM2 cluster support was also removed to be reworked as a separate feature in the future.
+Unlike its predecessor, discord.js-light attempts to deliver a cleaner discord.js experience and as such it does not include prefix managers or command handlers. It is still however a fairly opinionated framework and includes some non-standard behavior such as convenience methods and functions, auto-login, internal sharding and intents enabled by default, sweeping intervals and logging of connection events. PM2 cluster support was also removed to be reworked as a separate feature in the future.
 
-## Caching
+## Caching Behavior
 
-This library alters caching behavior by extending and modifying a few of discord.js's original classes and functions as follows:
+This library alters caching behavior as follows:
 
-* Users are not cached. Relevant events contain a temporary User object or partial instead. Users can be manually cached by using `client.users.fetch(id)`. This will not cache the guild member.
-* Channels are not cached. Relevant events contain a temporary Channel object or partial instead. Channels can be manually cached by using `client.channels.fetch(id)`. This will not cache the channel in the guild.
-* Messages are not cached. Relevant events contain a temporary Message object or partial instead. Messages can be manually cached by fetching its channel and then using `channel.messages.fetch(id)`
-* Guilds are cached at login and will be synced while they remain in the cache (can be sweeped), but not its contents. See below
-* Guild Emojis are not cached and not synced. They can be cached by using `guild.fetch()`. This will also enable them to sync.
-* Guild Roles are not cached and not synced. They can be cached by using `guild.fetch()`. This will also enable them to sync.
-* Guild Members are not cached. Relevant events contain a temporary Member object or partial instead. Members can be manually cached by using `guild.members.fetch(id)`. This will not cache the user.
-* Guild Channels are not cached. Guild Channels can be cached in the guild by fetching it and then linking it using `guild.channels.cache.set(fetchedChannel.id,fetchedChannel)`.
-* Guild Channel Permission Overwrites are not cached and not synced. They can only be cached by fetching the guild to enable role syncing, then fetching the channel and linking it to the guild. This will also enable them to sync. This might be required to enable many permission checking functions.
+* Users are not cached by default. Users can be manually cached by using `client.users.fetch(id)`. This will not cache the guild member.
+* Channels are not cached by default. This will not cache the channel in the guild.
+* Messages are not cached by default. Messages can be manually cached by fetching its channel and then using `channel.messages.fetch(id)`
+* Guilds are cached at login and will be kept updated as long as they remain in the cache, but not all of its contents are cached (see below). Guilds can also be safely sweeped/removed from the cache for additional memory saving.
+* Guild Emojis are not cached by default. Emojis can be cached by using `guild.fetch()`. Once cached, they will be kept updated while they remain in the cache.
+* Guild Roles are not cached by default. Roles can be cached by using `guild.fetch()`. Once cached, they will be kept updated while they remain in the cache.
+* Guild Members are not cached by default. Members can be cached by using `guild.members.fetch(id)`. This will not cache the user which will need to be fetched separately.
+* Guild Channels are not cached by default. Guild Channels can be added to the guild cache by fetching the channel and then linking it using `guild.channels.cache.set(fetchedChannel.id,fetchedChannel)`.
+* Guild Channel Permission Overwrites are not cached by default. They can only be cached by fetching the guild to ensure roles are updated, then fetching the channel and linking it to the guild. Once cached, they will be updated as long as they remain in the cache. This might be required to enable many permission checking functions.
 * Guild Presences and VoiceStates are disabled.
 
-Cached Users, Channels and their Member and GuildChannel counterparts get automatically sweeped after 24 hours of inactivity. To disable sweeping of a User or Channel, give them a custom `noSweep` property set to `true`. This will also disable sweeping of their Member and GuildChannel counterparts.
+All relevant events provide a temporary/partial object if the full object is not cached. These objects may have missing information, so depending on your needs, you might need to fetch them before using them.
 
-Unlike discord.js, discord.js-light will properly function and fire events even if nothing is cached and most methods will work normaly when called on partials and temporary objects. You can send messages to uncached channels, receive reactions from uncached messages, receive delete events from uncached objects and even completely sweep the guild cache without breaking the library.
+Messages sent by the client itself will automatically cache the relevant objects (DMChannel/User, GuildChannel and Message).
+
+Unlike discord.js, discord.js-light will properly function even if nothing is cached and most methods will work properly when called on partials and temporary objects. You can send/receive messages to/from uncached channels, send/receive reactions to/from uncached messages, receive update/delete events from uncached objects and even completely sweep the guild cache without breaking the library.
 
 ## Events
 
-Most events should be identical to the originals, with a few exceptions. All partial objects will be full objects if they are cached.
+Most events should be identical to the originals besides the caching behavior. All partial objects will be full objects if cached.
 
 | Event | Description |
 | ------------- | ------------- |
-| message | This event is fired by both new messages and edited messages. It provides a full Message object with a partial Channel object. The messageUpdate event was merged into the message event in order to make it easy for the bot to reply to edited messages. Edited messages can be identified by checking for the existence of .editedTimestamp |
+| message | This event is fired by both new messages and edited messages. It provides a full Message object with a partial Channel object. The messageUpdate event was merged into the message event in order to make it easy for the bot to reply to edited messages. Edited messages can be identified by checking for the existence of message.editedTimestamp and be accessed from message.edits if cached |
 | messageDelete | Provides a partial Message object with a partial Channel object |
 | messageDeleteBulk | Provides a Collection of deleted messages as above |
 | messageReactionAdd | Provides full Reaction object with partial Message object, and full User object (partial if DM). Does not provide Reaction count nor Reaction users if not cached |
@@ -104,51 +106,40 @@ Most events should be identical to the originals, with a few exceptions. All par
 | guildBanAdd | Provides a full Guild object and a full User object |
 | guildBanRemove | Provides a full Guild object and a full User object |
 | guildCreate | Provides a full Guild object without Roles, Emojis, Channels, Members, Presences and VoiceStates |
-| guildUpdate | Provides a full old Guild object and a full new Guild object. Does not contain Roles, Emojis, Channels, Members, Presences and VoiceStates unless previously cached or fetched. |
-| guildDelete | Provides a full Guild object |
-| userUpdate | This event is only fired if the user is cached and when the updated user is active. It provides a full User object |
-| guildMemberUpdate | This event is only fired if the member is cached and when the updated member is active. It provides a full Member object |
+| guildUpdate | Provides a NULL old Guild object if not cached and a NULL new Guild object if not cached. Does not contain Roles, Emojis, Channels, Members, Presences and VoiceStates unless previously cached or fetched. |
+| guildDelete | Provides a NULL Guild object if not cached |
+| userUpdate | Provides a NULL old User object if not cached and a full new User object |
+| guildMemberAdd | Provides a full Member object. Requires the GUILD MEMBERS priviledged intent |
+| guildMemberUpdate | Provides a NULL old Member object if not cached and a full new Member object. Requires the GUILD MEMBERS priviledged intent |
+| guildMemberRemove | Provides a partial Member object. Requires the GUILD MEMBERS priviledged intent |
 
-guildMemberAdd and guildMemberRemove are disabled due to discord's new restrictions when using Intents. They can be enabled either by disabling Intents (which will also enable presence updates and massively increase cpu and bandwidth usage) or by enabling the priviledged SERVER MEMBERS Intent in the Discord developer portal and passing the corresponding intents to the client options. If Intents are disabled or the priviledged Intent is enabled and added, the following events will be enabled:
+All other events (except connection events) are currently not available.
 
-| Event | Description |
-| ------------- | ------------- |
-| guildMemberAdd | Provides a full Member object |
-| guildMemberUpdate | Provides a full Member object. Replaces the activity-based version mentioned above |
-| guildMemberRemove | Provides a partial Member object |
-
-To disable or modify Intents, pass them to the client options like this:
-```js
-client = new Client({
-	ws: {
-		intents:<bitmask> // new bitmask to include GUILD_MEMBER packets, or false to disable intents
-	}
-});
-```
-
-All other events, except connection events, are disabled. Additionally, there might be bugs or inconsistencies due to being unable to test all possible situations that might occur, so thread carefully.
-
-## Extras
+## Additional Functionality
 
 Some extra functionality is also included:
 
 | Func/Prop | Returns | Description |
 | ------------- | ------------- | ------------- |
-| client.getInfo() | promise>object | Gather several statistics about the client such as guild count, user count, sharding information, total active (cached) users and channels, websocket pings, uptimes, cpu usage and memory usage |
-| message.eval(string) | promise>anything | An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this` (should not be public) |
-| message.reply(content,options) | promise>message | Completely replaces the original message.reply(). It does the same as message.channel.send() but adds several improvements: handles promises, objects, falsey values and other non-string types, truncates large strings if no split options are provided, automatically caches the guild, channel, author and messages involved, tracks activity for automatic sweeping, logs response times, adds request-response pairing and if possible sends responses as edits when triggered by editing a previous command |
-| message.commandResponse | message | The message object that was sent as a response to this command. Only available if it was sent with message.reply() |
-| message.commandMessage | message | The message object that triggered this response. Only available if this response was sent with message.reply() |
-| message.commandResponseTime | number | Message response time in milliseconds. Only available in response messages if they were sent with message.reply() |
-| channel.lastActive | number | Timestamp of the last time this channel was used by the client |
-| channel.noSweep | boolean | Whether this channel should be cached forever |
-| user.lastActive | number | Timestamp of the last time this user was replied to by message.reply() |
-| user.noSweep | boolean | Whether this user should be cached forever |
+| Message.eval(string) | promise>anything | An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this` (should not be public) |
+| Message.reply(content,options) | promise>message | Completely replaces the original message.reply(). It does the same as message.channel.send() but adds several improvements: handles promises, objects, falsey values and other non-string types, truncates large strings if no split options are provided, automatically caches the channel, author and messages involved, tracks activity for automatic sweeping, adds response times, adds request-response pairing and if possible sends responses as edits when triggered by editing a previous command |
+| Message.commandResponse | message | The message object that was sent as a response to this command. Only available if it was sent with message.reply() |
+| Message.commandMessage | message | The message object that triggered this response. Only available if this response was sent with message.reply() |
+| Message.commandResponseTime | number | Message response time in milliseconds. Only available in response messages if they were sent with message.reply() |
+| Channel.lastActive | number | Timestamp of the last time this channel was used by the client |
+| Channel.noSweep | boolean | Set to `true` if this channel should be cached forever |
+| User.lastActive | number | Timestamp of the last time this user was replied to by message.reply() |
+| User.noSweep | boolean | Set to `true` if this user should be cached forever |
+| Client.options.clientSweepInterval | number | How often to sweep inactive cached channels and users in seconds. Set to `0` to disable (default:86400) |
+| Client.options.shardCheckInterval | number | How often to check for shard activity in seconds (internal sharding only). Inactive shards will be forced to reconnect (workaround for a rare issue with discord.js where shards randomly disconnect and refuse to reconnect). Set to `0` to disable (default:600) |
+| Client.sweepInactive() | number | Sweep inactive users/channels |
+| Client.checkShards() | number | Check for inactive shards (internal sharding only) |
+| Client.getInfo() | promise>object | Gather several statistics about the client such as guild count, user count, sharding information, total active (cached) users and channels, websocket pings, uptimes, cpu usage and memory usage |
 
 ## About
 
-This project is somewhat experimental, so there might be bugs and broken features especially in untested scenarios (i have tested only features that my bots need). You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you might find.
+This project is somewhat experimental, so there might be bugs and broken features especially in untested scenarios such as voice (i have tested only features that my bots need). You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you might find.
 
 You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
-[![Beerpay](https://img.shields.io/beerpay/timotejroiko/discord.js-light?label=buy%20me%20a%20beer%20%28jk%20i%20dont%20drink%29)](https://beerpay.io/timotejroiko/discord.js-light)
+[![Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2Ftimotejroiko&label=support%20me%20on%20patreon)](https://www.patreon.com/timotejroiko)

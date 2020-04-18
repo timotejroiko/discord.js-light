@@ -105,9 +105,11 @@ Discord.Structures.extend("Message", M => {
 			if(!content && !options.content && !options.embed && !options.files) {
 				content = "⠀";
 			}
+			/*
 			if(this.channel.type === "text" && !this.client.guilds.cache.has(this.channel.guild.id)) {
-				this.channel.guild = this.client.guilds.add({id:this.channel.guild.id,shardID:this.channel.guild.shardID});
+				this.channel.guild = this.client.guilds.add({id:this.channel.guild.id,shardID:this.channel.guild.shardID}, false);
 			}
+			*/
 			if(!this.client.channels.cache.has(this.channel.id)) {
 				this.channel = await this.client.channels.fetch(this.channel.id);
 				if(this.guild) { this.guild.channels.add(this.channel); }
@@ -188,8 +190,8 @@ Discord.Structures.extend("Guild", G => {
 	}
 });
 
-Discord.Structures.extend("GuildChannel", G => {
-	return class GuildChannel extends G {
+Discord.Structures.extend("TextChannel", T => {
+	return class TextChannel extends T {
 		get deletable() {
 			return this.guild.roles.cache.size ? this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_CHANNELS, false) : undefined;
 		}
@@ -608,8 +610,10 @@ Discord.Client = class Client extends Discord.Client {
 		}
 	}
 	sweepInactive() {
-		this.users.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - 86400000) && !t.noSweep && t.id !== this.user.id);
-		this.channels.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - 86400000) && !t.noSweep);
+		let timer = this.options.clientSweepInterval && !isNaN(this.options.clientSweepInterval) ? this.options.clientSweepInterval * 1000 : 86400000;
+		if(timer < 60000) { timer = 60000; }
+		this.users.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - timer) && !t.noSweep && t.id !== this.user.id);
+		this.channels.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - timer) && !t.noSweep);
 		this.guilds.cache.forEach(t => {
 			t.members.cache.sweep(m => !this.users.cache.has(m.id));
 			t.channels.cache.sweep(m => !this.channels.cache.has(m.id));
@@ -617,6 +621,7 @@ Discord.Client = class Client extends Discord.Client {
 	}
 	checkShards() {
 		let timer = this.options.shardCheckInterval && !isNaN(this.options.shardCheckInterval) ? this.options.shardCheckInterval * 1000 : 600000;
+		if(timer < 60000) { timer = 60000; }
 		this.ws.shards.forEach(shard => {
 			if(shard.lastActive < Date.now() - timer) {
 				console.log(`[${new Date().toISOString()}][Shard ${shard.id}] Possibly dead. Attempting to reconnect`);
