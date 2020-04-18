@@ -80,6 +80,9 @@ Discord.Structures.extend("Message", M => {
 		get member() {
 			return this.guild ? this.guild.members.cache.get((this.author || {}).id) || this._member || null : null;
 		}
+		get pinnable() {
+			return (this.type === 'DEFAULT' && (!this.guild || !this.guild.roles.cache.size || this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false)));
+		}
 		async reply(content,options = {}) {
 			if(content && typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
 			if(content && typeof content === "object") {
@@ -170,6 +173,25 @@ Discord.Structures.extend("GuildMember", G => {
 		equals(member) {
 			let equal = member && this.deleted === member.deleted && this.nickname === member.nickname && this._roles.length === member._roles.length;
 			return equal;
+		}
+	}
+});
+
+Discord.Structures.extend("Guild", G => {
+	return class Guild extends G {
+		get nameAcronym() {
+			return this.name ? this.name.replace(/\w+/g, name => name[0]).replace(/\s/g, '') : undefined;
+		}
+		get joinedAt() {
+			return this.joinedTimestamp ? new Date(this.joinedTimestamp) : undefined;
+		}
+	}
+});
+
+Discord.Structures.extend("GuildChannel", G => {
+	return class GuildChannel extends G {
+		get deletable() {
+			return this.guild.roles.cache.size ? this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_CHANNELS, false) : undefined;
 		}
 	}
 });
