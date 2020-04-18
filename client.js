@@ -10,30 +10,30 @@ const disabledEvents = [
 	//"GUILD_DELETE", // 1
 	"GUILD_EMOJIS_UPDATE", // 8
 	"GUILD_INTEGRATIONS_UPDATE", // 16
-	//"GUILD_MEMBERS_CHUNK", // ?
-	"GUILD_MEMBER_ADD", // 2
-	"GUILD_MEMBER_REMOVE", // 2
-	"GUILD_MEMBER_UPDATE", // 2
+	//"GUILD_MEMBERS_CHUNK", // passthrough // requires guild members priviledge
+	"GUILD_MEMBER_ADD", // 2 // requires guild members priviledge
+	"GUILD_MEMBER_REMOVE", // 2 // requires guild members priviledge
+	"GUILD_MEMBER_UPDATE", // 2 // requires guild members priviledge
 	"GUILD_ROLE_CREATE", // 1
 	"GUILD_ROLE_DELETE", // 1
 	"GUILD_ROLE_UPDATE", // 1
-	//"GUILD_UPDATE", // ^ ?
+	//"GUILD_UPDATE", // passthrough // probably implies guilds
 	"INVITE_CREATE", // 64
 	"INVITE_DELETE", // 64
 	"MESSAGE_CREATE", // 512 // 4096 for dm
 	"MESSAGE_DELETE", // 512 // 4096 for dm
-	"MESSAGE_DELETE_BULK", // ^ ?
+	"MESSAGE_DELETE_BULK", // passthrough ?
 	"MESSAGE_REACTION_ADD", // 1024 // 8192 for dm
 	"MESSAGE_REACTION_REMOVE", // 1024 // 8192 for dm
 	"MESSAGE_REACTION_REMOVE_ALL", // 1024 // 8192 for dm
 	"MESSAGE_REACTION_REMOVE_EMOJI", // 1024 // 8192 for dm
 	"MESSAGE_UPDATE", // 512 // 4096 for dm
-	"PRESENCE_UPDATE", // 256
+	"PRESENCE_UPDATE", // 256 // requires presences priviledge
 	//"READY",
 	//"RESUMED",
 	"TYPING_START", // 2048 // 16384 for dm
-	"USER_UPDATE", // ?
-	"VOICE_SERVER_UPDATE", // ?
+	"USER_UPDATE", // passthrough
+	//"VOICE_SERVER_UPDATE", // passthrough // client voice channel
 	"VOICE_STATE_UPDATE", // 128
 	"WEBHOOKS_UPDATE" // 32
 ];
@@ -243,7 +243,6 @@ Discord.Client = class Client extends Discord.Client {
 				messageCacheMaxSize: 10,
 				messageCacheLifetime: 86400,
 				messageSweepInterval: 86400,
-				disableMentions: "all",
 				clientSweepInterval: 86400,
 				shardCheckInterval: 600
 			},
@@ -295,72 +294,60 @@ Discord.Client = class Client extends Discord.Client {
 				}
 				case "MESSAGE_CREATE": case "MESSAGE_UPDATE": {
 					if(r.t === "MESSAGE_UPDATE" && !r.d.edited_timestamp) { break; }
-					if(this.users.cache.has(r.d.author.id)) {
-						let user = this.users.cache.get(r.d.author.id);
-						let olduser = user._update(r.d.author);
-						if(!user.equals(olduser)) {
-							this.emit("userUpdate",olduser,user);
-						}
-					}
-					if(this.guilds.cache.has(r.d.guild_id) && this.guilds.cache.get(r.d.guild_id).members.cache.has(r.d.author.id)) {
-						r.d.member.user = r.d.author;
-						let member = this.guilds.cache.get(r.d.guild_id).members.cache.get(r.d.author.id);
-						let oldmember = member._update(r.d.member);
-						if(!member.equals(oldmember)) {
-							this.emit("memberUpdate",oldmember,member);
-						}
-					}
 					if(r.d.author.id === this.user.id) {
 						let channel = this.channels.cache.get(r.d.channel_id);
 						if(!channel) {
 							channel = await this.channels.fetch(r.d.channel_id);
-							if(channel.guild) {
-								if(channel.permissionOverwrites && !channel.guild.roles.cache.size) { channel.permissionOverwrites.clear(); }
-								channel.guild.channels.cache.set(channel.id,channel);
+							if(channel.guild && channel.permissionOverwrites && !channel.guild.roles.cache.size) {
+								channel.permissionOverwrites.clear();
+								channel.guild.channels.cache.set(channel.id, channel);
 							}
 						}
-						if(channel.type === "dm") {
-							if(!this.users.cache.has(channel.recipient.id)) { this.users.add(channel.recipient); }
+						if(channel.recipient) {
+							if(!this.users.cache.has(channel.recipient.id)) {
+								channel.recipient = this.users.add(channel.recipient);
+							}
 							channel.recipient.lastActive = Date.now();
 						}
 						channel.lastActive = Date.now();
 					}
 					if(r.d.channel_id && (this.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue.length > 5) {
-						console.log("rate limited",(this.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue);
+						console.log("queue limit exceeded, possible spam",(this.rest.handlers.get("/channels/"+r.d.channel_id+"/messages") || {queue:""}).queue);
 						break;
 					}
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
-					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
-					let message;
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);
 					if(channel.messages.cache.has(r.d.id)) {
-						message = channel.messages.cache.get(r.d.id);
+						let message = channel.messages.cache.get(r.d.id);
 						message.patch(r.d);
+						if(message._edits.length > 1) { message._edits.length = 1; }
+						this.emit(Discord.Constants.Events.MESSAGE_CREATE, message);
 					} else {
-						message = channel.messages.add(r.d,r.d.author.id === this.user.id);
+						let message = channel.messages.add(r.d, r.d.author.id === this.user.id);
+						this.emit(Discord.Constants.Events.MESSAGE_CREATE, message);
 					}
-					this.emit("message",message);
 					break;
 				}
 				case "MESSAGE_DELETE": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
-					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);
 					let message;
 					if(channel.messages.cache.has(r.d.id)) {
 						message = channel.messages.cache.get(r.d.id);
-						channel.messages.cache.delete(r.d.id);
+						channel.messages.cache.delete(message.id);
 					} else {
-						message = channel.messages.add(r.d,false);
+						message = channel.messages.add({id:r.d.id}, false);
 						message.system = null;
 						message.createdTimestamp = null;
 						message.author = {};
 					}
 					message.deleted = true
-					this.emit("messageDelete",message);
+					this.emit(Discord.Constants.Events.MESSAGE_DELETE, message);
 					break;
 				}
 				case "MESSAGE_DELETE_BULK": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
-					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);
 					let deleted = new Discord.Collection();
 					for(let i = 0; i < r.d.ids.length; i++) {
 						let message;
@@ -368,238 +355,183 @@ Discord.Client = class Client extends Discord.Client {
 							message = channel.messages.cache.get(r.d.ids[i]);
 							channel.messages.cache.delete(message.id);
 						} else {
-							message = channel.messages.add({id:r.d.ids[i]},false);
+							message = channel.messages.add({id:r.d.ids[i]}, false);
 							message.system = null;
 							message.createdTimestamp = null;
 							message.author = {};
 						}
 						message.deleted = true;
-						deleted.set(r.d.ids[i],message);
+						deleted.set(r.d.ids[i], message);
 					}
 					if(deleted.size > 0) {
-						this.emit("messageDeleteBulk",deleted);
+						this.emit(Discord.Constants.Events.MESSAGE_DELETE_BULK, deleted);
 					}
 					break;
 				}
 				case "MESSAGE_REACTION_ADD": {
-					if(r.d.member && r.d.member.user && this.users.cache.has(r.d.member.user.id)) {
-						let user = this.users.cache.get(r.d.member.user.id);
-						let olduser = user._update(r.d.member.user);
-						if(!user.equals(olduser)) {
-							this.emit("userUpdate",olduser,user);
-						}
-					}
-					if(r.d.member && this.guilds.cache.has(r.d.guild_id) && this.guilds.cache.get(r.d.guild_id).members.cache.has(r.d.member.user.id)) {
-						let member = this.guilds.cache.get(r.d.guild_id).members.cache.get(r.d.member.user.id);
-						let oldmember = member._update(r.d.member);
-						if(!member.equals(oldmember)) {
-							this.emit("memberUpdate",oldmember,member);
-						}
-					}
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
-					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
-					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
-					let user = this.users.cache.get(r.d.user_id) || this.users.add((r.d.member || {}).user || {id:r.d.user_id},false);
-					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:null},channel.messages.cache.has(r.d.message_id));
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);
+					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id}, false);
+					let user = this.users.cache.get(r.d.user_id) || this.users.add((r.d.member || {}).user || {id:r.d.user_id}, false);
+					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:null}, channel.messages.cache.has(r.d.message_id));
 					reaction.me = r.d.user_id === this.user.id;
 					if(channel.messages.cache.has(message.id)) {
 						reaction.users.cache.set(user.id, user);
 						reaction.count = reaction.users.cache.size;
 					}
-					this.emit("messageReactionAdd",reaction,user);
+					this.emit(Discord.Constants.Events.MESSAGE_REACTION_ADD, reaction, user);
 					break;
 				}
 				case "MESSAGE_REACTION_REMOVE":  {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
-					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
-					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
-					let user = this.users.cache.get(r.d.user_id) || this.users.add((r.d.member || {}).user || {id:r.d.user_id},false);
-					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:null},channel.messages.cache.has(r.d.message_id));
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);
+					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id}, false);
+					let user = this.users.cache.get(r.d.user_id) || this.users.add((r.d.member || {}).user || {id:r.d.user_id}, false);
+					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:null}, channel.messages.cache.has(r.d.message_id));
 					reaction.me = r.d.user_id === this.user.id;
 					if(channel.messages.cache.has(message.id)) {
 						reaction.users.cache.delete(user.id);
 						reaction.count = reaction.users.cache.size;
 					}
-					this.emit("messageReactionRemove",reaction,user);
+					this.emit(Discord.Constants.Events.MESSAGE_REACTION_REMOVE, reaction, user);
 					break;
 				}
 				case "MESSAGE_REACTION_REMOVE_ALL": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
-					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
-					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
-					this.emit("messageReactionRemoveAll",message);
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);
+					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id}, false);
+					message.reactions.cache.clear();
+					this.emit(Discord.Constants.Events.MESSAGE_REACTION_REMOVE_ALL, message);
 					break;
 				}
 				case "MESSAGE_REACTION_REMOVE_EMOJI": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
-					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
-					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id},false);
-					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:null},channel.messages.cache.has(r.d.message_id));
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);
+					let message = channel.messages.cache.get(r.d.message_id) || channel.messages.add({id:r.d.message_id}, false);
+					let reaction = message.reactions.cache.get(r.d.emoji.id || r.d.emoji.name) || message.reactions.add({emoji:r.d.emoji,count:null,me:null}, channel.messages.cache.has(r.d.message_id));
 					reaction.me = r.d.user_id === this.user.id;
 					message.reactions.cache.delete(r.d.emoji.id || r.d.emoji.name);
-					this.emit("messageReactionRemoveEmoji",reaction.emoji);
+					this.emit(Discord.Constants.Events.MESSAGE_REACTION_REMOVE_EMOJI, reaction.emoji);
 					break;
 				}
 				case "CHANNEL_CREATE": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
-					let channel = this.channels.cache.get(r.d.id);
-					if(!channel) {
-						channel = this.channels.add(r.d,guild,false);
-						this.emit("channelCreate",channel);
-					}
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+					let channel = this.channels.cache.get(r.d.id) || this.channels.add(r.d, guild, false);
+					this.emit(Discord.Constants.Events.CHANNEL_CREATE, channel);
 					break;
 				}
 				case "CHANNEL_UPDATE": {
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
 					if(this.channels.cache.has(r.d.id)) {
-						let oldchannel = this.channels.cache.get(r.d.id);
-						if(oldchannel.guild && this.guilds.cache.has(oldchannel.guild.id) && !oldchannel.guild.roles.cache.size) { r.d.permission_overwrites = []; }
-						oldchannel = oldchannel._update(r.d);
-						let newchannel = this.channels.cache.get(r.d.id);
-						if(Discord.Constants.ChannelTypes[oldchannel.type.toUpperCase()] !== r.d.type) {
-							let newchannel = this.channels.add(r.d,this.guilds.cache.get(r.d.guild_id),false);
-							for(let [id, message] of oldchannel.messages.cache) { newchannel.messages.cache.set(id, message); }
-							this.channels.cache.set(newchannel.id, newchannel);
+						if(guild && !guild.roles.cache.size) { r.d.permission_overwrites = []; }
+						let newChannel = this.channels.cache.get(r.d.id);
+						let oldChannel = newChannel._update(r.d);
+						if(Discord.Constants.ChannelTypes[oldChannel.type.toUpperCase()] !== r.d.type) {
+							let changedChannel = Discord.Channel.create(this, r.d, this.guilds.cache.get(r.d.guild_id));
+							for(let [id, message] of oldChannel.messages.cache) { changedChannel.messages.cache.set(id, message); }
+							changedChannel._typing = new Map(newChannel._typing);
+							newChannel = changedChannel;
+					        this.channels.cache.set(newChannel.id, newChannel);
 						}
-						this.emit("channelUpdate",oldchannel,newchannel);
+						this.emit(Discord.Constants.Events.CHANNEL_UPDATE, oldChannel, newChannel);
 					} else {
-						let channel = this.channels.cache.get(r.d.channel_id);
-						let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
-						if(!channel) {
-							if(guild && !guild.roles.cache.size) { r.d.permission_overwrites = []; }
-							channel = this.channels.add(r.d,guild,false);
-						}
-						this.emit("channelUpdate",null,channel);
+						if(guild && !guild.roles.cache.size) { r.d.permission_overwrites = []; }
+						let channel = this.channels.add(r.d, guild, false);
+						this.emit(Discord.Constants.Events.CHANNEL_UPDATE, null, channel);
 					}
 					break;
 				}
 				case "CHANNEL_PINS_UPDATE": {
-					let channel = this.channels.cache.get(r.d.channel_id);
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
-					if(!channel) {
-						channel = this.channels.add({id:r.d.channel_id,type:guild ? 0 : 1},guild,false);
-					}
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+					let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);
 					let date = new Date(r.d.last_pin_timestamp);
-					this.emit("channelPinsUpdate",channel,date);
+					this.emit(Discord.Constants.Events.CHANNEL_PINS_UPDATE, channel, date);
 					break;
 				}
 				case "CHANNEL_DELETE": {
-					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false) : undefined;
-					let channel = this.channels.cache.get(r.d.id);
-					if(channel) {
-						for(let message of channel.messages.cache.values()) { message.deleted = true; }
+					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+					if(this.channels.cache.has(r.d.id)) {
+						let channel = this.channels.cache.get(r.d.id);
+						for(let message of channel.messages.cache.values()) {
+							message.deleted = true;
+						}
 						this.channels.remove(channel.id);
 						channel.deleted = true;
+						this.emit(Discord.Constants.Events.CHANNEL_DELETE, channel);
 					} else {
-						channel = this.channels.add(r.d,guild,false);
+						let channel = this.channels.add(r.d, guild, false);
+						this.emit(Discord.Constants.Events.CHANNEL_DELETE, channel);
 					}
-					this.emit("channelDelete",channel);
 					break;
 				}
 				case "GUILD_MEMBER_ADD": {
-					if(this.users.cache.has(r.d.user.id)) {
-						let user = this.users.cache.get(r.d.user.id);
-						let olduser = user._update(r.d.user);
-						if(!user.equals(olduser)) {
-							this.emit("userUpdate",olduser,user);
-						}
-					}
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
-					let member = guild.members.add(r.d,guild.members.cache.has(r.d.user.id));
-					if(!guild.members.cache.has(r.d.user.id)) {
-						this.emit("guildMemberAdd",member);
-					}
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+					let member = guild.members.add(r.d, false);
+					this.emit(Discord.Constants.Events.GUILD_MEMBER_ADD, member);
 					break;
 				}
 				case "GUILD_MEMBER_REMOVE": {
-					if(this.users.cache.has(r.d.user.id)) {
-						let user = this.users.cache.get(r.d.user.id);
-						let olduser = user._update(r.d.user);
-						if(!user.equals(olduser)) {
-							this.emit("userUpdate",olduser,user);
-						}
-					}
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
-					let member = guild.members.cache.get(r.d.user.id) || guild.members.add(r.d,false);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+					let member = guild.members.cache.get(r.d.user.id) || guild.members.add(r.d, false);
 					guild.members.cache.delete(r.d.user.id);
-					this.emit("guildMemberRemove",member);
+					this.emit(Discord.Constants.Events.GUILD_MEMBER_REMOVE, member);
 					break;
 				}
 				case "GUILD_MEMBER_UPDATE": {
-					if(this.users.cache.has(r.d.user.id)) {
-						let user = this.users.cache.get(r.d.user.id);
-						let olduser = user._update(r.d.user);
-						if(!user.equals(olduser)) {
-							this.emit("userUpdate",olduser,user);
-						}
-					}
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
 					if(guild.members.cache.has(r.d.user.id)) {
-						let member = guild.members.cache.get(r.d.user.id);
-						let oldmember = member._update(r.d);
-						if(!member.equals(oldmember)) {
-							this.emit("memberUpdate",oldmember,member);
+						let newMember = guild.members.cache.get(r.d.user.id);
+						let oldMember = newMember._update(r.d);
+						if(!newMember.equals(oldMember)) {
+							this.emit(Discord.Constants.Events.GUILD_MEMBER_UPDATE, oldMember, newMember);
 						}
+					} else {
+						let member = guild.members.add(r.d, false);
+						this.emit(Discord.Constants.Events.GUILD_MEMBER_UPDATE, null, member);
 					}
-					let member = guild.members.cache.get(r.d.user.id) || guild.members.add(r.d,false);
-					this.emit("guildMemberUpdate",null,member);
 					break;
 				}
 				case "GUILD_ROLE_CREATE": {
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
-					if (guild) {
-						let role = guild.roles.add(r.d.role, Boolean(guild.roles.cache.size));
-						this.emit("roleCreate", role);
-					}
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+					let role = guild.roles.add(r.d.role, Boolean(guild.roles.cache.size));
+					this.emit(Discord.Constants.Events.GUILD_ROLE_CREATE, role);
 					break;
 				}
 				case "GUILD_ROLE_UPDATE": {
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
-					if (guild) {
-						if(guild.roles.cache.size) {
-							let role = guild.roles.cache.get(r.d.role.id);
-							let old = role ? role._update(r.d.role) : null;
-							this.emit("roleUpdate", old, role);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+					if(guild.roles.cache.size) {
+						if(guild.roles.cache.has(r.d.role.id)) {
+							let newRole = guild.roles.cache.get(r.d.role.id);
+							let oldRole = newRole._update(r.d.role);
+							this.emit(Discord.Constants.Events.GUILD_ROLE_UPDATE, oldRole, newRole);
 						} else {
-							let role = guild.roles.add(r.d.role,false);
-							this.emit("roleUpdate", null, role);
+							let role = guild.roles.add(r.d.role, true);
+							this.emit(Discord.Constants.Events.GUILD_ROLE_UPDATE, null, role);							
 						}
+					} else {
+						let role = guild.roles.add(r.d.role,false);
+						this.emit(Discord.Constants.Events.GUILD_ROLE_UPDATE, null, role);
 					}
 					break;
 				}
 				case "GUILD_ROLE_DELETE": {
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
-					if (guild) {
-						let role = guild.roles.cache.get(r.d.role_id) || guild.roles.add({id:r.d.role_id}, false);
-						guild.roles.cache.delete(r.d.role_id);
-        				role.deleted = true;
-						this.emit("roleDelete", role);
-					}
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+					let role = guild.roles.cache.get(r.d.role_id) || guild.roles.add({id:r.d.role_id}, false);
+					guild.roles.cache.delete(r.d.role_id);
+    				role.deleted = true;
+					this.emit(Discord.Constants.Events.GUILD_ROLE_DELETE, role);
 					break;
 				}
 				case "GUILD_BAN_ADD": {
-					if(this.users.cache.has(r.d.user.id)) {
-						let user = this.users.cache.get(r.d.user.id);
-						let olduser = user._update(r.d.user);
-						if(!user.equals(olduser)) {
-							this.emit("userUpdate",olduser,user);
-						}
-					}
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
-					let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user,false);
-					this.emit("guildBanAdd", guild, user);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+					let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user, false);
+					this.emit(Discord.Constants.Events.GUILD_BAN_ADD, guild, user);
 					break;
 				}
 				case "GUILD_BAN_REMOVE": {
-					if(this.users.cache.has(r.d.user.id)) {
-						let user = this.users.cache.get(r.d.user.id);
-						let olduser = user._update(r.d.user);
-						if(!user.equals(olduser)) {
-							this.emit("userUpdate",olduser,user);
-						}
-					}
-					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID},false);
-					let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user,false);
-					this.emit("guildBanRemove", guild, user);
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+					let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user, false);
+					this.emit(Discord.Constants.Events.GUILD_BAN_REMOVE, guild, user);
 					break;
 				}
 				case "GUILD_MEMBERS_CHUNK": {
@@ -620,6 +552,19 @@ Discord.Client = class Client extends Discord.Client {
 						if(r.d.members) { r.d.members = r.d.members.filter(t => guild.members.cache.has(t.user.id)); }
 						if(!guild.roles.cache.size) { r.d.roles = []; }
 						if(!guild.emojis.cache.size) { r.d.emojis = []; }
+					}
+					break;
+				}
+				case "USER_UPDATE": {
+					if(this.users.cache.has(r.d.id)) {
+						let newUser = this.users.cache.get(r.d.id);
+						let oldUser = newUser._update(r.d);
+						if(!oldUser.equals(newUser)) {
+							this.emit(Discord.Constants.Events.USER_UPDATE, oldUser, newUser);
+						}
+					} else {
+						let user = this.users.add(r.d, false);
+						this.emit(Discord.Constants.Events.USER_UPDATE, null, user);
 					}
 					break;
 				}
