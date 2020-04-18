@@ -132,8 +132,8 @@ Some extra functionality is also included:
 | User.noSweep | boolean | Set to `true` if this user should be cached forever |
 | Client.options.clientSweepInterval | number | How often to sweep inactive cached channels and users in seconds. Set to `0` to disable (default:86400) |
 | Client.options.shardCheckInterval | number | How often to check for shard activity in seconds (internal sharding only). Inactive shards will be forced to reconnect (workaround for a rare issue with discord.js where shards randomly disconnect and refuse to reconnect). Set to `0` to disable (default:600) |
-| Client.sweepInactive() | number | Sweep inactive users/channels |
-| Client.checkShards() | number | Check for inactive shards (internal sharding only) |
+| Client.sweepInactive() |  | Sweep inactive users/channels |
+| Client.checkShards() |  | Check for inactive shards (internal sharding only) |
 | Client.getInfo() | promise>object | Gather several statistics about the client such as guild count, user count, sharding information, total active (cached) users and channels, websocket pings, uptimes, cpu usage and memory usage |
 
 ## About
