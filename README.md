@@ -64,24 +64,34 @@ Unlike its predecessor, discord.js-light attempts to deliver a cleaner discord.j
 
 ## Caching Behavior
 
-This library alters caching behavior as follows:
+This library alters the default caching behavior as follows:
 
 * Users are not cached by default. Users can be manually cached by using `client.users.fetch(id)`. This will not cache the guild member.
-* Channels are not cached by default. This will not cache the channel in the guild.
+* Channels are not cached by default. Channels can be manually cached using `client.channels.fetch(id)`. This will not cache the channel in the guild.
 * Messages are not cached by default. Messages can be manually cached by fetching its channel and then using `channel.messages.fetch(id)`
-* Guilds are cached at login and will be kept updated as long as they remain in the cache, but not all of its contents are cached (see below). Guilds can also be safely sweeped/removed from the cache for additional memory saving.
+* Guilds are cached at login and will be kept updated as long as they remain in the cache, but not all of its contents are cached (see below). Guilds can also be safely sweeped/removed from the cache for additional memory saving in exchange for losing access to some guild information.
 * Guild Emojis are not cached by default. Emojis can be cached by using `guild.fetch()`. Once cached, they will be kept updated while they remain in the cache.
-* Guild Roles are not cached by default. Roles can be cached by using `guild.fetch()`. Once cached, they will be kept updated while they remain in the cache.
+* Guild Roles are not cached by default unless the client option `enablePermissions` is set to true. Roles can be cached by using `guild.roles.fetch()`. Once cached, they will be kept updated while they remain in the cache.
 * Guild Members are not cached by default. Members can be cached by using `guild.members.fetch(id)`. This will not cache the user which will need to be fetched separately.
 * Guild Channels are not cached by default. Guild Channels can be added to the guild cache by fetching the channel and then linking it using `guild.channels.cache.set(fetchedChannel.id,fetchedChannel)`.
-* Guild Channel Permission Overwrites are not cached by default. They can only be cached by fetching the guild to ensure roles are updated, then fetching the channel and linking it to the guild. Once cached, they will be updated as long as they remain in the cache. This might be required to enable many permission checking functions.
-* Guild Presences and VoiceStates are disabled.
+* Guild Channel Permission Overwrites are not cached by default unless the client option `enablePermissions` is set to true. They can only be cached by fetching guild roles to ensure roles are updated, then fetching the channel and linking it to the guild (if the channel was already cached before roles were enabled, you will need to delete it from the cache and fetch it again). Once cached, they will be updated as long as they remain in the cache.
+* Guild Presences and VoiceStates are completely disabled at the moment.
 
 All relevant events provide a temporary/partial object if the full object is not cached. These objects may have missing information, so depending on your needs, you might need to fetch them before using them.
 
 Messages sent by the client itself will automatically cache the relevant objects (DMChannel/User, GuildChannel and Message).
 
-Unlike discord.js, discord.js-light will properly function even if nothing is cached and most methods will work properly when called on partials and temporary objects. You can send/receive messages to/from uncached channels, send/receive reactions to/from uncached messages, receive update/delete events from uncached objects and even completely sweep the guild cache without breaking the library.
+Unlike discord.js, discord.js-light will function properly even if nothing is cached and methods will work properly when called on the provided partials and temporary objects. You can send/receive messages to/from uncached channels, send/receive reactions to/from uncached messages, receive update/delete events from uncached objects and even completely sweep the guild cache without breaking the library.
+
+## Client options
+
+Some additional client options were introduced to control certain aspects of this library
+
+| Option | Type | Description |
+| ------------- | ------------- | ------------- |
+| clientSweepInterval | number | Set how often to sweep inactive cached channels and users in seconds. Set to `0` to disable (default:86400) |
+| shardCheckInterval | number | Set how often to check for shard activity in seconds (internal sharding only). Inactive shards will be forced to reconnect (workaround for a rare issue with discord.js where shards randomly disconnect and refuse to reconnect). Set to `0` to disable (default:600) |
+| enablePermissions | boolean | This option enables caching of Guild Roles and GuildChannel PermissionOverwrites in order to allow for permission checking. This will of course increase memory usage a bit (default:false) |
 
 ## Events
 
@@ -105,15 +115,17 @@ Most events should be identical to the originals besides the caching behavior. A
 | roleDelete | Provides a partial Role object |
 | guildBanAdd | Provides a full Guild object and a full User object |
 | guildBanRemove | Provides a full Guild object and a full User object |
-| guildCreate | Provides a full Guild object without Roles, Emojis, Channels, Members, Presences and VoiceStates |
-| guildUpdate | Provides a NULL old Guild object if not cached and a NULL new Guild object if not cached. Does not contain Roles, Emojis, Channels, Members, Presences and VoiceStates unless previously cached or fetched. |
+| guildCreate | Provides a full Guild object \* |
+| guildUpdate | Provides a NULL old Guild object if not cached and a NULL new Guild object if not cached \* |
 | guildDelete | Provides a NULL Guild object if not cached |
 | userUpdate | Provides a NULL old User object if not cached and a full new User object |
 | guildMemberAdd | Provides a full Member object. Requires the GUILD MEMBERS priviledged intent |
 | guildMemberUpdate | Provides a NULL old Member object if not cached and a full new Member object. Requires the GUILD MEMBERS priviledged intent |
 | guildMemberRemove | Provides a partial Member object. Requires the GUILD MEMBERS priviledged intent |
 
-All other events (except connection events) are currently not available.
+\* Guild Objects do not contain Roles, Emojis, Channels or Members unless previously cached or fetched. Presences and VoiceStates are always empty.
+
+All other events (except connection events) are currently disabled.
 
 ## Additional Functionality
 
@@ -138,8 +150,16 @@ Some extra functionality is also included:
 
 ## About
 
-This project is somewhat experimental, so there might be bugs and broken features especially in untested scenarios such as voice (i have tested only features that my bots need). You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you might find.
+This project is somewhat experimental, so there might be bugs and broken features in untested scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you might find.
 
 You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [![Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2Ftimotejroiko&label=support%20me%20on%20patreon)](https://www.patreon.com/timotejroiko)
+
+## Bots using discord.js-light
+
+[Astrobot](https://top.gg/bot/astrobot)
+
+[Message Viewer](https://top.gg/bot/642052166982303754)
+
+(using discord.js-light? let me know :3)
