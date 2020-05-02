@@ -112,7 +112,9 @@ Discord.Structures.extend("Message", M => {
 			*/
 			if(!this.client.channels.cache.has(this.channel.id)) {
 				this.channel = await this.client.channels.fetch(this.channel.id);
-				if(this.guild) { this.guild.channels.add(this.channel); }
+				if(this.guild && !this.guild.channels.cache.has(this.channel.id)) {
+					this.guild.channels.cache.set(this.channel.id, this.channel);
+				}
 			}
 			if(!this.client.users.cache.has(this.author.id)) {
 				this.author = this.client.users.add(this.author);
@@ -567,10 +569,10 @@ Discord.Client = class Client extends Discord.Client {
 					r.d.presences = [];
 					let guild = this.guilds.cache.get(r.d.id);
 					if(!guild || !guild.available) {
-						r.d.members = [];
+						r.d.members = r.d.members && r.d.members.length ? r.d.members.filter(t => t.user.id === this.user.id) : [];
 						r.d.channels = [];
 						r.d.emojis = [];
-						r.d.roles = [];
+						if(!this.options.enablePermissions) { r.d.roles = []; }
 					} else {
 						if(r.d.channels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
 						if(r.d.members) { r.d.members = r.d.members.filter(t => guild.members.cache.has(t.user.id)); }
