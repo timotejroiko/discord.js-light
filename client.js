@@ -574,11 +574,11 @@ Discord.Client = class Client extends Discord.Client {
 					let guild = this.guilds.cache.get(r.d.id);
 					if(!guild || !guild.available) {
 						r.d.members = r.d.members && r.d.members.length ? r.d.members.filter(t => t.user.id === this.user.id) : [];
-						r.d.channels = [];
 						r.d.emojis = [];
+						if(!this.options.enableChannels) { r.d.channels = []; }
 						if(!this.options.enablePermissions) { r.d.roles = []; }
 					} else {
-						if(r.d.channels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
+						if(r.d.channels && !this.options.trackChannels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
 						if(r.d.members) { r.d.members = r.d.members.filter(t => guild.members.cache.has(t.user.id)); }
 						if(!guild.roles.cache.size) { r.d.roles = []; }
 						if(!guild.emojis.cache.size) { r.d.emojis = []; }
@@ -601,10 +601,14 @@ Discord.Client = class Client extends Discord.Client {
 				case "PRESENCE_UPDATE": {
 					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
 					if(guild.presences.cache.has(r.d.user.id)) {
-						let oldPresence = guild.presences.cache.get(r.d.user.id)._clone();
-						let newPresence = guild.presences.add(Object.assign(r.d,{guild}));
-						this.emit(Discord.Constants.Events.PRESENCE_UPDATE, oldPresence, newPresence);
-					} else {
+						if(this.listenerCount(Discord.Constants.Events.PRESENCE_UPDATE)) {
+							let oldPresence = guild.presences.cache.get(r.d.user.id)._clone();
+							let newPresence = guild.presences.add(Object.assign(r.d,{guild}));
+							this.emit(Discord.Constants.Events.PRESENCE_UPDATE, oldPresence, newPresence);
+						} else {
+							guild.presences.add(Object.assign(r.d,{guild}));
+						}
+					} else if(this.listenerCount(Discord.Constants.Events.PRESENCE_UPDATE)) {
 						let presence = guild.presences.add(Object.assign(r.d,{guild}),false);
 						this.emit(Discord.Constants.Events.PRESENCE_UPDATE, null, presence);
 					}
