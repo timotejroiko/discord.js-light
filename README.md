@@ -16,7 +16,9 @@ This is due to the fact that discord.js caches EVERYTHING it can in order to avo
 
 This issue has been discussed a few times by the community but ultimately it has been decided that the library is too tightly coupled with its caching systems and seperating them would be unfeasible. Thus the task of scaling falls back to us bot developers.
 
-Several solutions have been presented so far, such as regular cache sweeping, intents and event disabling. However i felt that the existing methods were lacking and decided to study the discord.js source code to see what count be done about it. This project later became the base framework for all my bots and it does a wonderful job keeping hosting costs and scaling maintenance in check (\~150mb ram at 3000 guilds).
+Several solutions have been presented so far, such as regular cache sweeping, intents and event disabling. However i felt that the existing methods were lacking and decided to study the discord.js source code to see what count be done about it.
+
+This project later became the base framework for all my bots and it does a wonderful job keeping hosting costs and scaling maintenance in check (\~150mb ram at 3000 guilds).
 
 ## Features
 
@@ -32,8 +34,7 @@ Installation:
 
 ```npm install discord.js-light```
 
-Optional packages (recommended to reduce bandwidth usage and improve websocket performance)
-These packages are plug and play, just install and discord.js will pick them up automatically.
+Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and discord.js will pick them up automatically.
 
 ```
 npm install zlib-sync
