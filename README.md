@@ -109,15 +109,15 @@ This library comes preconfigured with a set of Intents enabled by default, and c
 
 | Intent | Enabled | Description |
 | ------------- | ------------- | ------------- |
-| GUILDS (1) | yes | Enables emitting and processing guildCreate, guildUpdate, guildDelete, guildRoleCreate, guildRoleUpdate, guildRoleDelete, channelCreate, channelUpdate, channelDelete, channelPinsUpdate |
-| GUILD_BANS (4) | yes | Enables emitting and processing guildBanAdd, guildBanRemove |
-| GUILD_MESSAGES (512) | yes | Enables emitting and processing messageCreate, messageUpdate, messageDelete, messageDeleteBulk |
-| GUILD_MESSAGE_REACTIONS (1024) | yes | Enables emitting and processing messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
-| DIRECT_MESSAGES (4096) | yes | DMs only. Enables emitting and processing channelCreate, messageCreate, messageUpdate, messageDelete, channelPinsUpdate |
-| DIRECT_MESSAGE_REACTIONS (8192) | yes | DMs only. Enables emitting and processing messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
-| GUILD_MEMBERS (2) | no | Priviledged Intent - requires enabling in your Discord developer portal. Enables emitting and processing guildMemberAdd, guildMemberRemove, guildMemberUpdate. Also keeps guild.memberCount updated and allows fetching all members |
-| GUILD_VOICE_STATES (128) | no | Enables emitting and processing voiceStateUpdate. Also enabled caching of and access to VoiceState objects |
-| GUILD_PRESENCES (256) | no | Priviledged Intent - requires enabling in your Discord developer portal. This Intent alone is responsible for about 90% of a bot's idle CPU and bandwidth usage so enabling it is not recommended unless you absolutely need it. Enables emitting and processing presenceUpdate. Also allows fetching members with presences |
+| GUILDS (1) | yes | Enables emitting and processing of guildCreate, guildUpdate, guildDelete, guildRoleCreate, guildRoleUpdate, guildRoleDelete, channelCreate, channelUpdate, channelDelete, channelPinsUpdate |
+| GUILD_BANS (4) | yes | Enables emitting and processing of guildBanAdd, guildBanRemove |
+| GUILD_MESSAGES (512) | yes | Enables emitting and processing of messageCreate, messageUpdate, messageDelete, messageDeleteBulk |
+| GUILD_MESSAGE_REACTIONS (1024) | yes | Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
+| DIRECT_MESSAGES (4096) | yes | DMs only. Enables emitting and processing of channelCreate, messageCreate, messageUpdate, messageDelete, channelPinsUpdate |
+| DIRECT_MESSAGE_REACTIONS (8192) | yes | DMs only. Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
+| GUILD_MEMBERS (2) | no | Priviledged Intent - requires enabling in your Discord developer portal. Enables emitting and processing of guildMemberAdd, guildMemberRemove, guildMemberUpdate. Also keeps guild.memberCount updated and allows fetching all members |
+| GUILD_VOICE_STATES (128) | no | Enables emitting and processing of voiceStateUpdate. Also enables caching of and access to VoiceState objects |
+| GUILD_PRESENCES (256) | no | Priviledged Intent - requires enabling in your Discord developer portal. This Intent alone is responsible for about 90% of a bot's idle CPU and bandwidth usage so enabling it is not recommended unless you absolutely need it. Enables emitting and processing of presenceUpdate. Also allows fetching members with presences |
 
 You can enable/disable the above Intents by defining your own Intents combination in your client options as per the discord.js documentation.
 
