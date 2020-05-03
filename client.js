@@ -569,8 +569,8 @@ Discord.Client = class Client extends Discord.Client {
 					break;
 				}
 				case "GUILD_CREATE": case "GUILD_UPDATE": {
-					if(!(this.options.ws.intents & 128)) { r.d.voice_states = []; }
-					if(!(this.options.ws.intents & 256)) { r.d.presences = []; }
+					if(this.options.ws && !(this.options.ws.intents & 128)) { r.d.voice_states = []; }
+					if(!this.options.trackPresences) { r.d.presences = []; }
 					let guild = this.guilds.cache.get(r.d.id);
 					if(!guild || !guild.available) {
 						r.d.members = r.d.members && r.d.members.length ? r.d.members.filter(t => t.user.id === this.user.id) : [];
@@ -595,6 +595,18 @@ Discord.Client = class Client extends Discord.Client {
 					} else {
 						let user = this.users.add(r.d, false);
 						this.emit(Discord.Constants.Events.USER_UPDATE, null, user);
+					}
+					break;
+				}
+				case "PRESENCE_UPDATE": {
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+					if(guild.presences.cache.has(r.d.user.id)) {
+						let oldPresence = guild.presences.cache.get(r.d.user.id)._clone();
+						let newPresence = guild.presences.add(Object.assign(r.d,{guild}));
+						this.emit(Discord.Constants.Events.PRESENCE_UPDATE, oldPresence, newPresence);
+					} else {
+						let presence = guild.presences.add(Object.assign(r.d,{guild}),false);
+						this.emit(Discord.Constants.Events.PRESENCE_UPDATE, null, presence);
 					}
 					break;
 				}
