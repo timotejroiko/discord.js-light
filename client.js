@@ -646,7 +646,7 @@ Discord.Client = class Client extends Discord.Client {
 		let timer = this.options.clientSweepInterval && !isNaN(this.options.clientSweepInterval) ? this.options.clientSweepInterval * 1000 : 86400000;
 		if(timer < 60000) { timer = 60000; }
 		this.users.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - timer) && !t.noSweep && t.id !== this.user.id);
-		this.channels.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - timer) && !t.noSweep);
+		if(!this.options.enableChannels) { this.channels.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - timer) && !t.noSweep); }
 		this.guilds.cache.forEach(t => {
 			t.members.cache.sweep(m => !this.users.cache.has(m.id));
 			t.channels.cache.sweep(m => !this.channels.cache.has(m.id));
