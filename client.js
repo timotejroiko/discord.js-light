@@ -493,13 +493,17 @@ Discord.Client = class Client extends Discord.Client {
 				case "GUILD_MEMBER_ADD": {
 					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
 					let member = guild.members.add(r.d, false);
+					if(guild.memberCount) { guild.memberCount++; }
 					this.emit(Discord.Constants.Events.GUILD_MEMBER_ADD, member);
 					break;
 				}
 				case "GUILD_MEMBER_REMOVE": {
 					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
 					let member = guild.members.cache.get(r.d.user.id) || guild.members.add(r.d, false);
+					member.deleted = true;
 					guild.members.cache.delete(r.d.user.id);
+					guild.voiceStates.cache.delete(r.d.user.id);
+					if(guild.memberCount) { guild.memberCount--; }
 					this.emit(Discord.Constants.Events.GUILD_MEMBER_REMOVE, member);
 					break;
 				}
@@ -565,8 +569,8 @@ Discord.Client = class Client extends Discord.Client {
 					break;
 				}
 				case "GUILD_CREATE": case "GUILD_UPDATE": {
-					r.d.voice_states = [];
-					r.d.presences = [];
+					if(!(this.options.ws.intents & 128)) { r.d.voice_states = []; }
+					if(!(this.options.ws.intents & 256)) { r.d.presences = []; }
 					let guild = this.guilds.cache.get(r.d.id);
 					if(!guild || !guild.available) {
 						r.d.members = r.d.members && r.d.members.length ? r.d.members.filter(t => t.user.id === this.user.id) : [];
@@ -593,6 +597,17 @@ Discord.Client = class Client extends Discord.Client {
 						this.emit(Discord.Constants.Events.USER_UPDATE, null, user);
 					}
 					break;
+				}
+				case "VOICE_STATE_UPDATE": {
+					if(r.d.user_id === this.user.id) {
+						this.emit('debug', `[VOICE] received voice state update: ${JSON.stringify(r.d)}`);
+						this.voice.onVoiceStateUpdate(r.d);
+					}
+					let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+					let oldState = guild.voiceStates.cache.has(r.d.user_id) ? guild.voiceStates.cache.get(r.d.user_id)._clone() : null;
+					let newState = r.d.channel_id ? guild.voiceStates.add(r.d) : null;
+					if(oldState && !newState) { guild.voiceStates.cache.delete(r.d.user_id); }
+					if(oldState || newState) { this.emit(Discord.Constants.Events.VOICE_STATE_UPDATE, oldState, newState); }
 				}
 			}
 		});
