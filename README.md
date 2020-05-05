@@ -7,6 +7,7 @@ A [discord.js (v12)](https://discord.js.org) "anti-caching" framework focused on
 [![npm (prod) dependency version](https://img.shields.io/npm/dependency-version/discord.js-light/discord.js)](https://discord.js.org)
 [![node](https://img.shields.io/node/v/discord.js-light)](https://nodejs.org)
 [![Discord](https://img.shields.io/discord/581072557512458241?label=support%20server)](https://discord.gg/BpeedKh)
+[![Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2Ftimotejroiko&label=support%20me%20on%20patreon)](https://www.patreon.com/timotejroiko)
 
 ## Why?
 
@@ -184,12 +185,10 @@ This project is somewhat experimental, so there might be bugs and broken feature
 
 You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
-[![Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2Ftimotejroiko&label=support%20me%20on%20patreon)](https://www.patreon.com/timotejroiko)
-
 ## Bots using discord.js-light
 
 [Astrobot](https://top.gg/bot/astrobot)
 
 [Message Viewer](https://top.gg/bot/642052166982303754)
 
-(using discord.js-light? let me know if you're interested having your bot being listed here)
+(using discord.js-light? let me know if you're interested in having your bot being listed here)
