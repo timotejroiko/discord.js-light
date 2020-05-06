@@ -200,6 +200,19 @@ Discord.Structures.extend("TextChannel", T => {
 	}
 });
 
+Discord.Structures.extend("VoiceChannel", V => {
+	return class VoiceChannel extends V {
+		get joinable() {
+			if(Discord.Constants.browser) return false;
+			if(!this.guild.roles.cache.size && !this.client.options.enablePermissions) return true;
+			if(!this.viewable) return false;
+			if(!this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.CONNECT, false)) return false;
+			if(this.full && !this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MOVE_MEMBERS, false)) return false;
+			return true;
+		}
+	}
+});
+
 Discord.Structures.extend("DMChannel", D => {
 	return class DMChannel extends D {
 		_patch(data) {
