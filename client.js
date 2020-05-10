@@ -211,7 +211,7 @@ Discord.Structures.extend("VoiceChannel", V => {
 			return true;
 		}
 		async join() {
-			if(browser) return Promise.reject(new Error('VOICE_NO_BROWSER'));
+			if(Discord.Constants.browser) return Promise.reject(new Error('VOICE_NO_BROWSER'));
 			if(!this.client.channels.cache.has(this.id)) {
 				let channel = await this.client.channels.fetch(this.id);
 				if(channel.guild) { channel.guild.channels.cache.set(channel.id,channel); }
@@ -221,7 +221,7 @@ Discord.Structures.extend("VoiceChannel", V => {
 			return this.client.voice.joinChannel(channel);
 		}
 		leave() {
-			if(browser) return;
+			if(Discord.Constants.browser) return;
 			const connection = this.client.voice.connections.get(this.guild.id);
 			if(connection && connection.channel.id === this.id) connection.disconnect();
 			this.noSweep = false;
