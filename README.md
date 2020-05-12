@@ -191,4 +191,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Message Viewer](https://top.gg/bot/642052166982303754)
 
+[Helper](https://top.gg/bot/409538753997307915)
+
 (using discord.js-light? let me know if you're interested in having your bot being listed here)
