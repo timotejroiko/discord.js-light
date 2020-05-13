@@ -212,18 +212,15 @@ Discord.Structures.extend("VoiceChannel", V => {
 		}
 		async join() {
 			if(Discord.Constants.browser) return Promise.reject(new Error('VOICE_NO_BROWSER'));
-			if(!this.client.channels.cache.has(this.id)) {
-				let channel = await this.client.channels.fetch(this.id);
-				if(channel.guild) { channel.guild.channels.cache.set(channel.id,channel); }
-			}
-			let channel = this.client.channels.cache.get(this.id);
+			let channel = await this.client.channels.fetch(this.id);
+			if(channel.guild && !channel.guild.channels.cache.has(channel.id)) { channel.guild.channels.cache.set(channel.id,channel); }
 			channel.noSweep = true;
 			return this.client.voice.joinChannel(channel);
 		}
 		leave() {
 			if(Discord.Constants.browser) return;
 			const connection = this.client.voice.connections.get(this.guild.id);
-			if(connection && connection.channel.id === this.id) connection.disconnect();
+			if(connection && connection.channel.id === this.id) { connection.disconnect(); }
 			this.noSweep = false;
 		}
 	}
@@ -604,7 +601,13 @@ Discord.Client = class Client extends Discord.Client {
 					if(!guild || !guild.available) {
 						r.d.members = r.d.members && r.d.members.length ? r.d.members.filter(t => t.user.id === this.user.id) : [];
 						r.d.emojis = [];
-						if(!this.options.enableChannels) { r.d.channels = []; }
+						if(!this.options.enableChannels) {
+							if(this.options.ws && this.options.ws.intents & 128) {
+								r.d.channels = r.d.channels.filter(c => r.d.voice_states.find(v => v.channel_id === c.id));
+							} else {
+								r.d.channels = [];
+							}
+						}
 						if(!this.options.enablePermissions) { r.d.roles = []; }
 					} else {
 						if(r.d.channels && !this.options.trackChannels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
