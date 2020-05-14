@@ -197,6 +197,10 @@ Discord.Structures.extend("TextChannel", T => {
 		get deletable() {
 			return this.guild.roles.cache.size ? this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_CHANNELS, false) : undefined;
 		}
+		async send(content, options) {
+			let channel = await this.client.channels.fetch(this.id);
+			return channel.send(content, options);
+		}
 	}
 });
 
