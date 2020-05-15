@@ -372,13 +372,9 @@ Discord.Client = class Client extends Discord.Client {
 				case "MESSAGE_CREATE": case "MESSAGE_UPDATE": {
 					if(r.t === "MESSAGE_UPDATE" && !r.d.edited_timestamp) { break; }
 					if(r.d.author.id === this.user.id) {
-						let channel = this.channels.cache.get(r.d.channel_id);
-						if(!channel) {
-							channel = await this.channels.fetch(r.d.channel_id);
-							if(channel.guild && channel.permissionOverwrites && !channel.guild.roles.cache.size) {
-								channel.permissionOverwrites.clear();
-								channel.guild.channels.cache.set(channel.id, channel);
-							}
+						let channel = this.channels.fetch(r.d.channel_id);
+						if(channel.guild && !channel.guild.channels.cache.has(channel.id)) {
+							channel.guild.channels.cache.set(channel.id, channel);
 						}
 						if(channel.recipient) {
 							if(!this.users.cache.has(channel.recipient.id)) {
@@ -499,8 +495,8 @@ Discord.Client = class Client extends Discord.Client {
 				}
 				case "CHANNEL_UPDATE": {
 					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+					if(guild && (!this.options.enablePermissions && !guild.roles.cache.size)) { r.d.permission_overwrites = []; }
 					if(this.channels.cache.has(r.d.id)) {
-						if(guild && !guild.roles.cache.size) { r.d.permission_overwrites = []; }
 						let newChannel = this.channels.cache.get(r.d.id);
 						let oldChannel = newChannel._update(r.d);
 						if(Discord.Constants.ChannelTypes[oldChannel.type.toUpperCase()] !== r.d.type) {
@@ -512,7 +508,6 @@ Discord.Client = class Client extends Discord.Client {
 						}
 						this.emit(Discord.Constants.Events.CHANNEL_UPDATE, oldChannel, newChannel);
 					} else {
-						if(guild && !guild.roles.cache.size) { r.d.permission_overwrites = []; }
 						let channel = this.channels.add(r.d, guild, false);
 						this.emit(Discord.Constants.Events.CHANNEL_UPDATE, null, channel);
 					}
@@ -635,7 +630,7 @@ Discord.Client = class Client extends Discord.Client {
 						}
 						if(!this.options.enablePermissions) { r.d.roles = []; }
 					} else {
-						if(r.d.channels && !this.options.trackChannels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
+						if(r.d.channels && !this.options.enableChannels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
 						if(r.d.members) { r.d.members = r.d.members.filter(t => guild.members.cache.has(t.user.id)); }
 						if(!guild.roles.cache.size) { r.d.roles = []; }
 						if(!guild.emojis.cache.size) { r.d.emojis = []; }
