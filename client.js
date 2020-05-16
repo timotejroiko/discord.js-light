@@ -198,8 +198,8 @@ Discord.Structures.extend("TextChannel", T => {
 			return this.guild.roles.cache.size ? this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_CHANNELS, false) : undefined;
 		}
 		async send(content, options) {
-			let channel = await this.client.channels.fetch(this.id);
-			return channel.send(content, options);
+			if(!this.client.channels.cache.has(this.id)) { await this.fetch(); }
+			return super.send(content, options);
 		}
 	}
 });
