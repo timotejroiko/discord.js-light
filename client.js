@@ -312,6 +312,24 @@ Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
 	return channel;
 }
 
+Discord.GuildChannelManager.prototype.fetch = async function(cache = true) {
+	let channels = await this.client.api.guilds(this.guild.id).channels().get();
+	if(cache) {
+		for(let channel of channels) {
+			let c = this.client.channels.add(channel,this.guild,true);
+			this.cache.set(c.id,c);
+		}
+		return this.cache;
+	} else {
+		let collection = new Discord.Collection();
+		for(let channel of channels) {
+			let c = this.client.channels.add(channel,this.guild,false);
+			collection.set(c.id,c);
+		}
+		return collection;
+	}
+}
+
 Discord.Client = class Client extends Discord.Client {
 	constructor(options = {}) {
 		options = Object.assign(

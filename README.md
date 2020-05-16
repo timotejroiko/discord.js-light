@@ -75,7 +75,7 @@ Some client options were introduced to control certain aspects specific to this 
 | clientSweepInterval | number | Set how often to sweep inactive cached users and channels in seconds. Set to `0` to disable (default:86400) |
 | shardCheckInterval | number | Set how often to check for shard activity in seconds (internal sharding only). Inactive shards will be forced to reconnect (workaround for a rare issue with discord.js where shards randomly disconnect and refuse to reconnect). Set to `0` to disable (default:600) |
 | enablePermissions | boolean | This option enables caching of Guild Roles and Channel PermissionOverwrites in order to allow for permission checking. This will increase memory usage by a moderate amount (default:false) |
-| enableChannels | boolean | This option enables caching of Channels and disables sweeping of inactive channels. This will increase memory usage by a substantial amount, use only if you need channel counts or to access channels without knowing their IDs (default:false) |
+| enableChannels | boolean | This option enables caching of Channels and disables sweeping of inactive channels. This will increase memory usage by a substantial amount, use only if you need to track channel updates in real time (default:false) |
 | trackPresences | boolean | This option enables caching of Presences when the GUILD_PRESENCES priviledged Intent is enabled or when Intents are not used. This will increase memory usage by a large amount, use only if you need to track people's statuses and activities in real time (default:false) |
 
 All other discord.js client options continue to be available.
@@ -168,6 +168,7 @@ Some extra functionality is also included for convenience (mine mostly):
 | ------------- | ------------- | ------------- |
 | Message.eval(string) | promise>anything | An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this` (should not be public) |
 | Message.reply(content,options) | promise>message | Completely replaces the original message.reply(). It does the same as message.channel.send() but adds several improvements: handles promises, objects, falsey values and other non-string types, truncates large strings if no split options are provided, automatically caches the channel, author and messages involved, tracks activity for automatic sweeping, adds response times, request-response pairing and if possible replies by editing a previous response when triggered by a message update. |
+| Guild.channels.fetch(boolean) | promise>collection | Fetches the guild's channels from the API. Fetched channels are cached by default but caching can be disabled by setting the function argument to false. If set to false, it returns a collection of Channel objects, otherwise it returns the guild channel cache |
 | Message.commandResponse | message | The message object that was sent as a response to this command. Only available if it was sent with message.reply() |
 | Message.commandMessage | message | The message object that triggered this response. Only available if this response was sent with message.reply() |
 | Message.commandResponseTime | number | Message response time in milliseconds. Only available in response messages if they were sent with message.reply() |
