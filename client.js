@@ -741,11 +741,16 @@ Discord.Client = class Client extends Discord.Client {
 			ping:Math.round(this.ws.shards.get(i).ping),
 			guilds:this.guilds.cache.filter(t => t.shardID === i).size,
 			memberCount:this.guilds.cache.reduce((a,t) => t.memberCount && t.shardID === i ? a + t.memberCount : a,0),
-			activeGuildMembers:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.members.cache.filter(a => a.id !== this.user.id).size : a,0),
-			activeGuildChannels:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.channels.cache.size : a,0)
+			cachedChannels:this.channels.cache.filter(t => t.guild && t.guild.shardID === i).size,
+			cachedGuildMembers:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.members.cache.filter(a => a.id !== this.user.id).size : a,0),
+			cachedGuildChannels:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.channels.cache.size : a,0),
+			cachedGuildRoles:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.roles.cache.size : a,0),
+			cachedGuildPresences:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.presences.cache.size : a,0),
+			cachedGuildVoiceStates:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.voiceStates.cache.size : a,0),
+			cachedGuildEmojis:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.emojis.cache.size : a,0)
 		}});
-		shards[0].activeDMUsers = this.users.cache.filter(t => t.id !== this.user.id && !this.guilds.cache.some(a => a.members.cache.has(t.id))).size;
-		shards[0].activeDMChannels = this.channels.cache.filter(t => t.type === "dm").size;
+		shards[0].cachedDMUsers = this.users.cache.filter(t => t.id !== this.user.id && !this.guilds.cache.some(a => a.members.cache.has(t.id))).size;
+		shards[0].cachedDMChannels = this.channels.cache.filter(t => t.type === "dm").size;
 		return {
 			shards:shards.length,
 			status:statuses[this.ws.status],
@@ -760,8 +765,14 @@ Discord.Client = class Client extends Discord.Client {
 			}))+'e2')+'e-2'),
 			guilds:this.guilds.cache.size,
 			memberCount:shards.reduce((a,t) => a + t.memberCount,0),
-			activeUsers:this.users.cache.filter(t => t.id !== this.user.id).size,
-			activeChannels:this.channels.cache.size,
+			cachedUsers:this.users.cache.filter(t => t.id !== this.user.id).size,
+			cachedChannels:this.channels.cache.size,
+			cachedGuildMembers:shards.reduce((a,t) => a + t.cachedGuildMembers,0),
+			cachedGuildChannels:shards.reduce((a,t) => a + t.cachedGuildChannels,0),
+			cachedGuildRoles:shards.reduce((a,t) => a + t.cachedGuildRoles,0),
+			cachedGuildPresences:shards.reduce((a,t) => a + t.cachedGuildPresences,0),
+			cachedGuildVoiceStates:shards.reduce((a,t) => a + t.cachedGuildVoiceStates,0),
+			cachedGuildEmojis:shards.reduce((a,t) => a + t.cachedGuildEmojis,0)
 			shardDetails:shards
 		}
 	}
