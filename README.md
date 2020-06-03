@@ -35,7 +35,7 @@ Installation:
 
 ```npm install discord.js-light```
 
-Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and discord.js will pick them up automatically. Additionally, using a custom memory allocator such as `jemalloc` can reduce memory usage by a substantial amount in exchange for slightly higher cpu usage.
+Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and discord.js will pick them up automatically. Additionally, using an alternative memory allocator such as [jemalloc](http://jemalloc.net/) can further reduce memory usage by a substantial amount in exchange for slightly higher cpu usage.
 
 ```
 npm install zlib-sync
