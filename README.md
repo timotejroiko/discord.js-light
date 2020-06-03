@@ -35,7 +35,7 @@ Installation:
 
 ```npm install discord.js-light```
 
-Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and discord.js will pick them up automatically.
+Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and discord.js will pick them up automatically. Additionally, using a custom memory allocator such as `jemalloc` can reduce memory usage by a substantial amount in exchange for slightly higher cpu usage.
 
 ```
 npm install zlib-sync
@@ -63,11 +63,11 @@ client.on("message", message => {
 });
 ```
 
-Unlike my previous project, discord.js-light attempts to deliver a cleaner discord.js experience and as such it does not include prefix managers or command handlers. It is still however a fairly opinionated framework and includes some non-standard behavior, convenience methods & functions, auto-login, internal sharding & intents enabled by default, sweeping intervals and logging of connection events. PM2 cluster support was also dropped to be reworked as a separate feature some day.
+Generally usage should be very similar to discord.js and you can safely refer to its documentation as long as you respect the caching differences explained later on in this readme.
 
 ## Client options
 
-Some client options were introduced to control certain aspects specific to this library
+Some extra client options were introduced to control certain aspects specific to this library.
 
 | Option | Type | Description |
 | ------------- | ------------- | ------------- |
@@ -79,6 +79,28 @@ Some client options were introduced to control certain aspects specific to this 
 | trackPresences | boolean | This option enables caching of Presences when the GUILD_PRESENCES priviledged Intent is enabled or when Intents are not used. This will increase memory usage by a large amount, use only if you need to track people's statuses and activities in real time (default:false) |
 
 All other discord.js client options continue to be available.
+
+## Intents
+
+Discord released the Intents system some time ago, making it possible for developers to selectively subscribe to the events they want to receive, instead of being forced to receive and process EVERYTHING. This enabled bot owners to greatly reduce cpu and bandwidth usage and thus reducing hosting costs.
+
+This library comes preconfigured with a set of Intents enabled by default, and currently supports the following intents:
+
+| Intent | Enabled | Description |
+| ------------- | ------------- | ------------- |
+| GUILDS (1) | yes | Enables emitting and processing of guildCreate, guildUpdate, guildDelete, guildRoleCreate, guildRoleUpdate, guildRoleDelete, channelCreate, channelUpdate, channelDelete, channelPinsUpdate |
+| GUILD_BANS (4) | yes | Enables emitting and processing of guildBanAdd, guildBanRemove |
+| GUILD_MESSAGES (512) | yes | Enables emitting and processing of messageCreate, messageUpdate, messageDelete, messageDeleteBulk |
+| GUILD_MESSAGE_REACTIONS (1024) | yes | Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
+| DIRECT_MESSAGES (4096) | yes | DMs only. Enables emitting and processing of channelCreate, messageCreate, messageUpdate, messageDelete, channelPinsUpdate |
+| DIRECT_MESSAGE_REACTIONS (8192) | yes | DMs only. Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
+| GUILD_MEMBERS (2) | no | Priviledged Intent - requires enabling in your Discord developer portal. Enables emitting and processing of guildMemberAdd, guildMemberRemove, guildMemberUpdate. Also keeps guild.memberCount updated and allows fetching all members |
+| GUILD_VOICE_STATES (128) | no | Enables emitting and processing of voiceStateUpdate. Also enables caching of and access to VoiceState objects. This intent is required for the majority of voice features to work |
+| GUILD_PRESENCES (256) | no | Priviledged Intent - requires enabling in your Discord developer portal. This Intent alone is responsible for about 90% of a bot's idle CPU and bandwidth usage so enabling it is not recommended unless you absolutely need it. Enables emitting and processing of presenceUpdate. Also allows fetching members with presences |
+
+You can enable/disable the above Intents by defining your own Intents combination in your client options as per the discord.js documentation.
+
+Other Intents are currently not supported.
 
 ## Caching Behavior
 
@@ -101,28 +123,6 @@ All relevant events provide a temporary/partial object if the necessary object i
 The client itself will always be cached as a User and as a GuildMember in all cached guilds. All messages it sends will also automatically cache all the relevant objects (DMChannel/RecipientUser, GuildChannel and Message).
 
 Unlike discord.js, this library will continue to function even if nothing is cached and most methods will work properly when called on the provided partials and temporary objects. You can send/receive messages to/from uncached channels, send/receive reactions to/from uncached messages, receive update/delete events from uncached objects and even completely sweep the guild cache without breaking the library.
-
-## Intents
-
-Discord released the Intents system some time ago, making it possible for developers to selectively subscribe to the events they want to receive, instead of being forced to receive and process EVERYTHING. This enabled bot owners to greatly reduce cpu and bandwidth usage and thus reducing hosting costs.
-
-This library comes preconfigured with a set of Intents enabled by default, and currently supports the following intents:
-
-| Intent | Enabled | Description |
-| ------------- | ------------- | ------------- |
-| GUILDS (1) | yes | Enables emitting and processing of guildCreate, guildUpdate, guildDelete, guildRoleCreate, guildRoleUpdate, guildRoleDelete, channelCreate, channelUpdate, channelDelete, channelPinsUpdate |
-| GUILD_BANS (4) | yes | Enables emitting and processing of guildBanAdd, guildBanRemove |
-| GUILD_MESSAGES (512) | yes | Enables emitting and processing of messageCreate, messageUpdate, messageDelete, messageDeleteBulk |
-| GUILD_MESSAGE_REACTIONS (1024) | yes | Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
-| DIRECT_MESSAGES (4096) | yes | DMs only. Enables emitting and processing of channelCreate, messageCreate, messageUpdate, messageDelete, channelPinsUpdate |
-| DIRECT_MESSAGE_REACTIONS (8192) | yes | DMs only. Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
-| GUILD_MEMBERS (2) | no | Priviledged Intent - requires enabling in your Discord developer portal. Enables emitting and processing of guildMemberAdd, guildMemberRemove, guildMemberUpdate. Also keeps guild.memberCount updated and allows fetching all members |
-| GUILD_VOICE_STATES (128) | no | Enables emitting and processing of voiceStateUpdate. Also enables caching of and access to VoiceState objects |
-| GUILD_PRESENCES (256) | no | Priviledged Intent - requires enabling in your Discord developer portal. This Intent alone is responsible for about 90% of a bot's idle CPU and bandwidth usage so enabling it is not recommended unless you absolutely need it. Enables emitting and processing of presenceUpdate. Also allows fetching members with presences |
-
-You can enable/disable the above Intents by defining your own Intents combination in your client options as per the discord.js documentation.
-
-Other Intents are currently not supported.
 
 ## Events
 
