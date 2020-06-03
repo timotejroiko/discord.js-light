@@ -542,8 +542,10 @@ Discord.Client = class Client extends Discord.Client {
 					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
 					if(this.channels.cache.has(r.d.id)) {
 						let channel = this.channels.cache.get(r.d.id);
-						for(let message of channel.messages.cache.values()) {
-							message.deleted = true;
+						if(channel.messages && !(channel instanceof Discord.DMChannel)) {
+							for(let message of channel.messages.cache.values()) {
+								message.deleted = true;
+							}
 						}
 						this.channels.remove(channel.id);
 						channel.deleted = true;
