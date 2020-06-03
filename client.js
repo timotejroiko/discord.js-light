@@ -519,11 +519,7 @@ Discord.Client = class Client extends Discord.Client {
 						let oldChannel = newChannel._update(r.d);
 						if(Discord.Constants.ChannelTypes[oldChannel.type.toUpperCase()] !== r.d.type) {
 							let changedChannel = Discord.Channel.create(this, r.d, this.guilds.cache.get(r.d.guild_id));
-							
-							if(oldChannel.messages) {
-								for(let [id, message] of oldChannel.messages.cache) { changedChannel.messages.cache.set(id, message); }
-							}
-								
+							for(let [id, message] of oldChannel.messages.cache) { changedChannel.messages.cache.set(id, message); }
 							changedChannel._typing = new Map(newChannel._typing);
 							newChannel = changedChannel;
 					        this.channels.cache.set(newChannel.id, newChannel);
@@ -546,13 +542,11 @@ Discord.Client = class Client extends Discord.Client {
 					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
 					if(this.channels.cache.has(r.d.id)) {
 						let channel = this.channels.cache.get(r.d.id);
-						
-						if(channel.messages) {
+						if(channel.messages && !(channel instanceof Discord.DMChannel)) {
 							for(let message of channel.messages.cache.values()) {
 								message.deleted = true;
 							}
 						}
-
 						this.channels.remove(channel.id);
 						channel.deleted = true;
 						this.emit(Discord.Constants.Events.CHANNEL_DELETE, channel);
