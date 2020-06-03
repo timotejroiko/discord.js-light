@@ -518,8 +518,8 @@ Discord.Client = class Client extends Discord.Client {
 						let newChannel = this.channels.cache.get(r.d.id);
 						let oldChannel = newChannel._update(r.d);
 						if(Discord.Constants.ChannelTypes[oldChannel.type.toUpperCase()] !== r.d.type) {
-							let changedChannel = Discord.Channel.create(this, r.d, this.guilds.cache.get(r.d.guild_id));
-							for(let [id, message] of oldChannel.messages.cache) { changedChannel.messages.cache.set(id, message); }
+							let changedChannel = Discord.Channel.create(this, r.d, newChannel.guild);
+							for(let [id, message] of newChannel.messages.cache) { changedChannel.messages.cache.set(id, message); }
 							changedChannel._typing = new Map(newChannel._typing);
 							newChannel = changedChannel;
 					        this.channels.cache.set(newChannel.id, newChannel);
@@ -542,8 +542,10 @@ Discord.Client = class Client extends Discord.Client {
 					let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
 					if(this.channels.cache.has(r.d.id)) {
 						let channel = this.channels.cache.get(r.d.id);
-						for(let message of channel.messages.cache.values()) {
-							message.deleted = true;
+						if(channel.messages && !(channel instanceof Discord.DMChannel)) {
+							for(let message of channel.messages.cache.values()) {
+								message.deleted = true;
+							}
 						}
 						this.channels.remove(channel.id);
 						channel.deleted = true;
@@ -742,6 +744,7 @@ Discord.Client = class Client extends Discord.Client {
 			guilds:this.guilds.cache.filter(t => t.shardID === i).size,
 			memberCount:this.guilds.cache.reduce((a,t) => t.memberCount && t.shardID === i ? a + t.memberCount : a,0),
 			cachedChannels:this.channels.cache.filter(t => t.guild && t.guild.shardID === i).size,
+			cachedMessages:this.channels.cache.filter(t => t.guild && t.guild.shardID === i && t.messages).reduce((a,t) => a + t.messages.cache.size, 0),
 			cachedGuildMembers:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.members.cache.filter(a => a.id !== this.user.id).size : a,0),
 			cachedGuildChannels:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.channels.cache.size : a,0),
 			cachedGuildRoles:this.guilds.cache.reduce((a,t) => t.shardID === i ? a + t.roles.cache.size : a,0),
@@ -751,6 +754,7 @@ Discord.Client = class Client extends Discord.Client {
 		}});
 		shards[0].cachedDMUsers = this.users.cache.filter(t => t.id !== this.user.id && !this.guilds.cache.some(a => a.members.cache.has(t.id))).size;
 		shards[0].cachedDMChannels = this.channels.cache.filter(t => t.type === "dm").size;
+		shards[0].cachedDMMessages = this.channels.cache.filter(t => t.type === "dm").reduce((a,t) => a + t.messages.cache.size, 0);
 		return {
 			shards:shards.length,
 			status:statuses[this.ws.status],
@@ -767,12 +771,13 @@ Discord.Client = class Client extends Discord.Client {
 			memberCount:shards.reduce((a,t) => a + t.memberCount,0),
 			cachedUsers:this.users.cache.filter(t => t.id !== this.user.id).size,
 			cachedChannels:this.channels.cache.size,
+			cachedMessages:this.channels.cache.filter(t => t.messages).reduce((a,t) => a + t.messages.cache.size, 0),
 			cachedGuildMembers:shards.reduce((a,t) => a + t.cachedGuildMembers,0),
 			cachedGuildChannels:shards.reduce((a,t) => a + t.cachedGuildChannels,0),
 			cachedGuildRoles:shards.reduce((a,t) => a + t.cachedGuildRoles,0),
 			cachedGuildPresences:shards.reduce((a,t) => a + t.cachedGuildPresences,0),
 			cachedGuildVoiceStates:shards.reduce((a,t) => a + t.cachedGuildVoiceStates,0),
-			cachedGuildEmojis:shards.reduce((a,t) => a + t.cachedGuildEmojis,0)
+			cachedGuildEmojis:shards.reduce((a,t) => a + t.cachedGuildEmojis,0),
 			shardDetails:shards
 		}
 	}
