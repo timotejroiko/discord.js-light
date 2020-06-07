@@ -330,6 +330,19 @@ Discord.GuildChannelManager.prototype.fetch = async function(cache = true) {
 	}
 }
 
+Object.defineProperty(Discord.MessageMentions.prototype, "channels", {
+	get: function() {
+		if(this._channels) { return this._channels; }
+		this._channels = new Discord.Collection();
+		let matches;
+		while((matches = this.constructor.CHANNELS_PATTERN.exec(this._content)) !== null) {
+			let chan = this.client.channels.cache.get(matches[1]) || this.client.channels.add({id:matches[1],type:this.guild?0:1}, this.guild, false);
+			this._channels.set(chan.id, chan);
+		}
+		return this._channels;
+	}
+});
+
 Discord.Client = class Client extends Discord.Client {
 	constructor(options = {}) {
 		options = Object.assign(
