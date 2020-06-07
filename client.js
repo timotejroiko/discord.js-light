@@ -49,7 +49,7 @@ Discord.Structures.extend("Message", M => {
 	return class Message extends M {
 		constructor(client, data, channel) {
 			let d = {};
-			let list = ["author","member","mentions"];
+			let list = ["author","member","mentions","mention_roles"];
 			for(let i in data) {
 				if(!list.includes(i)) { d[i] = data[i]; }
 			}
@@ -70,10 +70,16 @@ Discord.Structures.extend("Message", M => {
 			}
 			if(data.mentions && data.mentions.length) {
 				for(let mention of data.mentions) {
-					this.mentions.users.set(mention.id,client.users.cache.get(mention.id) || client.users.add(mention,false))
+					this.mentions.users.set(mention.id,client.users.cache.get(mention.id) || client.users.add(mention,false));
 					if(mention.member && this.guild) {
-						this.mentions.members.set(mention.id,this.guild.members.cache.get(mention.id) || this.guild.members.add(Object.assign(mention.member,{user:this.author}),false));
+						if(!this.mentions._members) { this.mentions._members = {} }
+						this.mentions._members[mention.id] = mention.member;
 					}
+				}
+			}
+			if(data.mention_roles && data.mention_roles.length && this.guild) {
+				for(let role of data.mention_roles) {
+					this.mentions.roles.set(role,this.guild.roles.cache.get(role) || this.guild.roles.add({id:role},false));
 				}
 			}
 		}
@@ -163,7 +169,7 @@ Discord.Structures.extend("GuildMember", G => {
 		constructor(client, data, guild) {
 			let d = {};
 			for(let i in data) {
-				if(i !== "user") { d[i] = data[i]; }
+				if(i !== "user" && i !== "roles") { d[i] = data[i]; }
 			}
 			super(client, d, guild);
 			if(data.user) {
@@ -172,6 +178,9 @@ Discord.Structures.extend("GuildMember", G => {
 				} else {
 					this.user = client.users.cache.get(data.user.id) || client.users.add(data.user,false);
 				}
+			}
+			if(data.roles.length && (this.client.options.enablePermissions || this.guild.roles.cache.size)) {
+				this._roles = data.roles;
 			}
 		}
 		equals(member) {
@@ -330,9 +339,43 @@ Discord.GuildChannelManager.prototype.fetch = async function(cache = true) {
 	}
 }
 
+Discord.RoleManager.prototype.fetch = async function(id, cache = true) {
+	if(id && this.cache.has(id)) { return this.cache.get(id); }
+	let roles = await this.client.api.guilds(this.guild.id).roles.get();
+	if(id) {
+		let role = roles.find(t => t.id === id);
+		return this.add(role, cache);
+	} else {
+		if(cache) {
+			for(let role of roles) {
+				this.add(role, cache);
+			}
+			return this.cache;
+		} else {
+			let collection = new Discord.Collection();
+			for(let role of roles) {
+				collection.set(role.id,this.add(role, false));
+			}
+			return collection;
+		}
+	}
+}
+
+Object.defineProperty(Discord.RoleManager.prototype, "everyone", {
+	get: function() {
+		return this.cache.get(this.guild.id) || this.guild.roles.add({id:this.guild.id},false);
+	}
+});
+
+Object.defineProperty(Discord.GuildMemberRoleManager.prototype, "_roles", {
+	get: function() {
+		const everyone = this.guild.roles.everyone;
+		return this.guild.roles.cache.filter(role => this.member._roles.includes(role.id)).set(everyone.id, everyone);
+	}
+});
+
 Object.defineProperty(Discord.MessageMentions.prototype, "channels", {
 	get: function() {
-		if(this._channels) { return this._channels; }
 		this._channels = new Discord.Collection();
 		let matches;
 		while((matches = this.constructor.CHANNELS_PATTERN.exec(this._content)) !== null) {
@@ -340,6 +383,19 @@ Object.defineProperty(Discord.MessageMentions.prototype, "channels", {
 			this._channels.set(chan.id, chan);
 		}
 		return this._channels;
+	}
+});
+
+Object.defineProperty(Discord.MessageMentions.prototype, "members", {
+	get: function() {
+		if(!this.guild) return null;
+		if(!this._members) { this._members = {}; }
+		let members = new Discord.Collection();
+		for(let id in this._members) {
+			let member = this.guild.members.cache.get(id) || this.guild.members.add(Object.assign(this._members[id],{user:this.client.users.cache.get(id) || this.users.get(id)}),false);
+			members.set(id,member);
+		}
+		return members
 	}
 });
 
