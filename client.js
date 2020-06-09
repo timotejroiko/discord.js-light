@@ -118,9 +118,6 @@ Discord.Structures.extend("Message", M => {
 			*/
 			if(!this.client.channels.cache.has(this.channel.id)) {
 				this.channel = await this.client.channels.fetch(this.channel.id);
-				if(this.guild && !this.guild.channels.cache.has(this.channel.id)) {
-					this.guild.channels.cache.set(this.channel.id, this.channel);
-				}
 			}
 			if(!this.client.users.cache.has(this.author.id)) {
 				this.author = this.client.users.add(this.author);
@@ -226,7 +223,6 @@ Discord.Structures.extend("VoiceChannel", V => {
 		async join() {
 			if(Discord.Constants.browser) return Promise.reject(new Error('VOICE_NO_BROWSER'));
 			let channel = await this.client.channels.fetch(this.id);
-			if(channel.guild && !channel.guild.channels.cache.has(channel.id)) { channel.guild.channels.cache.set(channel.id,channel); }
 			channel.noSweep = true;
 			return this.client.voice.joinChannel(channel);
 		}
@@ -294,7 +290,6 @@ Discord.Channel.create = (client, data, guild) => {
 					break;
 				}
 			}
-			if(channel && client.channels.cache.has(channel.id)) { guild.channels.cache.set(channel.id, channel); }
 		}
 	}
 	return channel;
@@ -308,8 +303,8 @@ Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
 	}
 	const existing = this.cache.get(data.id);
 	if(existing) {
-		if (existing._patch && cache) existing._patch(data);
-		if (guild) guild.channels.add(existing);
+		if(existing._patch && cache) { existing._patch(data); }
+		if(existing.guild) { existing.guild.channels.add(existing); }
 		return existing;
 	}
 	const channel = Discord.Channel.create(this.client, data, guild);
@@ -317,44 +312,78 @@ Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
 		this.client.emit(Discord.Constants.Events.DEBUG, `Failed to find guild, or unknown type for channel ${data.id} ${data.type}`);
 		return null;
 	}
-	if(cache) { this.cache.set(channel.id, channel); }
+	if(cache) {
+		this.cache.set(channel.id, channel);
+		if(channel.guild) {
+			channel.guild.channels.add(channel);
+		}
+	}
 	return channel;
 }
 
-Discord.GuildChannelManager.prototype.fetch = async function(cache = true) {
+Discord.GuildChannelManager.prototype.fetch = async function(id, cache = true) {
+	if(id === false) { cache = false; id = ""; }
+	if(id && this.cache.has(id)) { return this.cache.get(id); }
 	let channels = await this.client.api.guilds(this.guild.id).channels().get();
-	if(cache) {
-		for(let channel of channels) {
-			let c = this.client.channels.add(channel,this.guild,true);
-			this.cache.set(c.id,c);
-		}
-		return this.cache;
+	if(id) {
+		let channel = channels.find(t => t.id === id);
+		if(channel) { return this.client.channels.add(channel,this.guild,cache); }
 	} else {
-		let collection = new Discord.Collection();
-		for(let channel of channels) {
-			let c = this.client.channels.add(channel,this.guild,false);
-			collection.set(c.id,c);
+		if(cache) {
+			for(let channel of channels) {
+				this.client.channels.add(channel,this.guild);
+			}
+			return this.cache;
+		} else {
+			let collection = new Discord.Collection();
+			for(let channel of channels) {
+				collection.set(channel.id, this.client.channels.add(channel,this.guild,false));
+			}
+			return collection;
 		}
-		return collection;
+	}
+}
+
+Discord.GuildEmojiManager.prototype.fetch = async function(id, cache = true) {
+	if(id === false) { cache = false; id = ""; }
+	if(id && this.cache.has(id)) { return this.cache.get(id); }
+	let emojis = await this.client.api.guilds(this.guild.id).emojis().get();
+	if(id) {
+		let emoji = emojis.find(t => t.id === id);
+		if(emoji) { return this.add(emoji, cache); }
+	} else {
+		if(cache) {
+			for(let emoji of emojis) {
+				this.add(emoji);
+			}
+			return this.cache;
+		} else {
+			let collection = new Discord.Collection();
+			for(let emoji of emojis) {
+				collection.set(emoji.id, this.add(emoji, false));
+			}
+			return collection;
+		}
 	}
 }
 
 Discord.RoleManager.prototype.fetch = async function(id, cache = true) {
+	if(id === false) { cache = false; id = ""; }
 	if(id && this.cache.has(id)) { return this.cache.get(id); }
 	let roles = await this.client.api.guilds(this.guild.id).roles.get();
 	if(id) {
 		let role = roles.find(t => t.id === id);
-		return this.add(role, cache);
+		if(role) { return this.add(role, cache); }
 	} else {
 		if(cache) {
 			for(let role of roles) {
-				this.add(role, cache);
+				this.add(role);
 			}
 			return this.cache;
 		} else {
 			let collection = new Discord.Collection();
 			for(let role of roles) {
-				collection.set(role.id,this.add(role, false));
+				collection.set(role.id, this.add(role, false));
 			}
 			return collection;
 		}
@@ -459,10 +488,7 @@ Discord.Client = class Client extends Discord.Client {
 				case "MESSAGE_CREATE": case "MESSAGE_UPDATE": {
 					if(r.t === "MESSAGE_UPDATE" && !r.d.edited_timestamp) { break; }
 					if(r.d.author.id === this.user.id) {
-						let channel = this.channels.fetch(r.d.channel_id);
-						if(channel.guild && !channel.guild.channels.cache.has(channel.id)) {
-							channel.guild.channels.cache.set(channel.id, channel);
-						}
+						let channel = await this.channels.fetch(r.d.channel_id);
 						if(channel.recipient) {
 							if(!this.users.cache.has(channel.recipient.id)) {
 								channel.recipient = this.users.add(channel.recipient);
@@ -592,6 +618,7 @@ Discord.Client = class Client extends Discord.Client {
 							changedChannel._typing = new Map(newChannel._typing);
 							newChannel = changedChannel;
 					        this.channels.cache.set(newChannel.id, newChannel);
+					        if(newChannel.guild) { newChannel.guild.channels.add(newChannel); }
 						}
 						this.emit(Discord.Constants.Events.CHANNEL_UPDATE, oldChannel, newChannel);
 					} else {
@@ -768,13 +795,13 @@ Discord.Client = class Client extends Discord.Client {
 				}
 			}
 		});
-		if(this.options.clientSweepInterval && !isNaN(this.options.clientSweepInterval)) {
-			setInterval(() => {
+		if(this.options.clientSweepInterval && Number.isInteger(this.options.clientSweepInterval)) {
+			this.setInterval(() => {
 				this.sweepInactive();
 			},this.options.clientSweepInterval * 1000);
 		}
-		if(this.options.shardCheckInterval && !isNaN(this.options.shardCheckInterval)) {
-			setInterval(() => {
+		if(this.options.shardCheckInterval && Number.isInteger(this.options.shardCheckInterval)) {
+			this.setInterval(() => {
 				this.checkShards();
 			},this.options.shardCheckInterval * 1000);
 		}
@@ -784,7 +811,7 @@ Discord.Client = class Client extends Discord.Client {
 		}
 	}
 	sweepInactive() {
-		let timer = this.options.clientSweepInterval && !isNaN(this.options.clientSweepInterval) ? this.options.clientSweepInterval * 1000 : 86400000;
+		let timer = this.options.clientSweepInterval && Number.isInteger(this.options.clientSweepInterval) ? this.options.clientSweepInterval * 1000 : 86400000;
 		if(timer < 60000) { timer = 60000; }
 		this.users.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - timer) && !t.noSweep && t.id !== this.user.id);
 		if(!this.options.enableChannels) { this.channels.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - timer) && !t.noSweep); }
@@ -794,7 +821,7 @@ Discord.Client = class Client extends Discord.Client {
 		});
 	}
 	checkShards() {
-		let timer = this.options.shardCheckInterval && !isNaN(this.options.shardCheckInterval) ? this.options.shardCheckInterval * 1000 : 600000;
+		let timer = this.options.shardCheckInterval && Number.isInteger(this.options.shardCheckInterval) ? this.options.shardCheckInterval * 1000 : 600000;
 		if(timer < 60000) { timer = 60000; }
 		this.ws.shards.forEach(shard => {
 			if(shard.lastActive < Date.now() - timer) {
