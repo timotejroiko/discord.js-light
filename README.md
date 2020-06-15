@@ -11,23 +11,23 @@ A [discord.js (v12)](https://discord.js.org) "anti-caching" framework focused on
 
 ## Why?
 
-Discord.js has been THE javascript discord library for a long time now, and successfully powers thousands of bots. But as your bot grows larger, you will start noticing a horrendous increase in resource usage, especially memory consumption.
+Discord.js has been THE javascript discord library for a long time now, and successfully powers thousands of bots. But as bots grows larger, you will often notice a substantial increase in resource usage, especially memory consumption.
 
-This is due to the fact that discord.js caches EVERYTHING it can in order to avoid hitting the Discord API as much as possible. This behavior can however make the library feel bloated for most developers as many times the library is caching and processing data that your bot will never use.
+This is due to the fact that discord.js caches nearly everything it can in order to avoid hitting the Discord API as much as possible and also to provide all its features. This behavior can however make the library feel bloated for bigger bots as many times the library is caching and processing data that your bot will never use.
 
 This issue has been discussed a few times by the community but ultimately it has been decided that the library is too tightly coupled with its caching systems and seperating them would be unfeasible. Thus the task of scaling falls back to us bot developers.
 
-Several solutions have been presented so far, such as regular cache sweeping, intents and event disabling. However i felt that the existing methods were lacking and decided to study the discord.js source code to see what count be done about it.
+Several solutions have been presented so far, such as regular cache sweeping, intents and disabling events. However i felt that the existing methods were lacking and decided to study the discord.js source code to see what could be done about it.
 
-This project later became the base framework for all my bots and it does a wonderful job keeping hosting costs and scaling maintenance in check (\~150mb ram at 3000 guilds).
+This project later became the base framework for all my bots and it does a wonderful job keeping hosting costs and scaling maintenance in check (\~120mb ram at 3000+ guilds).
 
 ## Features
 
-* Provides most of discord.js's basic events without any automatic caching
+* Provides most of discord.js's basic events without automatic caching
 * Most classes have their structures intact and can be used the same way as the original library
 * Partial objects are given when data is missing and can be manually fetched and cached when needed
-* Fully compatible with Discord's new intents system to receive only data that is actually used (enabled by default)
-* Uses a fraction of memory, cpu and bandwidth compared to the original library (benchmarks can be found in the djs-shenanigans folder)
+* Fully compatible with Discord intents to receive only data that is actually used (enabled by default)
+* Drastically lower resource usage for most use cases especially at scale
 
 ## Getting Started
 
@@ -67,18 +67,19 @@ Generally usage should be very similar to discord.js and you can safely refer to
 
 ## Client options
 
-Some extra client options were introduced to control certain aspects specific to this library.
+Some extra client options were added to control certain aspects specific to this library.
 
 | Option | Type | Description |
 | ------------- | ------------- | ------------- |
 | token | string | Your Discord token. If provided will make the client login automatically |
 | clientSweepInterval | number | Set how often to sweep inactive cached users and channels in seconds. Set to `0` to disable (default:86400) |
 | shardCheckInterval | number | Set how often to check for shard activity in seconds (internal sharding only). Inactive shards will be forced to reconnect (workaround for a rare issue with discord.js where shards randomly disconnect and refuse to reconnect). Set to `0` to disable (default:600) |
-| enablePermissions | boolean | This option enables caching of Guild Roles and Channel PermissionOverwrites in order to allow for permission checking. This will increase memory usage by a moderate amount (default:false) |
-| enableChannels | boolean | This option enables caching of Channels and disables sweeping of inactive channels. This will increase memory usage by a substantial amount, use only if you need to track channel updates in real time (default:false) |
-| trackPresences | boolean | This option enables caching of Presences when the GUILD_PRESENCES priviledged Intent is enabled or when Intents are not used. This will increase memory usage by a large amount, use only if you need to track people's statuses and activities in real time (default:false) |
+| enablePermissions | boolean | This option enables caching of all Guild Roles and Channel PermissionOverwrites in order to allow for permission checking. This will increase memory usage by a moderate amount (default:false) |
+| enableChannels | boolean | This option enables caching of all channels and disables sweeping of inactive channels. This will increase memory usage by a substantial amount, use only if you need to track channel updates in real time (default:false) |
+| trackPresences | boolean | This option enables caching of all presences when the GUILD_PRESENCES priviledged Intent is enabled or when Intents are not used. This will increase memory and cpu usage by a large amount, use only if you need to track people's statuses and activities in real time (default:false) |
+| queueLimit | number | Max amount of queued responses when rate limited. If this limit is hit, the client will temporarily stop firing message events in the relevant channel to prevent spam build up (default:5) |
 
-All other discord.js client options continue to be available.
+All other discord.js client options continue to be available except for partials which this library implements in its own way.
 
 ## Intents
 
@@ -106,8 +107,24 @@ Other Intents are currently not supported.
 
 This library alters the default caching behavior as follows:
 
-* Users are not cached by default. Users can be manually cached by using `client.users.fetch(id)`. Fetching will not cache its GuildMember counterpart.
-* Channels are not cached by default unless the `enableChannels` client option is set to true. Channels can be manually cached using `client.channels.fetch(id)`. Fetching will not cache its GuildChannel counterpart.
+| Store | Behavior | How to Fetch |
+| ------------- | ------------- | ------------- |
+| client.users | Cached when sending DMs or when members are cached | client.users.fetch() & guild.members.fetch() |
+| client.channels | Cached when `enableChannels` is enabled or when sending messages | client.channels.fetch() & guild.channels.fetch() |
+| client.guilds | Always cached unless manually sweeped | client.guilds.fetch() |
+| channel.messages | Cached when sending messages, author messages are also cached when responding with message.reply() | channel.messages.fetch() |
+| channel.permissionOverwrites | Cached when `enablePermissions` is enabled | channel.fetchOverwrites() & guild.channels.fetch() |
+| guild.emojis | Not automatically cached | guild.emojis.fetch() & guild.fetch() & client.guilds.fetch() |
+| guild.roles | Cached when `enablePermissions` is enabled | guild.roles.fetch() & guild.fetch() & client.guilds.fetch() |
+| guild.channels | Cached when client.channels are cached | client.channels.fetch() & guild.channels.fetch() |
+| guild.members | Cached when responding with message.reply() | guild.members.fetch() |
+| guild.voiceStates | Cached only when the GUILD_VOICE_STATES intent is enabled and its respective member is connected to a voice channel | - |
+| guild.presences | Cached when the GUILD_PRESENCES intent is enabled and, `trackPresences` is enabled or its respective user is cached | guild.members.fetch() if GUILD_PRESENCES intent is enabled |
+| member.roles | Always cached, partial roles if guild.roles are not cached | guild.roles.fetch() |
+
+
+* Users are not cached by default. Users can be manually cached by using `client.users.fetch(id)`. Fetching Users will not fetch nor cache its GuildMember counterpart.
+* Channels are not cached by default unless the `enableChannels` client option is set to true. Channels can be manually cached using `client.channels.fetch(id)`.
 * Messages are not cached by default. Messages can be manually cached by fetching its channel and then using `channel.messages.fetch(id)`
 * Guilds are cached at login and will be kept updated as long as they remain in the cache, but not all of its contents are cached (see below). Guilds can also be safely sweeped and removed from the cache for additional memory saving in exchange for losing access to some guild information.
 * Guild Emojis are not cached by default. Emojis can be fully cached by using `guild.fetch()`. Emojis are currently not automatically updated and will need to be fetched again if needed.
