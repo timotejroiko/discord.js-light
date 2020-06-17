@@ -116,18 +116,18 @@ This library alters the default caching behavior as follows:
 
 | Store | Behavior | How to Fetch |
 | ------------- | ------------- | ------------- |
-| client.users | Cached when responding to DMs or when responding with message.reply() | client.users.fetch() & guild.members.fetch() |
-| client.channels | Cached when `enableChannels` is enabled or when sending messages in it | client.channels.fetch() & guild.channels.fetch() |
+| client.users | Cached when responding to DMs or when responding with message.reply() or when members are cached | client.users.fetch()  guild.members.fetch() |
+| client.channels | Cached when `enableChannels` is enabled or when sending messages in it | client.channels.fetch()  guild.channels.fetch() |
 | client.guilds | Always cached unless manually sweeped | client.guilds.fetch() |
-| channel.messages | Own messages are always cached, author messages are cached when responding with message.reply() | channel.messages.fetch() |
-| channel.permissionOverwrites | Cached when `enablePermissions` is enabled or when guild roles are cached | client.channels.fetch() & guild.channels.fetch() |
-| guild.emojis | Never automatically cached | guild.emojis.fetch() & guild.fetch() & client.guilds.fetch() |
-| guild.roles | Cached when `enablePermissions` is enabled | guild.roles.fetch() & guild.fetch() & client.guilds.fetch() |
-| guild.channels | Cached when client.channels are cached | client.channels.fetch() & guild.channels.fetch() |
+| channel.messages | Own messages are cached by default, author messages are cached when responding with message.reply() | channel.messages.fetch() |
+| channel.permissionOverwrites | Cached when `enablePermissions` is enabled or when guild roles are cached | client.channels.fetch()  guild.channels.fetch() |
+| guild.emojis | Never automatically cached | guild.emojis.fetch()  guild.fetch()  client.guilds.fetch() |
+| guild.roles | Cached when `enablePermissions` is enabled | guild.roles.fetch()  guild.fetch()  client.guilds.fetch() |
+| guild.channels | Cached when client.channels are cached | client.channels.fetch()  guild.channels.fetch() |
 | guild.members | Cached when responding with message.reply() | guild.members.fetch() |
-| guild.voiceStates | Cached while the relevant member is connected to a voice channel (requires GUILD_VOICE_STATES intent) | - |
+| guild.voiceStates | Cached while the relevant members are connected to a voice channel (requires GUILD_VOICE_STATES intent) | - |
 | guild.presences | Cached when `trackPresences` is enabled or when the relevant member is cached (requires GUILD_PRESENCES intent) | guild.members.fetch() (requires GUILD_PRESENCES intent) |
-| member.roles | Always available but contains partial roles if guild roles are not cached | guild.roles.fetch() & guild.fetch() & client.guilds.fetch() |
+| member.roles | Always available but contains partial roles if guild roles are not cached | guild.roles.fetch()  guild.fetch()  client.guilds.fetch() |
 | message.edits | Limited to 1 history state | - |
 
 All structures are replaced with a partial object when the necessary data is not available. These objects only guarantee an id property but most of its class methods should still work. Depending on your needs, you may need to fetch these before being able to access their data.
@@ -138,7 +138,7 @@ Unlike discord.js, this library will continue to function and emit partial event
 
 ## Events Behavior
 
-Most events should be identical to the originals besides the caching behavior. Events will always emit, regardless of the required data being available or not (similar to enabling all partials in discord.js but including unsupported partials). When the required data is missing, the event will emit a partial structure where only an id is guaranteed. Events that emit multiple versions of a structure, such as update events, will emit `null` instead if not available.
+Most events should be identical to the originals aside from the caching behavior. Events will always emit, regardless of the required data being available or not (similar to enabling all partials in discord.js but including unsupported partials). When the required data is missing, the event will emit a partial structure where only an id is guaranteed. Events that emit multiple versions of a structure, such as update events, will emit `null` instead if not available.
 
 | Event | Emits | Notes |
 | ------------- | ------------- | ------------- |
