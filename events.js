@@ -272,7 +272,7 @@ module.exports = async function(r,shard) {
 					if(r.d.channels && !this.options.enableChannels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
 					if(r.d.members) { r.d.members = r.d.members.filter(t => guild.members.cache.has(t.user.id)); }
 					if(!this.options.enablePermissions && !guild.roles.cache.size) { r.d.roles = []; }
-					if(!guild.emojis.cache.size) { r.d.emojis = []; }
+					if(!guild.emojis || !guild.emojis.cache.size) { r.d.emojis = []; }
 					guild._patch(r.d);
 					if(this.ws.status === Discord.Constants.Status.READY && this.options.fetchAllMembers && (this.options.ws.intents & 2)) {
 						await guild.members.fetch({limit:0}).catch(err => this.emit(Discord.Constants.Events.DEBUG, `Failed to fetch all members: ${err}\n${err.stack}`));
@@ -336,6 +336,7 @@ module.exports = async function(r,shard) {
 					this.emit(Discord.Constants.Events.GUILD_DELETE, guild);
 				}
 			}
+			break;
 		}
 		case "USER_UPDATE": {
 			if(this.users.cache.has(r.d.id)) {
