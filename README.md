@@ -196,7 +196,7 @@ Some functionality was added and/or modified for dealing with the above caching 
 
 An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this`
 
-**`content` (string)** - string to evaluate. if evaluated to a promise, returns `{Promise:result}`, otherwise returns `result`
+**`content (string)`** - string to evaluate. if evaluated to a promise, returns `{Promise:result}`, otherwise returns `result`
 
 **`returns`** - `Promise (Object | Anything)`
 
