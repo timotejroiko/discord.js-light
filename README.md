@@ -9,6 +9,8 @@ A [discord.js (v12)](https://discord.js.org) "anti-caching" framework focused on
 [![Discord](https://img.shields.io/discord/581072557512458241?label=support%20server)](https://discord.gg/BpeedKh)
 [![Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2Ftimotejroiko&label=support%20me%20on%20patreon)](https://www.patreon.com/timotejroiko)
 
+
+
 ## Why?
 
 Discord.js has been THE javascript discord library for a long time now, and successfully powers thousands of bots. But as bots grows larger, you will often notice a substantial increase in resource usage, especially memory consumption.
@@ -21,6 +23,8 @@ Several solutions have been presented so far, such as regular cache sweeping, in
 
 This project later became the base framework for all my bots and it does a wonderful job keeping hosting costs and scaling maintenance in check (\~120mb ram at 3000+ guilds).
 
+
+
 ## Features
 
 * Provides most of discord.js's basic events without automatic caching
@@ -28,6 +32,8 @@ This project later became the base framework for all my bots and it does a wonde
 * Partial objects are given when data is missing and can be manually fetched and cached when needed
 * Fully compatible with Gateway Intents to receive only data that is actually wanted (enabled by default)
 * Drastically lower resource usage for most use cases, especially at scale
+
+
 
 ## Getting Started
 
@@ -67,6 +73,8 @@ client.on("message", message => {
 
 Generally usage should be very similar to discord.js and you can safely refer to its documentation as long as you respect the caching differences explained later on in this readme.
 
+
+
 ## Client options
 
 Some client options were added to control certain aspects specific to this library while other options may have different defaults or behavior. Here's a list of changes and additions:
@@ -87,6 +95,8 @@ Some client options were added to control certain aspects specific to this libra
 | partials | - | This library implements its own partials system which is always enabled, therefore this option is not available |
 
 All other discord.js client options continue to be available and should work normally.
+
+
 
 ## Intents
 
@@ -109,6 +119,8 @@ This library comes preconfigured with a set of Intents enabled by default, and c
 You can enable/disable the above Intents by defining your own Intents combination in your client options as per the discord.js documentation.
 
 Other Intents are currently not supported.
+
+
 
 ## Caching Behavior
 
@@ -135,6 +147,8 @@ All structures are replaced with a partial object when the necessary data is not
 The client itself will always be cached as a User and as a GuildMember in all cached guilds.
 
 Unlike discord.js, this library will continue to function and emit partial events even if nothing is cached. You can send/receive messages and reactions to/from uncached channels and messages, receive update/delete events from uncached objects and even completely sweep the guild cache without breaking the library.
+
+
 
 ## Events Behavior
 
@@ -172,6 +186,8 @@ Events that do not return partials only guarantee the contents of the top-level 
 
 Other events are currently not supported (except errors, sharding and connection events)
 
+
+
 ## Non-standard API
 
 Some functionality was added and/or modified for dealing with the above caching changes among other conveniences:
@@ -180,9 +196,9 @@ Some functionality was added and/or modified for dealing with the above caching 
 
 An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this`
 
-`content` (string) - string to evaluate. if evaluated to a promise, returns `{Promise:result}`, otherwise returns `result`
+**`content` (string)** - string to evaluate. if evaluated to a promise, returns `{Promise:result}`, otherwise returns `result`
 
-`returns` - promise (Object | Anything)
+**`returns`** - `Promise (Object | Anything)`
 
 ### message.reply(content,options)
 
@@ -196,121 +212,123 @@ Replaces the original message.reply() and includes several changes:
 * Adds response times and request-response pairing properties
 * When triggered by a message update, replies by editing the previous response if possible
 
-`content` (anything) - content to send. non-strings will be serialized. cannot pass options as first parameter, pass an empty string instead
+**`content (anything)`** - content to send. non-strings will be serialized. cannot pass options as first parameter, pass an empty string instead
 
-`options (object)` - message options object as per discord.js
+**`options (object)`** - message options object as per discord.js
 
-`returns` - promise (Message)
+**`returns`** - `Promise (Message)`
 
 ### guild.channels.fetch(id,cache,withOverwrites)
 
 Fetches a single guild channel from the /guilds/:id/channels endpoint. This endpoint bypasses VIEW_CHANNEL permissions.
 
-`id (string)` - id of the channel to fetch. if not a string, fetches all channels in the guild and first and second parameters become cache and withOverwrites
+**`id (string)`** - id of the channel to fetch. if not a string, fetches all channels in the guild and first and second parameters become cache and withOverwrites
 
-`cache (boolean)` - whether to cache the result. returns the guild channel cache if set to true and no id is specified, otherwise returns a channel or a collection of channels. defaults to true
+**`cache (boolean)`** - whether to cache the result. returns the guild channel cache if set to true and no id is specified, otherwise returns a channel or a collection of channels. defaults to true
 
-`withOverwrites (boolean)` - whether to include channel permissionOverwrites. always true if `enablePermissions` is enabled or if guild roles are cached, otherwise defaults to false
+**`withOverwrites (boolean)`** - whether to include channel permissionOverwrites. always true if `enablePermissions` is enabled or if guild roles are cached, otherwise defaults to false
 
-`returns` - promise (Channel | Collection of Channels | guild.channels.cache)
+**`returns`** - `Promise (Channel | Collection of Channels | guild.channels.cache)`
 
 ### guild.members.fetch(options)
 
 Fetches guild members.
 
-`options (object)` - object of options
+**`options (object)`** - object of options
 
-`options.rest (boolean)` - whether to use the /guilds/:id/members endpoint instead of the gateway. defaults to false
+**`options.rest (boolean)`** - whether to use the /guilds/:id/members endpoint instead of the gateway. defaults to false
 
-`options.id (string)` - id of the member to fetch (rest & gateway)
+**`options.id (string)`** - id of the member to fetch (rest & gateway)
 
-`options.ids (array)` - array of member ids to fetch (gateway only, requires GUILD_MEMBERS intent)
+**`options.ids (array)`** - array of member ids to fetch (gateway only, requires GUILD_MEMBERS intent)
 
-`options.query (string)` - query to search for members by username (gateway only). set to empty string for all members (requires GUILD_MEMBERS intent)
+**`options.query (string)`** - query to search for members by username (gateway only). set to empty string for all members (requires GUILD_MEMBERS intent)
 
-`options.limit (number)` - max amount of results (rest & gateway). set to 0 for unlimited (gateway only, requires GUILD_MEMBERS intent). max 1000 for rest. defaults to 50
+**`options.limit (number)`** - max amount of results (rest & gateway). set to 0 for unlimited (gateway only, requires GUILD_MEMBERS intent). max 1000 for rest. defaults to 50
 
-`options.after (string)` - last member id from the previous request (rest only). used for pagination in the rest endpoint
+**`options.after (string)`** - last member id from the previous request (rest only). used for pagination in the rest endpoint
 
-`options.cache (boolean)` - whether to cache results (rest & gateway). returns the member cache if results match guild.memberCount, otherwise returns a member or a collection of members. defaults to true
+**`options.cache (boolean)`** - whether to cache results (rest & gateway). returns the member cache if results match guild.memberCount, otherwise returns a member or a collection of members. defaults to true
 
-`options.withPresences (boolean)` - whether to include presences (gateway only, requires GUILD_PRESENCES intent, requires `trackPresences` to be enabled or relevant members to be cached)
+**`options.withPresences (boolean)`** - whether to include presences (gateway only, requires GUILD_PRESENCES intent, requires `trackPresences` to be enabled or relevant members to be cached)
 
-`options.time (number)` - time limit to wait for a response in milliseconds (gateway only). defaults to 60 seconds
+**`options.time (number)`** - time limit to wait for a response in milliseconds (gateway only). defaults to 60 seconds
 
-`returns` - promise (GuildMember | Collection of GuildMembers | guild.members.cache)
+**`returns`** - `Promise (GuildMember | Collection of GuildMembers | guild.members.cache)`
 
 ### guild.emojis.fetch(cache)
 
 Fetches guild emojis.
 
-`cache (boolean)` - whether to cache the results. returns the emoji cache if set to true, otherwise returns a collection of emojis. defaults to true
+**`cache (boolean)`** - whether to cache the results. returns the emoji cache if set to true, otherwise returns a collection of emojis. defaults to true
 
-`returns` - promise (Collection of Emojis | guild.emojis.cache)
+**`returns`** - `Promise (Collection of Emojis | guild.emojis.cache)`
 
 ### guild.roles.fetch(cache)
 
 Fetches guild roles.
 
-`cache (boolean)` - whether to cache the results. returns the role cache if set to true, otherwise returns a collection of roles. defaults to true
+**`cache (boolean)`** - whether to cache the results. returns the role cache if set to true, otherwise returns a collection of roles. defaults to true
 
-`returns` - promise (Collection of Roles | guild.roles.cache)
+**`returns`** - `Promise (Collection of Roles | guild.roles.cache)`
 
 ### client.guilds.fetch(id,cache)
 
 Fetches a guild.
 
-`id (string)` - id of the guild to fetch
+**`id (string)`** - id of the guild to fetch
 
-`cache (boolean)` - whether to cache the results. defaults to true
+**`cache (boolean)`** - whether to cache the results. defaults to true
 
-`returns` - promise (Guild)
+**`returns`** - `Promise (Guild)`
 
 ### client.sweepInactive()
 
 Sweep inactive users and channels from the cache
 
-`returns` - void
+**`returns`** - `Void`
 
 ### client.checkShards()
 
 Check internal shards for activity and force them to restart if inactive
 
-`returns` - void
+**`returns`** - `Void`
 
 ### client.getInfo()
 
 Fetches information about the current client and process, its caches, resource usage and shard information
 
-`returns` - promise (Object)
+**`returns`** - `Promise (Object)`
 
 ### user.lastActive
 
-Timestamp of the last time the client interacted with this user
+(number) Timestamp of the last time the client interacted with this user
 
 ### user.noSweep
 
-Set to true to disable sweeping of this user
+(boolean) Set to true to disable sweeping of this user
 
 ### channel.lastActive
 
-Timestamp of the last time the client interacted with this channel
+(number) Timestamp of the last time the client interacted with this channel
 
 ### channel.noSweep
 
-Set to true to disabled sweeping of this channel
+(boolean) Set to true to disabled sweeping of this channel
 
 ### message.commandResponse
 
-The message object that was sent in response to this message (only if responded with message.reply)
+(Message) The message object that was sent in response to this message (only if responded with message.reply)
 
 ### message.commandMessage
 
-The message object that triggered this response (only if responded with message.reply)
+(Message) The message object that triggered this response (only if responded with message.reply)
 
 ### message.commandResponseTime
 
-Message response time in milliseconds (only if responded with message.reply)
+(number) Message response time in milliseconds (only if responded with message.reply)
+
+
 
 ## Notes
 
