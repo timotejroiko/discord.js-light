@@ -180,9 +180,9 @@ Some functionality was added and/or modified for dealing with the above caching 
 
 An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this`
 
-**content (string)** - string to evaluate. if evaluated to a promise, returns `{Promise:result}`, otherwise returns `result`
+`content` (string) - string to evaluate. if evaluated to a promise, returns `{Promise:result}`, otherwise returns `result`
 
-**returns (promise)** - `anything | object`
+`returns` - promise (Object | Anything)
 
 ### message.reply(content,options)
 
@@ -196,93 +196,93 @@ Replaces the original message.reply() and includes several changes:
 * Adds response times and request-response pairing properties
 * When triggered by a message update, replies by editing the previous response if possible
 
-**content (anything)** - content to send. non-strings will be serialized. cannot pass options as first parameter, pass an empty string instead
+`content` (anything) - content to send. non-strings will be serialized. cannot pass options as first parameter, pass an empty string instead
 
-**options (object)** - message options object as per discord.js
+`options (object)` - message options object as per discord.js
 
-**returns (promise)** - `Message`
+`returns` - promise (Message)
 
 ### guild.channels.fetch(id,cache,withOverwrites)
 
 Fetches a single guild channel from the /guilds/:id/channels endpoint. This endpoint bypasses VIEW_CHANNEL permissions.
 
-**id (string)** - id of the channel to fetch. if not a string, fetches all channels in the guild and first and second parameters become cache and withOverwrites
+`id (string)` - id of the channel to fetch. if not a string, fetches all channels in the guild and first and second parameters become cache and withOverwrites
 
-**cache (boolean)** - whether to cache the result. returns the guild channel cache if set to true and no id is specified, otherwise returns a channel or a collection of channels. defaults to true
+`cache (boolean)` - whether to cache the result. returns the guild channel cache if set to true and no id is specified, otherwise returns a channel or a collection of channels. defaults to true
 
-**withOverwrites (boolean)** - whether to include channel permissionOverwrites. always true if `enablePermissions` is enabled or if guild roles are cached, otherwise defaults to false
+`withOverwrites (boolean)` - whether to include channel permissionOverwrites. always true if `enablePermissions` is enabled or if guild roles are cached, otherwise defaults to false
 
-**returns (promise)** - `Channel | Collection of Channels | guild.channels.cache`
+`returns` - promise (Channel | Collection of Channels | guild.channels.cache)
 
 ### guild.members.fetch(options)
 
 Fetches guild members.
 
-**options (object)** - object of options
+`options (object)` - object of options
 
-**options.rest (boolean)** - whether to use the /guilds/:id/members endpoint instead of the gateway. defaults to false
+`options.rest (boolean)` - whether to use the /guilds/:id/members endpoint instead of the gateway. defaults to false
 
-**options.id (string)** - id of the member to fetch (rest & gateway)
+`options.id (string)` - id of the member to fetch (rest & gateway)
 
-**options.ids (array)** - array of member ids to fetch (gateway only, requires GUILD_MEMBERS intent)
+`options.ids (array)` - array of member ids to fetch (gateway only, requires GUILD_MEMBERS intent)
 
-**options.query (string)** - query to search for members by username (gateway only). set to empty string for all members (requires GUILD_MEMBERS intent)
+`options.query (string)` - query to search for members by username (gateway only). set to empty string for all members (requires GUILD_MEMBERS intent)
 
-**options.limit (number)** - max amount of results (rest & gateway). set to 0 for unlimited (gateway only, requires GUILD_MEMBERS intent). max 1000 for rest. defaults to 50
+`options.limit (number)` - max amount of results (rest & gateway). set to 0 for unlimited (gateway only, requires GUILD_MEMBERS intent). max 1000 for rest. defaults to 50
 
-**options.after (string)** - last member id from the previous request (rest only). used for pagination in the rest endpoint
+`options.after (string)` - last member id from the previous request (rest only). used for pagination in the rest endpoint
 
-**options.cache (boolean)** - whether to cache results (rest & gateway). returns the member cache if results match guild.memberCount, otherwise returns a member or a collection of members. defaults to true
+`options.cache (boolean)` - whether to cache results (rest & gateway). returns the member cache if results match guild.memberCount, otherwise returns a member or a collection of members. defaults to true
 
-**options.withPresences (boolean)** - whether to include presences (gateway only, requires GUILD_PRESENCES intent, requires `trackPresences` to be enabled or relevant members to be cached)
+`options.withPresences (boolean)` - whether to include presences (gateway only, requires GUILD_PRESENCES intent, requires `trackPresences` to be enabled or relevant members to be cached)
 
-**options.time (number)** - time limit to wait for a response in milliseconds (gateway only). defaults to 60 seconds
+`options.time (number)` - time limit to wait for a response in milliseconds (gateway only). defaults to 60 seconds
 
-**returns (promise)** - `GuildMember | Collection of GuildMembers | guild.members.cache`
+`returns` - promise (GuildMember | Collection of GuildMembers | guild.members.cache)
 
 ### guild.emojis.fetch(cache)
 
 Fetches guild emojis.
 
-**cache (boolean)** - whether to cache the results. returns the emoji cache if set to true, otherwise returns a collection of emojis. defaults to true
+`cache (boolean)` - whether to cache the results. returns the emoji cache if set to true, otherwise returns a collection of emojis. defaults to true
 
-**returns (promise)** - `Collection of Emojis | guild.emojis.cache`
+`returns` - promise (Collection of Emojis | guild.emojis.cache)
 
 ### guild.roles.fetch(cache)
 
 Fetches guild roles.
 
-**cache (boolean)** - whether to cache the results. returns the role cache if set to true, otherwise returns a collection of roles. defaults to true
+`cache (boolean)` - whether to cache the results. returns the role cache if set to true, otherwise returns a collection of roles. defaults to true
 
-**returns (promise)** - `Collection of Roles | guild.roles.cache`
+`returns` - promise (Collection of Roles | guild.roles.cache)
 
 ### client.guilds.fetch(id,cache)
 
 Fetches a guild.
 
-**id (string)** - id of the guild to fetch
+`id (string)` - id of the guild to fetch
 
-**cache (boolean)** - whether to cache the results. defaults to true
+`cache (boolean)` - whether to cache the results. defaults to true
 
-**returns (promise)** - `Guild`
+`returns` - promise (Guild)
 
 ### client.sweepInactive()
 
 Sweep inactive users and channels from the cache
 
-**returns** - `void`
+`returns` - void
 
 ### client.checkShards()
 
 Check internal shards for activity and force them to restart if inactive
 
-**returns** - `void`
+`returns` - void
 
 ### client.getInfo()
 
 Fetches information about the current client and process, its caches, resource usage and shard information
 
-**returns (promise)** - `Object`
+`returns` - promise (Object)
 
 ### user.lastActive
 
