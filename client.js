@@ -10,7 +10,9 @@ Discord.Client = class Client extends Discord.Client {
 				messageCacheLifetime: 86400,
 				messageSweepInterval: 86400,
 				clientSweepInterval: 86400,
-				shardCheckInterval: 600,
+				userCacheLifetime: 86400,
+				channelCacheLifetime: 86400,
+				shardCheckInterval: 1800,
 				queueLimit: 5
 			},
 			options
@@ -48,15 +50,17 @@ Discord.Client = class Client extends Discord.Client {
 			console.log(`[${new Date().toISOString()}][Shard ${id}] Resumed`); // evts are useless
 		});
 		this.on("raw", Events.bind(this));
-		if(this.options.clientSweepInterval && Number.isInteger(this.options.clientSweepInterval)) {
+		if(parseInt(this.options.clientSweepInterval)) {
+			let time = Math.max(this.options.clientSweepInterval, 60);
 			this.setInterval(() => {
 				this.sweepInactive();
-			},this.options.clientSweepInterval * 1000);
+			}, time * 1000);
 		}
-		if(this.options.shardCheckInterval && Number.isInteger(this.options.shardCheckInterval)) {
+		if(parseInt(this.options.shardCheckInterval)) {
+			let time = Math.max(this.options.shardCheckInterval, 60);
 			this.setInterval(() => {
 				this.checkShards();
-			},this.options.shardCheckInterval * 1000);
+			}, time * 1000);
 		}
 		if(this.options.token) {
 			console.log(`[${new Date().toISOString()}] Connecting...`);
@@ -64,10 +68,14 @@ Discord.Client = class Client extends Discord.Client {
 		}
 	}
 	sweepInactive() {
-		let timer = this.options.clientSweepInterval && Number.isInteger(this.options.clientSweepInterval) ? this.options.clientSweepInterval * 1000 : 86400000;
-		if(timer < 60000) { timer = 60000; }
-		this.users.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - timer) && !t.noSweep && t.id !== this.user.id);
-		if(!this.options.enableChannels) { this.channels.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - timer) && !t.noSweep); }
+		let users = parseInt(this.options.userCacheLifetime);
+		let channels = parseInt(this.options.channelCacheLifetime);
+		if(users) {
+			this.users.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - users * 1000) && !t.noSweep && t.id !== this.user.id);
+		}
+		if(channels && !this.options.enableChannels) {
+			this.channels.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - channels * 1000) && !t.noSweep);
+		}
 		this.guilds.cache.forEach(t => {
 			t.members.cache.sweep(m => !this.users.cache.has(m.id));
 			t.channels.cache.sweep(m => !this.channels.cache.has(m.id));
@@ -75,10 +83,9 @@ Discord.Client = class Client extends Discord.Client {
 		});
 	}
 	checkShards() {
-		let timer = this.options.shardCheckInterval && Number.isInteger(this.options.shardCheckInterval) ? this.options.shardCheckInterval * 1000 : 600000;
-		if(timer < 60000) { timer = 60000; }
+		let timer = Math.max(parseInt(this.options.shardCheckInterval) || 0, 60);
 		this.ws.shards.forEach(shard => {
-			if(shard.lastActive < Date.now() - timer) {
+			if(shard.lastActive < Date.now() - timer * 1000) {
 				console.log(`[${new Date().toISOString()}][Shard ${shard.id}] Possibly dead. Attempting to reconnect`);
 				shard.destroy();
 			}

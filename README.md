@@ -82,11 +82,13 @@ Some client options were added to control certain aspects specific to this libra
 | Option | Type | Description |
 | ------------- | ------------- | ------------- |
 | token | string | Your bot token. If provided will make the client login automatically |
-| clientSweepInterval | number | Set how often to sweep inactive cached users and channels in seconds. Set to `0` to disable (default:86400) |
-| shardCheckInterval | number | Set how often to check for shard activity in seconds (internal sharding only). Inactive shards will be forced to reconnect (workaround for a rare issue with discord.js where shards randomly disconnect and refuse to reconnect). Set to `0` to disable (default:600) |
 | enablePermissions | boolean | This option enables caching of all Guild Roles and Channel PermissionOverwrites in order to allow for permission checking. This will increase memory usage by a moderate amount (default:false) |
 | enableChannels | boolean | This option enables caching of all channels and disables sweeping of inactive channels. This will increase memory usage by a substantial amount, use only if you need to track channel updates in real time (default:false) |
 | trackPresences | boolean | This option enables caching of all presences when the GUILD_PRESENCES priviledged Intent is enabled or when Intents are not used. This will increase memory and cpu usage by a large amount, use only if you need to track people's statuses and activities in real time (default:false) |
+| clientSweepInterval | number | Set how often to sweep inactive users and channels in seconds. Set to `0` to disable (default:86400) |
+| userCacheLifetime | number | Set how long a user needs to be inactive to be sweepable in seconds. Set to `0` to disable user sweeping (default:86400) |
+| channelCacheLifetime | number | Set how long a channel needs to be inactive to be sweepable in seconds. Set to `0` to disable channel sweeping (default:86400) |
+| shardCheckInterval | number | Set how often to check for shard activity in seconds (internal shards only). Inactive shards will be forced to reconnect (workaround for a rare issue with discord.js where shards randomly stop trying to reconnect). Set to `0` to disable (default:1800) |
 | queueLimit | number | Max amount of queued responses when rate limited. If this limit is hit, the client will temporarily stop firing message events in the relevant channel to prevent spam build up (default:5) |
 | shards | number/string/array | Shards to spawn via internal sharding (default:"auto") |
 | messageCacheMaxSize | number | Max amount of messages to cache in cached channels (default:10) |
