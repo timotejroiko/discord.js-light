@@ -263,11 +263,22 @@ module.exports = async function(r,shard) {
 			this.emit(Discord.Constants.Events.GUILD_MEMBERS_CHUNK, guild, r.d);
 			break;
 		}
-		case "GUILD_CREATE": case "GUILD_UPDATE": {
-			if(this.options.ws && !(this.options.ws.intents & 128)) { r.d.voice_states = []; }
+		case "GUILD_CREATE": {
+			if(!(this.options.ws.intents & 128)) { r.d.voice_states = []; }
 			if(!this.options.trackPresences) { r.d.presences = []; }
 			let guild = this.guilds.cache.get(r.d.id);
-			if(!guild || !guild.available) {
+			if(guild) {
+				if(!guild.available && !r.d.unavailable) {
+					if(r.d.channels && !this.options.enableChannels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
+					if(r.d.members) { r.d.members = r.d.members.filter(t => guild.members.cache.has(t.user.id)); }
+					if(!this.options.enablePermissions && !guild.roles.cache.size) { r.d.roles = []; }
+					if(!guild.emojis.cache.size) { r.d.emojis = []; }
+					guild._patch(r.d);
+					if(this.ws.status === Discord.Constants.Status.READY && this.options.fetchAllMembers && (this.options.ws.intents & 2)) {
+						await guild.members.fetch({limit:0}).catch(err => this.emit(Discord.Constants.Events.DEBUG, `Failed to fetch all members: ${err}\n${err.stack}`));
+					}
+				}
+			} else {
 				r.d.members = r.d.members && r.d.members.length ? r.d.members.filter(t => t.user.id === this.user.id) : [];
 				r.d.emojis = [];
 				if(!this.options.enableChannels) {
@@ -278,13 +289,53 @@ module.exports = async function(r,shard) {
 					}
 				}
 				if(!this.options.enablePermissions) { r.d.roles = []; }
-			} else {
-				if(r.d.channels && !this.options.enableChannels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
-				if(r.d.members) { r.d.members = r.d.members.filter(t => guild.members.cache.has(t.user.id)); }
-				if(!guild.roles.cache.size) { r.d.roles = []; }
-				if(!guild.emojis.cache.size) { r.d.emojis = []; }
+				guild = this.guilds.add(r.d);
+				if(this.ws.status === Discord.Constants.Status.READY) {
+					if(this.options.fetchAllMembers && (this.options.ws.intents & 2)) {
+						await guild.members.fetch({limit:0}).catch(err => this.emit(Discord.Constants.Events.DEBUG, `Failed to fetch all members: ${err}\n${err.stack}`));
+					}
+					this.emit(Discord.Constants.Events.GUILD_CREATE, guild)
+				}
 			}
 			break;
+		}
+		case "GUILD_UPDATE": {
+			if(this.options.ws && !(this.options.ws.intents & 128)) { r.d.voice_states = []; }
+			if(!this.options.trackPresences) { r.d.presences = []; }
+			let guild = this.guilds.cache.get(r.d.id);
+			if(guild) {
+				if(r.d.channels && !this.options.enableChannels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
+				if(r.d.members) { r.d.members = r.d.members.filter(t => guild.members.cache.has(t.user.id)); }
+				if(!this.options.enablePermissions && !guild.roles.cache.size) { r.d.roles = []; }
+				if(!guild.emojis.cache.size) { r.d.emojis = []; }
+				let old = guild._update(r.d);
+				this.emit(Discord.Constants.Events.GUILD_UPDATE, old, guild);
+			} else {
+				r.d.members = r.d.members && r.d.members.length ? r.d.members.filter(t => t.user.id === this.user.id) : [];
+				r.d.emojis = [];
+				if(!this.options.enableChannels) {
+					if(this.options.ws && this.options.ws.intents & 128) {
+						r.d.channels = r.d.channels.filter(c => r.d.voice_states.find(v => v.channel_id === c.id));
+					} else {
+						r.d.channels = [];
+					}
+				}
+				if(!this.options.enablePermissions) { r.d.roles = []; }
+				guild = this.guilds.add(r.d, false);
+				this.emit(Discord.Constants.Events.GUILD_UPDATE, null, guild);
+			}
+			break;
+		}
+		case "GUILD_DELETE": {
+			if(!this.guilds.cache.has(r.d.id)) {
+				let guild = this.guilds.add({id:r.d.id,shardID:r.d.shardID}, false);
+				if(r.d.unavailable) {
+					guild.unavailable = true;
+					this.emit(Discord.Constants.Events.GUILD_UNAVAILABLE, guild);
+				} else {
+					this.emit(Discord.Constants.Events.GUILD_DELETE, guild);
+				}
+			}
 		}
 		case "USER_UPDATE": {
 			if(this.users.cache.has(r.d.id)) {

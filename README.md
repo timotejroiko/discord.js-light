@@ -26,16 +26,16 @@ This project later became the base framework for all my bots and it does a wonde
 * Provides most of discord.js's basic events without automatic caching
 * Most classes have their structures intact and can be used the same way as the original library
 * Partial objects are given when data is missing and can be manually fetched and cached when needed
-* Fully compatible with Discord intents to receive only data that is actually used (enabled by default)
-* Drastically lower resource usage for most use cases especially at scale
+* Fully compatible with Gateway Intents to receive only data that is actually wanted (enabled by default)
+* Drastically lower resource usage for most use cases, especially at scale
 
 ## Getting Started
 
-Installation:
+### Installation:
 
 ```npm install discord.js-light```
 
-Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and discord.js will pick them up automatically. Additionally, using an alternative memory allocator such as [jemalloc](http://jemalloc.net/) can further reduce memory usage by a substantial amount in exchange for slightly higher cpu usage.
+Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and discord.js will pick them up automatically.
 
 ```
 npm install zlib-sync
@@ -44,12 +44,14 @@ npm install discordapp/erlpack
 npm install utf-8-validate
 ```
 
-Usage example:
+Additionally, using an alternative memory allocator such as [jemalloc](http://jemalloc.net/) can further reduce memory usage by a substantial amount in exchange for slightly higher cpu usage.
+
+### Usage example:
 
 ```js
 const Discord = require("discord.js-light");
 const client = new Discord.Client({
-	token: "yourbottoken"
+	token: "your bot token"
 });
 
 client.on("ready", () => {
@@ -67,23 +69,28 @@ Generally usage should be very similar to discord.js and you can safely refer to
 
 ## Client options
 
-Some extra client options were added to control certain aspects specific to this library.
+Some client options were added to control certain aspects specific to this library while other options may have different defaults or behavior. Here's a list of changes and additions:
 
 | Option | Type | Description |
 | ------------- | ------------- | ------------- |
-| token | string | Your Discord token. If provided will make the client login automatically |
+| token | string | Your bot token. If provided will make the client login automatically |
 | clientSweepInterval | number | Set how often to sweep inactive cached users and channels in seconds. Set to `0` to disable (default:86400) |
 | shardCheckInterval | number | Set how often to check for shard activity in seconds (internal sharding only). Inactive shards will be forced to reconnect (workaround for a rare issue with discord.js where shards randomly disconnect and refuse to reconnect). Set to `0` to disable (default:600) |
 | enablePermissions | boolean | This option enables caching of all Guild Roles and Channel PermissionOverwrites in order to allow for permission checking. This will increase memory usage by a moderate amount (default:false) |
 | enableChannels | boolean | This option enables caching of all channels and disables sweeping of inactive channels. This will increase memory usage by a substantial amount, use only if you need to track channel updates in real time (default:false) |
 | trackPresences | boolean | This option enables caching of all presences when the GUILD_PRESENCES priviledged Intent is enabled or when Intents are not used. This will increase memory and cpu usage by a large amount, use only if you need to track people's statuses and activities in real time (default:false) |
 | queueLimit | number | Max amount of queued responses when rate limited. If this limit is hit, the client will temporarily stop firing message events in the relevant channel to prevent spam build up (default:5) |
+| shards | number/string/array | Shards to spawn via internal sharding (default:"auto") |
+| messageCacheMaxSize | number | Max amount of messages to cache in cached channels (default:10) |
+| messageCacheLifetime | number | For how long are cached messages guaranteed to stay in the cache in seconds (default:86400) |
+| messageSweepInterval | number | How often to clean the message cache in seconds (default:86400) |
+| partials | - | This library implements its own partials system which is always enabled, therefore this option is not available |
 
-All other discord.js client options continue to be available except for partials which this library implements in its own way.
+All other discord.js client options continue to be available and should work normally.
 
 ## Intents
 
-Discord released the Intents system some time ago, making it possible for developers to selectively subscribe to the events they want to receive, instead of being forced to receive and process EVERYTHING. This enabled bot owners to greatly reduce cpu and bandwidth usage and thus reducing hosting costs.
+Discord released the Intents system some time ago, making it possible for developers to selectively subscribe to the events they want to receive, instead of being forced to receive and process all events. This enabled bot owners to greatly reduce cpu and bandwidth usage and thus reducing hosting costs.
 
 This library comes preconfigured with a set of Intents enabled by default, and currently supports the following intents:
 
@@ -109,97 +116,205 @@ This library alters the default caching behavior as follows:
 
 | Store | Behavior | How to Fetch |
 | ------------- | ------------- | ------------- |
-| client.users | Cached when sending DMs or when members are cached | client.users.fetch() & guild.members.fetch() |
-| client.channels | Cached when `enableChannels` is enabled or when sending messages | client.channels.fetch() & guild.channels.fetch() |
+| client.users | Cached when responding to DMs or when responding with message.reply() | client.users.fetch() & guild.members.fetch() |
+| client.channels | Cached when `enableChannels` is enabled or when sending messages in it | client.channels.fetch() & guild.channels.fetch() |
 | client.guilds | Always cached unless manually sweeped | client.guilds.fetch() |
-| channel.messages | Cached when sending messages, author messages are also cached when responding with message.reply() | channel.messages.fetch() |
-| channel.permissionOverwrites | Cached when `enablePermissions` is enabled | channel.fetchOverwrites() & guild.channels.fetch() |
-| guild.emojis | Not automatically cached | guild.emojis.fetch() & guild.fetch() & client.guilds.fetch() |
+| channel.messages | Own messages are always cached, author messages are cached when responding with message.reply() | channel.messages.fetch() |
+| channel.permissionOverwrites | Cached when `enablePermissions` is enabled or when guild roles are cached | client.channels.fetch() & guild.channels.fetch() |
+| guild.emojis | Never automatically cached | guild.emojis.fetch() & guild.fetch() & client.guilds.fetch() |
 | guild.roles | Cached when `enablePermissions` is enabled | guild.roles.fetch() & guild.fetch() & client.guilds.fetch() |
 | guild.channels | Cached when client.channels are cached | client.channels.fetch() & guild.channels.fetch() |
 | guild.members | Cached when responding with message.reply() | guild.members.fetch() |
-| guild.voiceStates | Cached only when the GUILD_VOICE_STATES intent is enabled and its respective member is connected to a voice channel | - |
-| guild.presences | Cached when the GUILD_PRESENCES intent is enabled and, `trackPresences` is enabled or its respective user is cached | guild.members.fetch() if GUILD_PRESENCES intent is enabled |
-| member.roles | Always cached, partial roles if guild.roles are not cached | guild.roles.fetch() |
+| guild.voiceStates | Cached while the relevant member is connected to a voice channel (requires GUILD_VOICE_STATES intent) | - |
+| guild.presences | Cached when `trackPresences` is enabled or when the relevant member is cached (requires GUILD_PRESENCES intent) | guild.members.fetch() (requires GUILD_PRESENCES intent) |
+| member.roles | Always available but contains partial roles if guild roles are not cached | guild.roles.fetch() & guild.fetch() & client.guilds.fetch() |
+| message.edits | Limited to 1 history state | - |
 
+All structures are replaced with a partial object when the necessary data is not available. These objects only guarantee an id property but most of its class methods should still work. Depending on your needs, you may need to fetch these before being able to access their data.
 
-* Users are not cached by default. Users can be manually cached by using `client.users.fetch(id)`. Fetching Users will not fetch nor cache its GuildMember counterpart.
-* Channels are not cached by default unless the `enableChannels` client option is set to true. Channels can be manually cached using `client.channels.fetch(id)`.
-* Messages are not cached by default. Messages can be manually cached by fetching its channel and then using `channel.messages.fetch(id)`
-* Guilds are cached at login and will be kept updated as long as they remain in the cache, but not all of its contents are cached (see below). Guilds can also be safely sweeped and removed from the cache for additional memory saving in exchange for losing access to some guild information.
-* Guild Emojis are not cached by default. Emojis can be fully cached by using `guild.fetch()`. Emojis are currently not automatically updated and will need to be fetched again if needed.
-* Guild Roles are not cached by default unless the `enablePermissions` client option is set to true. Roles can be fully cached by using `guild.roles.fetch()`. Once cached, they will be kept updated while they remain in the cache.
-* Guild Members are not cached by default. Members can be individually cached by using `guild.members.fetch(id)`. Fetching a large number of members with Intents enabled requires the priviledged GUILD_MEMBERS Intent. This will not cache its User counterpart.
-* Guild Channels are not cached by default unless the `enableChannels` client option is set to true. Guild Channels can be added to the guild cache by fetching the channel and then linking it using `guild.channels.cache.set(fetchedChannel.id,fetchedChannel)`.
-* Guild Channels have their Permission Overwrites removed by default unless the `enablePermissions` client option is set to true or the guild's roles are cached. If `enablePermissions` is disabled and a channel is already cached before guild roles are fetched, you will need to delete it from the cache and fetch it again in order to obtain its permission overwrites. Permission Overwrites will be kept updated as long as the mentioned conditions are met.
-* VoiceStates are completely disabled unless the GUILD_VOICE_STATES Intent is enabled. If the Intent is enabled, VoiceStates will be cached automatically, remain in the cache as long as the relevant members are connected to a voice channel and removed from the cache when they disconnect. This will not cache their GuildMember nor User. There is no way to manually obtain voice states otherwise.
-* Presences are completely disabled unless the priviledged GUILD_PRESENCES Intent is enabled. If the Intent is enabled, Presences can be manually cached by using `guild.members.fetch({user:id,withPresences:true})` or fully cached by setting the `trackPresences` client option to true.
+The client itself will always be cached as a User and as a GuildMember in all cached guilds.
 
-All relevant events provide a temporary/partial object if the necessary object is not cached. These objects may have missing information, so depending on your needs, you might need to fetch them before using them.
+Unlike discord.js, this library will continue to function and emit partial events even if nothing is cached. You can send/receive messages and reactions to/from uncached channels and messages, receive update/delete events from uncached objects and even completely sweep the guild cache without breaking the library.
 
-The client itself will always be cached as a User and as a GuildMember in all cached guilds. All messages it sends will also automatically cache all the relevant objects (DMChannel/RecipientUser, GuildChannel and Message).
+## Events Behavior
 
-Unlike discord.js, this library will continue to function even if nothing is cached and most methods will work properly when called on the provided partials and temporary objects. You can send/receive messages to/from uncached channels, send/receive reactions to/from uncached messages, receive update/delete events from uncached objects and even completely sweep the guild cache without breaking the library.
+Most events should be identical to the originals besides the caching behavior. Events will always emit, regardless of the required data being available or not (similar to enabling all partials in discord.js but including unsupported partials). When the required data is missing, the event will emit a partial structure where only an id is guaranteed. Events that emit multiple versions of a structure, such as update events, will emit `null` instead if not available.
 
-## Events
-
-Most events should be identical to the originals besides the caching behavior. All "partial" objects below will be full objects if cached or a temporary/partial version of them if not cached.
-
-| Event | Description |
-| ------------- | ------------- |
-| message | This event is fired by both new messages and edited messages. It provides a full Message object with a partial Channel object. The messageUpdate event was merged into the message event in order to make it easy for the bot to reply to edited messages. Edited messages can be identified by checking for the existence of message.editedTimestamp and be accessed from message.edits if cached |
-| messageDelete | Provides a partial Message object with a partial Channel object |
-| messageDeleteBulk | Provides a Collection of deleted messages as above |
-| messageReactionAdd | Provides a full Reaction object with partial Message object, and a full User object (partial if DM). Does not provide Reaction count nor Reaction users if not cached |
-| messageReactionRemove | Provides a full Reaction object with partial Message object, and a full User object (partial if DM). Does not provide Reaction count nor Reaction users if not cached |
-| messageReactionRemoveAll | Provides a partial Message object |
-| messageReactionRemoveEmoji | Provides a full Reaction object with a partial Message object. Does not provide Reaction count nor Reaction users if not cached |
-| channelCreate | Provides a full Channel object |
-| channelUpdate | Provides a NULL old Channel object if not cached and a full new Channel object |
-| channelDelete | Provides a full Channel object |
-| channelPinsUpdate | Provides a partial Channel object and a Date object |
-| roleCreate | Provides a full Role object |
-| roleUpdate | Provides a NULL old Role object if not cached and a full new Role object |
-| roleDelete | Provides a partial Role object |
-| guildBanAdd | Provides a full Guild object and a full User object |
-| guildBanRemove | Provides a full Guild object and a full User object |
-| guildCreate | Provides a full Guild object \* |
-| guildUpdate | Provides full old and new Guild objects if cached, otherwise both old and new will be null \* |
-| guildDelete | Provides a NULL Guild object if not cached |
-| guildMemberAdd | Provides a full Member object. Requires the GUILD_MEMBERS priviledged Intent |
-| guildMemberUpdate | Provides a NULL old Member object if not cached and a full new Member object. Requires the GUILD_MEMBERS priviledged Intent |
-| guildMemberRemove | Provides a partial Member object. Requires the GUILD_MEMBERS priviledged Intent |
-| voiceStateUpdate | Provides a NULL old state and full new state when connecting, full old and new states when updating, full old and NULL new state when disconnecting. Requires the GUILD_VOICE_STATES Intent |
-| userUpdate | Provides a NULL old User object if not cached and a full new User object |
-| presenceUpdate | Provides a NULL old Presence object if not cached and a full new Presence object. Requires the GUILD_PRESENCES priviledged Intent |
-
-\* Guild Objects do not contain Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or conditions met.
-
-All other events (except connection events) are currently not supported.
-
-## Additional Functionality
-
-Some extra functionality is also included for convenience (mine mostly):
-
-| Func/Prop | Type | Description |
+| Event | Emits | Notes |
 | ------------- | ------------- | ------------- |
-| Message.eval(string) | promise>anything | An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this` (should not be public) |
-| Message.reply(content,options) | promise>message | Completely replaces the original message.reply(). It does the same as message.channel.send() but adds several improvements: handles promises, objects, falsey values and other non-string types, truncates large strings if no split options are provided, automatically caches the channel, author and messages involved, tracks activity for automatic sweeping, adds response times, request-response pairing and if possible replies by editing a previous response when triggered by a message update. |
-| Guild.channels.fetch(boolean) | promise>collection | Fetches the guild's channels from the API. Fetched channels are cached by default but caching can be disabled by setting the function argument to false. If set to false, it returns a collection of Channel objects, otherwise it returns the guild channel cache |
-| Message.commandResponse | message | The message object that was sent as a response to this command. Only available if it was sent with message.reply() |
-| Message.commandMessage | message | The message object that triggered this response. Only available if this response was sent with message.reply() |
-| Message.commandResponseTime | number | Message response time in milliseconds. Only available in response messages if they were sent with message.reply() |
-| Channel.lastActive | number | Timestamp of the last time this channel was used by the client |
-| Channel.noSweep | boolean | Set to `true` if this channel should be cached forever |
-| User.lastActive | number | Timestamp of the last time this user was replied to by message.reply() |
-| User.noSweep | boolean | Set to `true` if this user should be cached forever |
-| Client.sweepInactive() |  | Sweep inactive users/channels |
-| Client.checkShards() |  | Check for inactive shards (internal sharding only) |
-| Client.getInfo() | promise>object | Gather several statistics about the client such as guild count, user count, sharding information, total active (cached) users and channels, websocket pings, uptimes, cpu usage and memory usage |
+| message | Message | This event is fired by both new messages and edited messages. The messageUpdate event was merged into the message event in order to make it easy for the client to reply to edited messages. Edited messages can be identified by checking for the existence of message.editedTimestamp and be accessed from message.edits if cached |
+| messageDelete | Message | Partial Message if not cached |
+| messageDeleteBulk | Collection | Provides a Collection of deleted messages as above |
+| messageReactionAdd | Reaction, User | User may be partial if DM. Does not include reaction count nor list of users if not cached |
+| messageReactionRemove | Reaction, User | User may be partial if DM. Does not include reaction count nor list of users if not cached |
+| messageReactionRemoveAll | Message | Partial Message if not cached |
+| messageReactionRemoveEmoji | Reaction | Does not include reaction count nor reaction users if not cached |
+| channelCreate | Channel | - |
+| channelUpdate | Channel or NULL, Channel | Old Channel is NULL if not cached |
+| channelDelete | Channel | - |
+| channelPinsUpdate | Channel, Date | Partial Channel if not cached |
+| roleCreate | Role | - |
+| roleUpdate | Role or NULL, Role | Old Role is NULL if not cached |
+| roleDelete | Role | Partial Role if not cached |
+| guildBanAdd | Guild, User | Partial Guild if not cached |
+| guildBanRemove | Guild, User | Partial Guild if not cached |
+| guildCreate | Guild | - |
+| guildUpdate | Guild or NULL, Guild | Old Guild is NULL if not cached |
+| guildDelete | Guild | Partial Guild if not cached |
+| guildMemberAdd | Member | Requires the GUILD_MEMBERS priviledged Intent |
+| guildMemberUpdate | Member or NULL, Member | Old Member is NULL if not cached. Requires the GUILD_MEMBERS priviledged Intent |
+| guildMemberRemove | Member | Partial Member if not cached. Requires the GUILD_MEMBERS priviledged Intent |
+| voiceStateUpdate | VoiceState or NULL, VoiceState or NULL | NULL if not connected to a voice channel. Requires the GUILD_VOICE_STATES Intent |
+| userUpdate | User or NULL, User | Old User is NULL if not cached |
+| presenceUpdate | Presence or NULL, Presence | Old Presence is NULL if not cached. Requires the GUILD_PRESENCES priviledged Intent |
 
-## About
+Events that do not return partials only guarantee the contents of the top-level object. Linked objects such as message.channel or reaction.message may be partials if not previously cached or fetched. This is especially true with Guild objects which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
 
-This project is somewhat experimental, so there might be bugs and broken features in untested scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you might find.
+Other events are currently not supported (except errors, sharding and connection events)
+
+## Non-standard API
+
+Some functionality was added and/or modified for dealing with the above caching changes among other conveniences:
+
+### message.eval(content)
+
+An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this`
+
+**content (string)** - string to evaluate. if evaluated to a promise, returns `{Promise:result}`, otherwise returns `result`
+
+**returns (promise)** - `anything | object`
+
+### message.reply(content,options)
+
+Replaces the original message.reply() and includes several changes:
+
+* Does not automatically mention the author
+* Handles promises, objects, falsey values and other non-string types
+* Truncates large strings if no split options are provided
+* Automatically caches the channel, author and messages involved
+* Tracks user activity for automatic sweeping
+* Adds response times and request-response pairing properties
+* When triggered by a message update, replies by editing the previous response if possible
+
+**content (anything)** - content to send. non-strings will be serialized. cannot pass options as first parameter, pass an empty string instead
+
+**options (object)** - message options object as per discord.js
+
+**returns (promise)** - `Message`
+
+### guild.channels.fetch(id,cache,withOverwrites)
+
+Fetches a single guild channel from the /guilds/:id/channels endpoint. This endpoint bypasses VIEW_CHANNEL permissions.
+
+**id (string)** - id of the channel to fetch. if not a string, fetches all channels in the guild and first and second parameters become cache and withOverwrites
+
+**cache (boolean)** - whether to cache the result. returns the guild channel cache if set to true and no id is specified, otherwise returns a channel or a collection of channels. defaults to true
+
+**withOverwrites (boolean)** - whether to include channel permissionOverwrites. always true if `enablePermissions` is enabled or if guild roles are cached, otherwise defaults to false
+
+**returns (promise)** - `Channel | Collection of Channels | guild.channels.cache`
+
+### guild.members.fetch(options)
+
+Fetches guild members.
+
+**options (object)** - object of options
+
+**options.rest (boolean)** - whether to use the /guilds/:id/members endpoint instead of the gateway. defaults to false
+
+**options.id (string)** - id of the member to fetch (rest & gateway)
+
+**options.ids (array)** - array of member ids to fetch (gateway only, requires GUILD_MEMBERS intent)
+
+**options.query (string)** - query to search for members by username (gateway only). set to empty string for all members (requires GUILD_MEMBERS intent)
+
+**options.limit (number)** - max amount of results (rest & gateway). set to 0 for unlimited (gateway only, requires GUILD_MEMBERS intent). max 1000 for rest. defaults to 50
+
+**options.after (string)** - last member id from the previous request (rest only). used for pagination in the rest endpoint
+
+**options.cache (boolean)** - whether to cache results (rest & gateway). returns the member cache if results match guild.memberCount, otherwise returns a member or a collection of members. defaults to true
+
+**options.withPresences (boolean)** - whether to include presences (gateway only, requires GUILD_PRESENCES intent, requires `trackPresences` to be enabled or relevant members to be cached)
+
+**options.time (number)** - time limit to wait for a response in milliseconds (gateway only). defaults to 60 seconds
+
+**returns (promise)** - `GuildMember | Collection of GuildMembers | guild.members.cache`
+
+### guild.emojis.fetch(cache)
+
+Fetches guild emojis.
+
+**cache (boolean)** - whether to cache the results. returns the emoji cache if set to true, otherwise returns a collection of emojis. defaults to true
+
+**returns (promise)** - `Collection of Emojis | guild.emojis.cache`
+
+### guild.roles.fetch(cache)
+
+Fetches guild roles.
+
+**cache (boolean)** - whether to cache the results. returns the role cache if set to true, otherwise returns a collection of roles. defaults to true
+
+**returns (promise)** - `Collection of Roles | guild.roles.cache`
+
+### client.guilds.fetch(id,cache)
+
+Fetches a guild.
+
+**id (string)** - id of the guild to fetch
+
+**cache (boolean)** - whether to cache the results. defaults to true
+
+**returns (promise)** - `Guild`
+
+### client.sweepInactive()
+
+Sweep inactive users and channels from the cache
+
+**returns** - `void`
+
+### client.checkShards()
+
+Check internal shards for activity and force them to restart if inactive
+
+**returns** - `void`
+
+### client.getInfo()
+
+Fetches information about the current client and process, its caches, resource usage and shard information
+
+**returns (promise)** - `Object`
+
+### user.lastActive
+
+Timestamp of the last time the client interacted with this user
+
+### user.noSweep
+
+Set to true to disable sweeping of this user
+
+### channel.lastActive
+
+Timestamp of the last time the client interacted with this channel
+
+### channel.noSweep
+
+Set to true to disabled sweeping of this channel
+
+### message.commandResponse
+
+The message object that was sent in response to this message (only if responded with message.reply)
+
+### message.commandMessage
+
+The message object that triggered this response (only if responded with message.reply)
+
+### message.commandResponseTime
+
+Message response time in milliseconds (only if responded with message.reply)
+
+## Notes
+
+This project is somewhat experimental, so there might be bugs and broken features in untested scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you may find.
 
 You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
