@@ -270,7 +270,7 @@ module.exports = async function(r,shard) {
 			if(guild) {
 				if(!guild.available && !r.d.unavailable) {
 					if(r.d.channels && !this.options.enableChannels) { r.d.channels = r.d.channels.filter(t => guild.channels.cache.has(t.id)); }
-					if(r.d.members) { r.d.members = r.d.members.filter(t => guild.members.cache.has(t.user.id)); }
+					if(r.d.members && r.d.members.length) { r.d.members = r.d.members.filter(t => this.users.cache.has(t.user.id)); }
 					if(!this.options.enablePermissions && !guild.roles.cache.size) { r.d.roles = []; }
 					if(!guild.emojis || !guild.emojis.cache.size) { r.d.emojis = []; }
 					guild._patch(r.d);
@@ -279,7 +279,7 @@ module.exports = async function(r,shard) {
 					}
 				}
 			} else {
-				r.d.members = r.d.members && r.d.members.length ? r.d.members.filter(t => t.user.id === this.user.id) : [];
+				if(r.d.members && r.d.members.length) { r.d.members = r.d.members.filter(t => this.users.cache.has(t.user.id)); }
 				r.d.emojis = [];
 				if(!this.options.enableChannels) {
 					if(this.options.ws && this.options.ws.intents & 128) {
@@ -338,6 +338,38 @@ module.exports = async function(r,shard) {
 			}
 			break;
 		}
+		case "GUILD_EMOJIS_UPDATE": {
+			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+			if(!guild.emojis) { guild.emojis = new Discord.GuildEmojiManager(guild); }
+			if(guild.emojis.cache.size) {
+				let deletions = new Map(guild.emojis.cache);
+				for(let emoji of r.d.emojis) {
+					let cached = guild.emojis.cache.get(emoji.id);
+					if(cached) {
+						deletions.delete(emoji.id);
+						if(!cached.equal(emoji)) {
+							let old = cached._update(emoji);
+							this.emit(Discord.Constants.Events.GUILD_EMOJI_UPDATE, old, cached);
+						}
+					} else {
+						let create = guild.emojis.add(emoji);
+						this.emit(Discord.Constants.Events.GUILD_EMOJI_CREATE, create);
+					}
+				}
+				for(let deleted of deletions.values()) {
+					guild.emojis.cache.delete(deleted.id);
+					deleted.deleted = true;
+					this.emit(Discord.Constants.Events.GUILD_EMOJI_DELETE, deleted);
+				}
+			} else {
+				let emojis = new Discord.Collection();
+				for(let emoji of r.d.emojis) {
+					emojis.set(emoji.id, guild.emojis.add(emoji, false));
+				}
+				this.emit("guildEmojisUpdate", emojis)
+			}
+			break;
+		}
 		case "USER_UPDATE": {
 			if(this.users.cache.has(r.d.id)) {
 				let newUser = this.users.cache.get(r.d.id);
@@ -380,7 +412,7 @@ module.exports = async function(r,shard) {
 			if(oldState || newState) { this.emit(Discord.Constants.Events.VOICE_STATE_UPDATE, oldState, newState); }
 			break;
 		}
-		case: "TYPING_START": {
+		case "TYPING_START": {
 			if(!this.channels.cache.has(r.d.channel_id) || !this.users.cache.has(r.d.user_id)) {
 				let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
 				let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);

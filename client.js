@@ -19,7 +19,7 @@ Discord.Client = class Client extends Discord.Client {
 		options.ws = Object.assign(
 			{
 				large_threshold:50,
-				intents:1+4+512+1024+4096+8192
+				intents:1+4+8+512+1024+4096+8192
 			},
 			options.ws
 		);

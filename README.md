@@ -111,11 +111,12 @@ This library comes preconfigured with a set of Intents enabled by default, and c
 | GUILDS (1) | yes | Enables emitting and processing of guildCreate, guildUpdate, guildDelete, guildRoleCreate, guildRoleUpdate, guildRoleDelete, channelCreate, channelUpdate, channelDelete, channelPinsUpdate |
 | GUILD_MEMBERS (2) | no | Priviledged Intent - requires enabling in your Discord developer portal. Enables emitting and processing of guildMemberAdd, guildMemberRemove, guildMemberUpdate. Also keeps guild.memberCount updated and allows fetching all members |
 | GUILD_BANS (4) | yes | Enables emitting and processing of guildBanAdd, guildBanRemove |
+| GUILD_EMOJIS (8) | yes | Enables emitting and processing of emojiCreate, emojiUpdate, emojiDelete, guildEmojisUpdate |
 | GUILD_VOICE_STATES (128) | no | Enables emitting and processing of voiceStateUpdate. Also enables caching of and access to VoiceState objects. This intent is required for the majority of voice features to work |
 | GUILD_PRESENCES (256) | no | Priviledged Intent - requires enabling in your Discord developer portal. This Intent alone is responsible for about 90% of a bot's idle CPU and bandwidth usage so enabling it is not recommended unless you absolutely need it. Enables emitting and processing of presenceUpdate. Also allows fetching members with presences |
 | GUILD_MESSAGES (512) | yes | Enables emitting and processing of messageCreate, messageUpdate, messageDelete, messageDeleteBulk |
 | GUILD_MESSAGE_REACTIONS (1024) | yes | Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
-| GUILD_TYPING_START (2048) | no | Enables emitting and processing of typingStart |
+| GUILD_MESSAGE_TYPING (2048) | no | Enables emitting and processing of typingStart |
 | DIRECT_MESSAGES (4096) | yes | DMs only. Enables emitting and processing of channelCreate, messageCreate, messageUpdate, messageDelete, channelPinsUpdate |
 | DIRECT_MESSAGE_REACTIONS (8192) | yes | DMs only. Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
 
@@ -132,13 +133,13 @@ This library alters the default caching behavior as follows:
 | Store | Behavior | How to Fetch |
 | ------------- | ------------- | ------------- |
 | client.users | Cached when responding to DMs or when responding with message.reply() or when members are cached | client.users.fetch()  guild.members.fetch() |
-| client.channels | Cached when `enableChannels` is enabled or when sending messages in it | client.channels.fetch()  guild.channels.fetch() |
+| client.channels | Cached when `enableChannels` is enabled or when responding with channel.send() or message.reply() | client.channels.fetch()  guild.channels.fetch() |
 | client.guilds | Always cached unless manually sweeped | client.guilds.fetch() |
 | channel.messages | Own messages are cached by default, author messages are cached when responding with message.reply() | channel.messages.fetch() |
 | channel.permissionOverwrites | Cached when `enablePermissions` is enabled or when guild roles are cached | client.channels.fetch()  guild.channels.fetch() |
 | guild.emojis | Never automatically cached | guild.emojis.fetch()  guild.fetch()  client.guilds.fetch() |
 | guild.roles | Cached when `enablePermissions` is enabled | guild.roles.fetch()  guild.fetch()  client.guilds.fetch() |
-| guild.channels | Cached when client.channels are cached | client.channels.fetch()  guild.channels.fetch() |
+| guild.channels | Cached when channels are cached | client.channels.fetch()  guild.channels.fetch() |
 | guild.members | Cached when responding with message.reply() | guild.members.fetch() |
 | guild.voiceStates | Cached while the relevant members are connected to a voice channel (requires GUILD_VOICE_STATES intent) | - |
 | guild.presences | Cached when `trackPresences` is enabled or when the relevant member is cached (requires GUILD_PRESENCES intent) | guild.members.fetch() (requires GUILD_PRESENCES intent) |
@@ -173,6 +174,10 @@ Most events should be identical to the originals aside from the caching behavior
 | roleCreate | Role | - |
 | roleUpdate | Role or NULL, Role | Old Role is NULL if not cached |
 | roleDelete | Role | Partial Role if not cached |
+| emojiCreate | Emoji | Only fires if guild emojis are cached |
+| emojiUpdate | Emoji, Emoji | Only fires if guild emojis are cached |
+| emojiDelete | Emoji | Only fires if guild emojis are cached |
+| guildEmojisUpdate | Collection | Non-standard event that fires when guild emojis are not cached. Provides a Collection of up-to-date Emojis |
 | guildBanAdd | Guild, User | Partial Guild if not cached |
 | guildBanRemove | Guild, User | Partial Guild if not cached |
 | guildCreate | Guild | - |
