@@ -304,15 +304,15 @@ Discord.Channel.create = (client, data, guild) => {
 }
 
 Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
-	if(!data._withOverwrites && !this.client.options.enablePermissions) {
+	if(data.permission_overwrites && !data._withOverwrites && !this.client.options.enablePermissions) {
 		let g = this.client.guilds.cache.get(data.guild_id);
 		if(!g || !g.roles.cache.size) {
 			data.permission_overwrites = [];
 		}
 	}
 	const existing = this.cache.get(data.id);
-	if(existing && cache) {
-		if(existing._patch) { existing._patch(data); }
+	if(existing && !(data._withOverwrites && !existing.permissionOverwrites.size && !cache)) {
+		if(existing._patch && cache) { existing._patch(data); }
 		if(existing.guild) { existing.guild.channels.add(existing); }
 		return existing;
 	}
