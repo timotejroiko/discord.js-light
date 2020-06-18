@@ -215,6 +215,23 @@ module.exports = async function(r,shard) {
 			}
 			break;
 		}
+		case "GUILD_MEMBERS_CHUNK": {
+			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+			this.emit(Discord.Constants.Events.GUILD_MEMBERS_CHUNK, guild, r.d);
+			break;
+		}
+		case "GUILD_BAN_ADD": {
+			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+			let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user, false);
+			this.emit(Discord.Constants.Events.GUILD_BAN_ADD, guild, user);
+			break;
+		}
+		case "GUILD_BAN_REMOVE": {
+			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+			let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user, false);
+			this.emit(Discord.Constants.Events.GUILD_BAN_REMOVE, guild, user);
+			break;
+		}
 		case "GUILD_ROLE_CREATE": {
 			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
 			let role = guild.roles.add(r.d.role, Boolean(guild.roles.cache.size));
@@ -244,23 +261,6 @@ module.exports = async function(r,shard) {
 			guild.roles.cache.delete(r.d.role_id);
 			role.deleted = true;
 			this.emit(Discord.Constants.Events.GUILD_ROLE_DELETE, role);
-			break;
-		}
-		case "GUILD_BAN_ADD": {
-			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
-			let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user, false);
-			this.emit(Discord.Constants.Events.GUILD_BAN_ADD, guild, user);
-			break;
-		}
-		case "GUILD_BAN_REMOVE": {
-			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
-			let user = this.users.cache.get(r.d.user.id) || this.users.add(r.d.user, false);
-			this.emit(Discord.Constants.Events.GUILD_BAN_REMOVE, guild, user);
-			break;
-		}
-		case "GUILD_MEMBERS_CHUNK": {
-			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
-			this.emit(Discord.Constants.Events.GUILD_MEMBERS_CHUNK, guild, r.d);
 			break;
 		}
 		case "GUILD_CREATE": {
@@ -369,6 +369,10 @@ module.exports = async function(r,shard) {
 				this.emit("guildEmojisUpdate", emojis)
 			}
 			break;
+		}
+		case "GUILD_INTEGRATIONS_UPDATE": {
+			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+			this.emit(Discord.Constants.Events.GUILD_INTEGRATIONS_UPDATE, guild);
 		}
 		case "USER_UPDATE": {
 			if(this.users.cache.has(r.d.id)) {

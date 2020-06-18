@@ -112,6 +112,7 @@ This library comes preconfigured with a set of Intents enabled by default, and c
 | GUILD_MEMBERS (2) | no | Priviledged Intent - requires enabling in your Discord developer portal. Enables emitting and processing of guildMemberAdd, guildMemberRemove, guildMemberUpdate. Also keeps guild.memberCount updated and allows fetching all members |
 | GUILD_BANS (4) | yes | Enables emitting and processing of guildBanAdd, guildBanRemove |
 | GUILD_EMOJIS (8) | yes | Enables emitting and processing of emojiCreate, emojiUpdate, emojiDelete, guildEmojisUpdate |
+| GUILD_INTEGRATIONS (16) | yes | Enables emitting and processing of guildIntegrationsUpdate |
 | GUILD_VOICE_STATES (128) | no | Enables emitting and processing of voiceStateUpdate. Also enables caching of and access to VoiceState objects. This intent is required for the majority of voice features to work |
 | GUILD_PRESENCES (256) | no | Priviledged Intent - requires enabling in your Discord developer portal. This Intent alone is responsible for about 90% of a bot's idle CPU and bandwidth usage so enabling it is not recommended unless you absolutely need it. Enables emitting and processing of presenceUpdate. Also allows fetching members with presences |
 | GUILD_MESSAGES (512) | yes | Enables emitting and processing of messageCreate, messageUpdate, messageDelete, messageDeleteBulk |
@@ -178,6 +179,7 @@ Most events should be identical to the originals aside from the caching behavior
 | emojiUpdate | Emoji, Emoji | Only fires if guild emojis are cached |
 | emojiDelete | Emoji | Only fires if guild emojis are cached |
 | guildEmojisUpdate | Collection | Non-standard event that fires when guild emojis are not cached. Provides a Collection of up-to-date Emojis |
+| guildIntegrationsUpdate | Guild | - |
 | guildBanAdd | Guild, User | Partial Guild if not cached |
 | guildBanRemove | Guild, User | Partial Guild if not cached |
 | guildCreate | Guild | - |
