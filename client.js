@@ -5,7 +5,6 @@ Discord.Client = class Client extends Discord.Client {
 	constructor(options = {}) {
 		options = Object.assign(
 			{
-				shards: "auto",
 				messageCacheMaxSize: 10,
 				messageCacheLifetime: 86400,
 				messageSweepInterval: 86400,
@@ -24,6 +23,8 @@ Discord.Client = class Client extends Discord.Client {
 			},
 			options.ws
 		);
+		if(options.ws.intents === null || options.ws.intents === false) { delete options.ws.intents; }
+		if(!options.shards && !process.env.SHARDING_MANAGER) { options.shards = "auto"; }
 		super(options);
 		this.on("ready", () => {
 			console.log(`[${new Date().toISOString()}] Client Ready`);
