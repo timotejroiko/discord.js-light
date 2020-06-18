@@ -222,7 +222,7 @@ Replaces the original message.reply() and includes several changes:
 
 ### guild.channels.fetch(id,cache,withOverwrites)
 
-Fetches a single guild channel from the /guilds/:id/channels endpoint. This endpoint bypasses VIEW_CHANNEL permissions.
+Fetches channels from the /guilds/:id/channels endpoint. This endpoint bypasses VIEW_CHANNEL permissions.
 
 **`id (string)`** - id of the channel to fetch. if not a string, fetches all channels in the guild and first and second parameters become cache and withOverwrites
 
