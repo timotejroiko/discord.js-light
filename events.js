@@ -373,6 +373,13 @@ module.exports = async function(r,shard) {
 		case "GUILD_INTEGRATIONS_UPDATE": {
 			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
 			this.emit(Discord.Constants.Events.GUILD_INTEGRATIONS_UPDATE, guild);
+			break;
+		}
+		case "WEBHOOKS_UPDATE": {
+			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
+			let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);
+			this.emit(Discord.Constants.Events.WEBHOOKS_UPDATE, channel);
+			break;
 		}
 		case "USER_UPDATE": {
 			if(this.users.cache.has(r.d.id)) {
