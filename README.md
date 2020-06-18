@@ -109,14 +109,15 @@ This library comes preconfigured with a set of Intents enabled by default, and c
 | Intent | Enabled | Description |
 | ------------- | ------------- | ------------- |
 | GUILDS (1) | yes | Enables emitting and processing of guildCreate, guildUpdate, guildDelete, guildRoleCreate, guildRoleUpdate, guildRoleDelete, channelCreate, channelUpdate, channelDelete, channelPinsUpdate |
-| GUILD_BANS (4) | yes | Enables emitting and processing of guildBanAdd, guildBanRemove |
-| GUILD_MESSAGES (512) | yes | Enables emitting and processing of messageCreate, messageUpdate, messageDelete, messageDeleteBulk |
-| GUILD_MESSAGE_REACTIONS (1024) | yes | Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
-| DIRECT_MESSAGES (4096) | yes | DMs only. Enables emitting and processing of channelCreate, messageCreate, messageUpdate, messageDelete, channelPinsUpdate |
-| DIRECT_MESSAGE_REACTIONS (8192) | yes | DMs only. Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
 | GUILD_MEMBERS (2) | no | Priviledged Intent - requires enabling in your Discord developer portal. Enables emitting and processing of guildMemberAdd, guildMemberRemove, guildMemberUpdate. Also keeps guild.memberCount updated and allows fetching all members |
+| GUILD_BANS (4) | yes | Enables emitting and processing of guildBanAdd, guildBanRemove |
 | GUILD_VOICE_STATES (128) | no | Enables emitting and processing of voiceStateUpdate. Also enables caching of and access to VoiceState objects. This intent is required for the majority of voice features to work |
 | GUILD_PRESENCES (256) | no | Priviledged Intent - requires enabling in your Discord developer portal. This Intent alone is responsible for about 90% of a bot's idle CPU and bandwidth usage so enabling it is not recommended unless you absolutely need it. Enables emitting and processing of presenceUpdate. Also allows fetching members with presences |
+| GUILD_MESSAGES (512) | yes | Enables emitting and processing of messageCreate, messageUpdate, messageDelete, messageDeleteBulk |
+| GUILD_MESSAGE_REACTIONS (1024) | yes | Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
+| GUILD_TYPING_START (2048) | no | Enables emitting and processing of typingStart |
+| DIRECT_MESSAGES (4096) | yes | DMs only. Enables emitting and processing of channelCreate, messageCreate, messageUpdate, messageDelete, channelPinsUpdate |
+| DIRECT_MESSAGE_REACTIONS (8192) | yes | DMs only. Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
 
 You can enable/disable the above Intents by defining your own Intents combination in your client options as per the discord.js documentation.
 
@@ -183,6 +184,7 @@ Most events should be identical to the originals aside from the caching behavior
 | voiceStateUpdate | VoiceState or NULL, VoiceState or NULL | NULL if not connected to a voice channel. Requires the GUILD_VOICE_STATES Intent |
 | userUpdate | User or NULL, User | Old User is NULL if not cached |
 | presenceUpdate | Presence or NULL, Presence | Old Presence is NULL if not cached. Requires the GUILD_PRESENCES priviledged Intent |
+| typingStart | Channel, User | Partial Channel and/or User if not cached. Requires one of the \_MESSAGE_TYPING Intents |
 
 Events that do not return partials only guarantee the contents of the top-level object. Linked objects such as message.channel or reaction.message may be partials if not previously cached or fetched. This is especially true with Guild objects which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
 

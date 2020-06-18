@@ -378,6 +378,16 @@ module.exports = async function(r,shard) {
 			let newState = r.d.channel_id ? guild.voiceStates.add(r.d) : null;
 			if(oldState && !newState) { guild.voiceStates.cache.delete(r.d.user_id); }
 			if(oldState || newState) { this.emit(Discord.Constants.Events.VOICE_STATE_UPDATE, oldState, newState); }
+			break;
+		}
+		case: "TYPING_START": {
+			if(!this.channels.cache.has(r.d.channel_id) || !this.users.cache.has(r.d.user_id)) {
+				let guild = r.d.guild_id ? this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false) : undefined;
+				let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);
+				let user = this.users.cache.get(r.d.user_id) || this.users.add((r.d.member || {}).user || {id:r.d.user_id}, false);
+				this.emit(Discord.Constants.Events.TYPING_START, channel, user);
+			}
+			break;
 		}
 	}
 }
