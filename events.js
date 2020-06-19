@@ -378,7 +378,13 @@ module.exports = async function(r,shard) {
 		case "INVITE_CREATE": {
 			let guild = this.guilds.cache.get(r.d.guild_id) || this.guilds.add({id:r.d.guild_id,shardID:r.d.shardID}, false);
 			let channel = this.channels.cache.get(r.d.channel_id) || this.channels.add({id:r.d.channel_id,type:guild?0:1}, guild, false);
+			let inviter = r.d.inviter ? this.users.cache.get(r.d.inviter.id) || this.users.add(r.d.inviter, false) : null;
+			let target = r.d.target_user ? this.users.cache.get(r.d.target_user.id) || this.client.users.add(data.target_user, false) : null;
+			r.d.inviter = null;
+			r.d.target_user = null;
 			let invite = new Discord.Invite(this, Object.assign(r.d, { channel, guild }));
+			invite.inviter = inviter;
+			invite.targetUser = target;
 			this.emit(Discord.Constants.Events.INVITE_CREATE, invite);
 			break;
 		}
