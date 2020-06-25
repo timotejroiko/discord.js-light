@@ -131,7 +131,7 @@ module.exports = client => {
 				c.emit(Constants.Events.GUILD_EMOJI_DELETE, result.emoji);
 			}
 		} else {
-			let emojis = new Discord.Collection();
+			let emojis = new Collection();
 			for(let emoji of data.emojis) {
 				emojis.set(emoji.id, guild.emojis.add(emoji, false));
 			}
