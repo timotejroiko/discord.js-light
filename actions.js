@@ -140,7 +140,7 @@ module.exports = client => {
 	}
 	client.actions.GuildEmojiCreate.handle = function(guild,emoji) {
 		let c = this.client;
-		let created = guild.emojis.add(emoji);
+		let created = guild.emojis.add(emoji, guild.emojis.cache.size || c.options.cacheEmojis);
 		return { emoji: created };
 	}
 	client.actions.GuildEmojiUpdate.handle = function(current,data) {

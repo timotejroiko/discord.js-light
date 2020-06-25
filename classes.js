@@ -1,8 +1,33 @@
-const { Error, TypeError, RangeError } = require("discord.js/src/errors");
-const Action = require("discord.js/src/client/actions/Action.js");
-const Discord = require("discord.js");
-const util = require("util");
+const GC = require("discord.js/src/structures/GuildChannel.js");
+require.cache[require.resolve("discord.js/src/structures/GuildChannel.js")].exports = class GuildChannel extends GC {
+	constructor(guild, data) {
+		let g = {
+			id: guild.id,
+			shardID: guild.shardID
+		};
+		super({client: guild.client}, data);
+		this._guild = g;
+		Object.defineProperty(this, "guild", {
+			enumerable: false,
+			get: function() {
+				let guild = this.client.guilds.cache.get(this._guild.id);
+				if(!guild) { guild = this._guild.guild; }
+				if(!guild) {
+					guild = this._guild.guild = this.client.guilds.add(this._guild, false);
+					this.client.setTimeout(() => {
+						delete this._guild.guild;
+					}, 5000);
+				}
+				return guild;
+			}
+		});
+	}
+	get deletable() {
+		return this.guild.roles.cache.size && this.permissionOverwrites.size ? this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_CHANNELS, false) : false;
+	}
+}
 
+const Action = require("discord.js/src/client/actions/Action.js");
 Action.prototype.getPayload = function(data, manager, id, partialType, cache) {
 	const existing = manager.cache.get(id);
 	if(!existing) {
@@ -10,6 +35,10 @@ Action.prototype.getPayload = function(data, manager, id, partialType, cache) {
 	}
 	return existing;
 }
+
+const { Error, TypeError, RangeError } = require("discord.js/src/errors");
+const Discord = require("discord.js");
+const util = require("util");
 
 Discord.Structures.extend("Message", M => {
 	return class Message extends M {
@@ -24,14 +53,18 @@ Discord.Structures.extend("Message", M => {
 				if(data.author instanceof Discord.User) {
 					this.author = data.author;
 				} else {
-					this.author = client.users.cache.get(data.author.id) || client.users.add(data.author,false);
+					this.author = client.users.add(data.author,client.users.cache.has(data.author.id));
 				}
 			}
-			if(data.member && this.guild && !this.guild.members.cache.has(data.author.id)) {
-				if(data.member instanceof Discord.GuildMember) {
-					this._member = data.member;
+			if(this.guild && data.member) {
+				if(this.guild.members.cache.has(data.author.id)) {
+					this.member._patch(data.member);
 				} else {
-					this._member = this.guild.members.add(Object.assign(data.member,{user:this.author}),false);
+					if(data.member instanceof Discord.GuildMember) {
+						this._member = data.member;
+					} else {
+						this._member = this.guild.members.add(Object.assign(data.member,{user:this.author}),false);
+					}
 				}
 			}
 			if(data.mentions && data.mentions.length) {
@@ -50,85 +83,16 @@ Discord.Structures.extend("Message", M => {
 			}
 		}
 		get member() {
-			return this.guild ? this.guild.members.cache.get((this.author || {}).id) || this._member || null : null;
+			if(!this.guild) { return null; }
+			return this.guild.members.cache.get((this.author || {}).id || (this._member || {}).id) || this._member || null;
 		}
 		get pinnable() {
-			return (this.type === Discord.Constants.MessageTypes[0] && (!this.guild || !this.guild.roles.cache.size || this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false)));
+			if(this.guild && (!this.guild.roles.cache.size || !this.channel.permissionOverwrites.size)) { return false; }
+			return this.type === Discord.Constants.MessageTypes[0] && (!this.guild || this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false));
 		}
 		get deletable() {
-			return (!this.deleted && (this.author.id === this.client.user.id ||	(this.guild && this.guild.roles.cache.size && this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false))));
-		}
-		async reply(content,options = {}) {
-			if(content && typeof content === "object" && typeof content.then === "function") { content = {Promise:await content}; }
-			if(content && typeof content === "object") {
-				if(content.Promise) {
-					let obj = util.inspect(content.Promise,{getters: true, depth: 2 }).replace(/  /g,"\t\t").replace(/`/g,"\\`");
-					if(obj.length > 1950) { obj = util.inspect(content.Promise,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
-					if(obj.length > 1950) { obj = util.inspect(content.Promise,{getters: true, depth: 0 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
-					content = "```js\n<Promise> " + obj + "```";
-				} else {
-					let obj = util.inspect(content,{getters: true, depth: 2 }).replace(/  /g,"\t\t").replace(/`/g,"\\`");
-					if(obj.length > 1950) { obj = util.inspect(content,{getters: true, depth: 1 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
-					if(obj.length > 1950) { obj = util.inspect(content,{getters: true, depth: 0 }).replace(/  /g,"\t\t").replace(/`/g,"\\`"); }
-					content = "```js\n" + obj + "```";
-				}
-			}
-			if(typeof content !== "string") { content = content+""; }
-			if(content && content.length > 1950 && !options.split) {
-				content = `${content.substring(0, 1950)}\n\n ... and ${content.slice(1950).split("\n").length} more lines ${content.startsWith("```") ? "```" : ""}`;
-			}
-			if(!content && !options.content && !options.embed && !options.files) {
-				content = "⠀";
-			}
-			if(!this.client.channels.cache.has(this.channel.id)) {
-				this.channel = await this.client.channels.fetch(this.channel.id);
-			}
-			if(this.member && !this.channel.guild.members.cache.has(this.author.id)) {
-				this.guild.members.add(this.member);
-			}
-			if(!this.client.users.cache.has(this.author.id)) {
-				this.author = this.client.users.add(this.author);
-			}
-			if(!this.channel.messages.cache.has(this.id)) {
-				this.channel.messages.cache.set(this.id,this);
-			}
-			if(this.editedTimestamp && this.commandResponse) {
-				if(this.commandResponse.attachments.size || options.files) {
-					let response = await this.channel.send(content,options);
-					if(!this.commandResponse.deleted) { this.commandResponse.delete().catch(e => {}); }
-					this.commandResponse = response;
-				} else {
-					if(this.commandResponse.embeds.length && !options.embed) {
-						options.embed = null;
-					}
-					this.commandResponse = await this.commandResponse.edit(content,options);
-				}
-			} else {
-				this.commandResponse = await this.channel.send(content,options);
-			}
-			this.commandResponse.commandMessage = this;
-			this.commandResponse.commandResponseTime = (this.commandResponse.editedTimestamp || this.commandResponse.createdTimestamp) - (this.editedTimestamp || this.createdTimestamp);
-			this.author.lastActive = Date.now();
-			return this.commandResponse;
-		}
-		async eval(f) {
-			let client = this.client;
-			try {
-				let _TEST_ = eval(`(()=>{return ${f}})()`);
-				return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_;
-			} catch(e) {}
-			try {
-				return await eval(`(async()=>{return ${f}})()`);
-			} catch(e) {}
-			try {
-				let _TEST_ = eval(`(()=>{${f}})()`);
-				return typeof _TEST_ === "object" && typeof _TEST_.then === "function" ? {Promise:await _TEST_} : _TEST_;
-			} catch(e) {}
-			try {
-				return await eval(`(async() => {${f}})()`);
-			} catch(e) {
-				return e;
-			}
+			if(!this.guild || !this.guild.roles.cache.size || !this.channel.permissionOverwrites.size) { return false; }
+			return !this.deleted && (this.author.id === this.client.user.id || (this.guild && this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false)));
 		}
 	}
 });
@@ -146,22 +110,20 @@ Discord.Structures.extend("GuildMember", G => {
 					if(data._cache && !client.users.cache.has(data.user.id)) { client.users.cache.set(data.user.id, data.user); }
 					this.user = data.user;
 				} else {
-					this.user = client.users.add(data.user, Boolean(data._cache));
+					this.user = client.users.add(data.user, data._cache);
 				}
 			}
 		}
 		equals(member) {
-			let equal = member && this.deleted === member.deleted && this.nickname === member.nickname && this._roles.length === member._roles.length;
-			return equal;
+			return member && this.deleted === member.deleted && this.nickname === member.nickname && this.roles.cache.size === member.roles.cache.size;
 		}
 	}
 });
 
 Discord.Structures.extend("Guild", G => {
 	return class Guild extends G {
-		constructor(...args) {
-			super(...args);
-			this.emojis = new Discord.GuildEmojiManager(this);
+		constructor(client,data) {
+			super(client,data);
 		}
 		get nameAcronym() {
 			return this.name ? this.name.replace(/\w+/g, name => name[0]).replace(/\s/g, '') : undefined;
@@ -170,6 +132,8 @@ Discord.Structures.extend("Guild", G => {
 			return this.joinedTimestamp ? new Date(this.joinedTimestamp) : undefined;
 		}
 		_patch(data) {
+			this.shardID = data.shardID;
+			this.emojis = new Discord.GuildEmojiManager(this);
 			let d = {};
 			for(let key in data) {
 				if(!["channels","roles","members","presences","voice_states","emojis"].includes(key)) {
@@ -177,7 +141,7 @@ Discord.Structures.extend("Guild", G => {
 				}
 			}
 			super._patch(d);
-			if(data.channels && this.client.options.cacheGuilds) {
+			if(data.channels) {
 				if(this.client.options.cacheChannels) { this.channels.cache.clear(); }
 				for(let channel of data.channels) {
 					if(this.client.options.cacheChannels || this.client.channels.cache.has(channel.id) || (this.client.options.ws.intents & 128 && data.voice_states && data.voice_states.find(v => v.channel_id === channel.id))) {
@@ -185,7 +149,7 @@ Discord.Structures.extend("Guild", G => {
 					}
 				}
 			}
-			if(data.roles && (this.roles.cache.size || this.client.options.enablePermissions)) {
+			if(data.roles && (this.roles.cache.size || this.client.options.cacheRoles)) {
 				this.roles.cache.clear();
 				for(let role of data.roles) {
 					this.roles.add(role);
@@ -211,7 +175,7 @@ Discord.Structures.extend("Guild", G => {
 					this.voiceStates.add(voiceState);
 				}
 			}
-			if(data.emojis && this.emojis.cache.size) {
+			if(data.emojis && (this.emojis.cache.size || this.client.options.cacheEmojis)) {
 				this.client.actions.GuildEmojisUpdate.handle({
 					guild_id: this.id,
 					emojis: data.emojis,
@@ -221,24 +185,11 @@ Discord.Structures.extend("Guild", G => {
 	}
 });
 
-Discord.Structures.extend("TextChannel", T => {
-	return class TextChannel extends T {
-		get deletable() {
-			return this.guild.roles.cache.size ? this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_CHANNELS, false) : undefined;
-		}
-		async send(content, options) {
-			if(!this.client.channels.cache.has(this.id)) { await this.fetch(); }
-			this.lastActive = Date.now();
-			return super.send(content, options);
-		}
-	}
-});
-
 Discord.Structures.extend("VoiceChannel", V => {
 	return class VoiceChannel extends V {
 		get joinable() {
 			if(Discord.Constants.browser) return false;
-			if(!this.guild.roles.cache.size && !this.client.options.enablePermissions) return true;
+			if((!this.guild.roles.cache.size && !this.client.options.cacheRoles) || (!this.permissionOverwrites.size && !this.client.options.cacheOverwrites)) return true;
 			if(!this.viewable) return false;
 			if(!this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.CONNECT, false)) return false;
 			if(this.full && !this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MOVE_MEMBERS, false)) return false;
@@ -247,14 +198,13 @@ Discord.Structures.extend("VoiceChannel", V => {
 		async join() {
 			if(Discord.Constants.browser) return Promise.reject(new Error('VOICE_NO_BROWSER'));
 			let channel = await this.client.channels.fetch(this.id);
-			channel.noSweep = true;
 			return this.client.voice.joinChannel(channel);
 		}
 		leave() {
 			if(Discord.Constants.browser) return;
 			const connection = this.client.voice.connections.get(this.guild.id);
 			if(connection && connection.channel.id === this.id) { connection.disconnect(); }
-			this.noSweep = false;
+			if(!this.client.options.cacheChannels) { this.client.channels.remove(this.id); }
 		}
 	}
 });
@@ -281,7 +231,7 @@ Discord.Channel.create = (client, data, guild) => {
 			const DMChannel = Discord.Structures.get('DMChannel');
 			channel = new DMChannel(client, data);
 		} else if(data.type === Discord.Constants.ChannelTypes.GROUP) {
-			const PartialGroupDMChannel = require('./PartialGroupDMChannel');
+			const PartialGroupDMChannel = require('discord.js/src/structures/PartialGroupDMChannel.js');
 			channel = new PartialGroupDMChannel(client, data);
 		}
 	} else {
@@ -320,7 +270,7 @@ Discord.Channel.create = (client, data, guild) => {
 }
 
 Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
-	if(data.permission_overwrites && !data._withOverwrites && !this.client.options.enablePermissions) {
+	if(data.permission_overwrites && !data._withOverwrites && !this.client.options.cacheOverwrites) {
 		let g = this.client.guilds.cache.get(data.guild_id);
 		if(!g || !g.roles.cache.size) {
 			data.permission_overwrites = [];
@@ -339,8 +289,9 @@ Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
 	}
 	if(cache) {
 		this.cache.set(channel.id, channel);
-		if(channel.guild) {
-			channel.guild.channels.add(channel);
+		let g = channel.guild;
+		if(g && this.client.guilds.cache.has(g.id)) {
+			this.client.guilds.cache.get(g.id).channels.add(channel);
 		}
 	}
 	return channel;
