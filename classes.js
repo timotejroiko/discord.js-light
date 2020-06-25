@@ -1,52 +1,15 @@
-const PacketHandlers = require(require.resolve("discord.js").replace("index.js","client/websocket/handlers"));
-const disabledEvents = [
-	"CHANNEL_CREATE", // 1 // 4096 for dm
-	"CHANNEL_DELETE", // 1
-	"CHANNEL_PINS_UPDATE", // 1 // 4096 for dm
-	"CHANNEL_UPDATE", // 1
-	"GUILD_BAN_ADD", // 4
-	"GUILD_BAN_REMOVE", // 4
-	"GUILD_CREATE", // 1
-	//"GUILD_DELETE", // 1
-	"GUILD_EMOJIS_UPDATE", // 8
-	"GUILD_INTEGRATIONS_UPDATE", // 16
-	"GUILD_MEMBERS_CHUNK", // passthrough // requires guild members priviledge
-	"GUILD_MEMBER_ADD", // 2 // requires guild members priviledge
-	"GUILD_MEMBER_REMOVE", // 2 // requires guild members priviledge
-	"GUILD_MEMBER_UPDATE", // 2 // requires guild members priviledge
-	"GUILD_ROLE_CREATE", // 1
-	"GUILD_ROLE_DELETE", // 1
-	"GUILD_ROLE_UPDATE", // 1
-	"GUILD_UPDATE", // passthrough // probably implies guilds
-	"INVITE_CREATE", // 64
-	"INVITE_DELETE", // 64
-	"MESSAGE_CREATE", // 512 // 4096 for dm
-	"MESSAGE_DELETE", // 512 // 4096 for dm
-	"MESSAGE_DELETE_BULK", // passthrough ?
-	"MESSAGE_REACTION_ADD", // 1024 // 8192 for dm
-	"MESSAGE_REACTION_REMOVE", // 1024 // 8192 for dm
-	"MESSAGE_REACTION_REMOVE_ALL", // 1024 // 8192 for dm
-	"MESSAGE_REACTION_REMOVE_EMOJI", // 1024 // 8192 for dm
-	"MESSAGE_UPDATE", // 512 // 4096 for dm
-	"PRESENCE_UPDATE", // 256 // requires presences priviledge
-	//"READY",
-	//"RESUMED",
-	"TYPING_START", // 2048 // 16384 for dm
-	"USER_UPDATE", // passthrough
-	//"VOICE_SERVER_UPDATE", // passthrough // client voice channel
-	"VOICE_STATE_UPDATE", // 128
-	"WEBHOOKS_UPDATE" // 32
-];
+const { Error, TypeError, RangeError } = require("discord.js/src/errors");
+const Action = require("discord.js/src/client/actions/Action.js");
+const Discord = require("discord.js");
+const util = require("util");
 
-for(let event of disabledEvents) {
-	delete PacketHandlers[event];
+Action.prototype.getPayload = function(data, manager, id, partialType, cache) {
+	const existing = manager.cache.get(id);
+	if(!existing) {
+		return manager.add(data, cache);
+	}
+	return existing;
 }
-
-const { Error, TypeError, RangeError } = require(require.resolve("discord.js").replace("index.js","errors"));
-const Discord = require('discord.js');
-const util = require('util');
-
-module.exports = Discord;
 
 Discord.Structures.extend("Message", M => {
 	return class Message extends M {
@@ -90,7 +53,7 @@ Discord.Structures.extend("Message", M => {
 			return this.guild ? this.guild.members.cache.get((this.author || {}).id) || this._member || null : null;
 		}
 		get pinnable() {
-			return (this.type === 'DEFAULT' && (!this.guild || !this.guild.roles.cache.size || this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false)));
+			return (this.type === Discord.Constants.MessageTypes[0] && (!this.guild || !this.guild.roles.cache.size || this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false)));
 		}
 		get deletable() {
 			return (!this.deleted && (this.author.id === this.client.user.id ||	(this.guild && this.guild.roles.cache.size && this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false))));
@@ -196,11 +159,64 @@ Discord.Structures.extend("GuildMember", G => {
 
 Discord.Structures.extend("Guild", G => {
 	return class Guild extends G {
+		constructor(...args) {
+			super(...args);
+			this.emojis = new Discord.GuildEmojiManager(this);
+		}
 		get nameAcronym() {
 			return this.name ? this.name.replace(/\w+/g, name => name[0]).replace(/\s/g, '') : undefined;
 		}
 		get joinedAt() {
 			return this.joinedTimestamp ? new Date(this.joinedTimestamp) : undefined;
+		}
+		_patch(data) {
+			let d = {};
+			for(let key in data) {
+				if(!["channels","roles","members","presences","voice_states","emojis"].includes(key)) {
+					d[key] = data[key];
+				}
+			}
+			super._patch(d);
+			if(data.channels && this.client.options.cacheGuilds) {
+				if(this.client.options.cacheChannels) { this.channels.cache.clear(); }
+				for(let channel of data.channels) {
+					if(this.client.options.cacheChannels || this.client.channels.cache.has(channel.id) || (this.client.options.ws.intents & 128 && data.voice_states && data.voice_states.find(v => v.channel_id === channel.id))) {
+						this.client.channels.add(channel, this);
+					}
+				}
+			}
+			if(data.roles && (this.roles.cache.size || this.client.options.enablePermissions)) {
+				this.roles.cache.clear();
+				for(let role of data.roles) {
+					this.roles.add(role);
+				}
+			}
+			if(data.members) {
+				for(let member of data.members) {
+					if(this.client.users.cache.has(member.user.id)) {
+						this.members.add(member);
+					}
+				}
+			}
+			if(data.presences) {
+				for(let presence of data.presences) {
+					if(this.client.users.cache.has(presence.user.id) || this.client.options.cachePresences) {
+						this.presences.add(Object.assign(presence, { guild: this }));
+					}
+				}
+			}
+			if(data.voice_states && this.client.options.ws.intents & 128) {
+				this.voiceStates.cache.clear();
+				for(let voiceState of data.voice_states) {
+					this.voiceStates.add(voiceState);
+				}
+			}
+			if(data.emojis && this.emojis.cache.size) {
+				this.client.actions.GuildEmojisUpdate.handle({
+					guild_id: this.id,
+					emojis: data.emojis,
+				});
+			}
 		}
 	}
 });
@@ -398,7 +414,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(options = {}) {
 			let user_ids = options.id || (Array.isArray(options.ids) ? options.ids : undefined);
 			let query = options.query;
 			let time = options.time || 60000;
-			let limit = Number.isInteger(options.limit) ? options.limit : 50;
+			let limit = Number.isInteger(options.limit) ? options.limit : 0;
 			let presences = options.withPresences || false;
 			let nonce = Date.now().toString(16);
 			if(nonce.length > 32) { return j(new RangeError('MEMBER_FETCH_NONCE_LENGTH')); }
@@ -441,7 +457,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(options = {}) {
 				}
 				if(presences && data.presences) {
 					for(let presence of data.presences) {
-						if(this.client.options.trackPresences || this.guild.members.cache.has(presence.user.id)) {
+						if(this.client.options.cachePresences || this.guild.members.cache.has(presence.user.id)) {
 							this.guild.presences.add(Object.assign(presence, { guild: this.guild }));
 						}
 					}
@@ -553,3 +569,5 @@ Object.defineProperty(Discord.MessageMentions.prototype, "members", {
 		return members
 	}
 });
+
+module.exports = Discord;

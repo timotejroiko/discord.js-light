@@ -1,56 +1,22 @@
-const Discord = require("./discord.js");
-const Events = require("./events.js");
+const Discord = require("./classes.js");
+const Handlers = require("./actions.js");
 
 Discord.Client = class Client extends Discord.Client {
 	constructor(options = {}) {
 		options = Object.assign(
 			{
-				messageCacheMaxSize: 10,
-				messageCacheLifetime: 86400,
-				messageSweepInterval: 86400,
-				clientSweepInterval: 86400,
-				userCacheLifetime: 86400,
-				channelCacheLifetime: 86400,
-				shardCheckInterval: 1800,
-				queueLimit: 5
+				cacheChannels:false,
+				cacheGuilds:true,
+				cachePresences:false,
+				cacheRoles:false,
+				cacheOverwrites:false,
+				cacheEmojis:false,
+				cacheMessages:false
 			},
 			options
 		);
-		options.ws = Object.assign(
-			{
-				large_threshold:50,
-				intents:1+512+1024+4096+8192
-			},
-			options.ws
-		);
-		if(options.ws.intents === null || options.ws.intents === false) { delete options.ws.intents; }
-		if(!options.shards && !process.env.SHARDING_MANAGER) { options.shards = "auto"; }
 		super(options);
-		this.on("ready", () => {
-			console.log(`[${new Date().toISOString()}] Client Ready`);
-		});
-		this.on("rateLimit", e => {
-			console.log(`[${new Date().toISOString()}] Rate Limited`,e);
-		});
-		this.on("warn", e => {
-			console.log(`[${new Date().toISOString()}] Warning`,e);
-		});
-		this.on("error", e => {
-			console.log(`[${new Date().toISOString()}] Error`,e);
-		});
-		this.on("shardDisconnect", (e,id) => {
-			console.log(`[${new Date().toISOString()}][Shard ${id}] Died and will not reconnect. Reason:`,e);
-		});
-		this.on("shardError", (e,id) => {
-			console.log(`[${new Date().toISOString()}][Shard ${id}] Error`,e);
-		});
-		this.on("shardReconnecting", id => {
-			console.log(`[${new Date().toISOString()}][Shard ${id}] Reconnecting`);
-		});
-		this.on("shardResume", (id,evts) => {
-			console.log(`[${new Date().toISOString()}][Shard ${id}] Resumed`); // evts are useless
-		});
-		this.on("raw", Events.bind(this));
+		Handlers(this);
 		if(parseInt(this.options.clientSweepInterval)) {
 			let time = Math.max(this.options.clientSweepInterval, 60);
 			this.setInterval(() => {
@@ -63,34 +29,6 @@ Discord.Client = class Client extends Discord.Client {
 				this.checkShards();
 			}, time * 1000);
 		}
-		if(this.options.token) {
-			console.log(`[${new Date().toISOString()}] Connecting...`);
-			this.login(this.options.token).catch(e => { throw e; });
-		}
-	}
-	sweepInactive() {
-		let users = parseInt(this.options.userCacheLifetime);
-		let channels = parseInt(this.options.channelCacheLifetime);
-		if(users) {
-			this.users.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - users * 1000) && !t.noSweep && t.id !== this.user.id);
-		}
-		if(channels && !this.options.enableChannels) {
-			this.channels.cache.sweep(t => (!t.lastActive || t.lastActive < Date.now() - channels * 1000) && !t.noSweep);
-		}
-		this.guilds.cache.forEach(t => {
-			t.members.cache.sweep(m => !this.users.cache.has(m.id));
-			t.channels.cache.sweep(m => !this.channels.cache.has(m.id));
-			t.presences.cache.sweep(m => !this.users.cache.has(m.id) && !this.options.trackPresences);
-		});
-	}
-	checkShards() {
-		let timer = Math.max(parseInt(this.options.shardCheckInterval) || 0, 60);
-		this.ws.shards.forEach(shard => {
-			if(shard.lastActive < Date.now() - timer * 1000) {
-				console.log(`[${new Date().toISOString()}][Shard ${shard.id}] Possibly dead. Attempting to reconnect`);
-				shard.destroy();
-			}
-		})
 	}
 	async getInfo() {
 		const statuses = Object.keys(Discord.Constants.Status);
