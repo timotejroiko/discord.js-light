@@ -1,366 +1,308 @@
-# discord.js-light
+# djs-shenanigans
 
-A [discord.js (v12)](https://discord.js.org) "anti-caching" framework focused on combating the original library's aggressive caching behavior to prevent excessive resource usage. It works by modifying a few of discord.js' internal classes and functions to prevent data from being cached at the source while introducing workarounds to keep its data structures as intact as possible.
-
-[![npm](https://img.shields.io/npm/v/discord.js-light?label=current%20version)](https://www.npmjs.com/package/discord.js-light)
-[![GitHub Release Date](https://img.shields.io/github/release-date/timotejroiko/discord.js-light?label=last%20updated)](https://github.com/timotejroiko/discord.js-light/releases)
-[![npm (prod) dependency version](https://img.shields.io/npm/dependency-version/discord.js-light/discord.js)](https://discord.js.org)
-[![node](https://img.shields.io/node/v/discord.js-light)](https://nodejs.org)
-[![Discord](https://img.shields.io/discord/581072557512458241?label=support%20server)](https://discord.gg/BpeedKh)
-[![Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2Ftimotejroiko&label=support%20me%20on%20patreon)](https://www.patreon.com/timotejroiko)
-
-
-
-## Why?
-
-Discord.js has been THE javascript discord library for a long time now, and successfully powers thousands of bots. But as bots grows larger, you will often notice a substantial increase in resource usage, especially memory consumption.
-
-This is due to the fact that discord.js caches nearly everything it can in order to avoid hitting the Discord API as much as possible and also to provide all its features. This behavior can however make the library feel bloated for bigger bots as many times the library is caching and processing data that your bot will never use.
-
-This issue has been discussed a few times by the community but ultimately it has been decided that the library is too tightly coupled with its caching systems and seperating them would be unfeasible. Thus the task of scaling falls back to us bot developers.
-
-Several solutions have been presented so far, such as regular cache sweeping, intents and disabling events. However i felt that the existing methods were lacking and decided to study the discord.js source code to see what could be done about it.
-
-This project later became the base framework for all my bots and it does a wonderful job keeping hosting costs and scaling maintenance in check (\~120mb ram at 3000+ guilds).
-
-
+A modified Discord client built on top of [discord.js](https://github.com/discordjs/discord.js) 12.0.0, Shenanigans aims to drastically reduce discord.js's resource usage while also adding its own set of utilities aimed primarily for reactive message-based bots. This library is very experimental and should be used with caution and lots of testing, as it may disable or break some of discord.js's features.
 
 ## Features
 
-* Provides all of discord.js's events without any automatic caching
-* Most classes have their structures intact and can be used the same way as the original library
-* Partial objects are given when data is missing and can be manually fetched and cached when needed
-* Fully compatible with any combination of Gateway Intents
-* Drastically lower resource usage at scale
+djs-shenanigans tweaks discord.js by removing some of its features for performance gains and adding some other features on top.
 
+Pros:
 
+* Drastically lower cpu, memory and network usage (see performance section)
+* Automatic sharding with support for multiple processes and multiple shards per process
+* On-demand caching (data is cached only when required, say goodbye to sweeping)
+* Built-in command handlers with error handling
+* Built-in custom prefix handler
+* Built-in discordbots.org guild count updater
+* Designed to run as replicable independent instances (compatible with pm2 clusters)
+* Some additional functions and methods for convenience (see non-standard API section)
+
+Cons:
+
+* Most events are either disabled, handled differently or require additional handling (see non-standard behavior section)
+* Presences, typing and guild member events are unavailable due to disabling guild subscriptions (see non-standard behavior section)
+* Some features have not been tested (ie: voice)
 
 ## Getting Started
 
-### Installation:
+Installation:
 
-```npm install discord.js-light```
+```npm install timotejroiko/djs-shenanigans```
 
-Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and discord.js will pick them up automatically.
+optional packages (recommended to improve performance, especially zlib-sync. dont use zucc)
 
 ```
 npm install zlib-sync
 npm install bufferutil
-npm install discordapp/erlpack
+npm install discordapp/erlpack (if it doesnt work, use this fork: churchofthought/erlpack)
 npm install utf-8-validate
 ```
 
-Additionally, using an alternative memory allocator such as [jemalloc](http://jemalloc.net/) can further reduce memory usage by a substantial amount in exchange for slightly higher cpu usage.
-
-### Usage example:
+Simple usage:
 
 ```js
-const Discord = require("discord.js-light");
-const client = new Discord.Client({
-	token: "your bot token"
-});
+const client = require("djs-shenanigans")(); // good old discord.js client
 
-client.on("ready", () => {
+client.on("message", message => {
 	// do stuff
 });
 
-client.on("message", message => {
-	if(message.content === "?!ping") {
-		message.reply("pong")
-	}
-});
+client.login("TOKEN")
 ```
 
-Generally usage should be very similar to discord.js and you can safely refer to its documentation as long as you respect the caching differences explained later on in this readme.
+With auto-login, auto-sharding, logging, prefix and command handlers:
 
+```js
+const client = require("djs-shenanigans")({
+	token:"TOKEN",
+	defaultPrefix:"!",
+	enableLogger: true,
+	enableHandler: "YOURCOMMANDSFOLDER",
+	sendErrors:true
+});
 
+// create commands in your command folder (see command handlers section)
+```
 
 ## Client options
 
-Some client options were added to control certain aspects specific to this library while other options may have different defaults or behavior. Here's a list of changes and additions:
+All fields are optional.
 
 | Option | Type | Description |
 | ------------- | ------------- | ------------- |
-| token | string | Your bot token. If provided will make the client login automatically |
-| enablePermissions | boolean | This option enables caching of all Guild Roles and Channel PermissionOverwrites in order to allow for permission checking. This will increase memory usage by a moderate amount (default:false) |
-| enableChannels | boolean | This option enables caching of all channels and disables sweeping of inactive channels. This will increase memory usage by a substantial amount, use only if you need to track channel updates in real time (default:false) |
-| trackPresences | boolean | This option enables caching of all presences when the GUILD_PRESENCES priviledged Intent is enabled or when Intents are not used. This will increase memory and cpu usage by a large amount, use only if you need to track people's statuses and activities in real time (default:false) |
-| clientSweepInterval | number | Set how often to sweep inactive users and channels in seconds. Set to `0` to disable (default:86400) |
-| userCacheLifetime | number | Set how long a user needs to be inactive to be sweepable in seconds. Set to `0` to disable user sweeping (default:86400) |
-| channelCacheLifetime | number | Set how long a channel needs to be inactive to be sweepable in seconds. Set to `0` to disable channel sweeping (default:86400) |
-| shardCheckInterval | number | Set how often to check for shard activity in seconds (internal shards only). Inactive shards will be forced to reconnect (workaround for a rare issue with discord.js where shards randomly stop trying to reconnect). Set to `0` to disable (default:1800) |
-| queueLimit | number | Max amount of queued responses when rate limited. If this limit is hit, the client will temporarily stop firing message events in the relevant channel to prevent spam build up (default:5) |
-| shards | number/string/array | Shards to spawn via internal sharding (default:"auto") |
-| messageCacheMaxSize | number | Max amount of messages to cache in cached channels (default:10) |
-| messageCacheLifetime | number | For how long are cached messages guaranteed to stay in the cache in seconds (default:86400) |
-| messageSweepInterval | number | How often to clean the message cache in seconds (default:86400) |
-| partials | - | This library implements its own partials system which is always enabled, therefore this option is not available |
+| token | string | Your discord bot token. If provided, the client will attempt to negotiate shards and login automatically, else you will need to run client.login() and manually specify shard settings |
+| dblToken | string | Your discordbots.org token. If provided, the client will send your guild count to discordbots.org every 24 hours |
+| dblTest | boolean | If set to true, the client will also send your guild count to discordbots.org immediatelly after logging in |
+| owners | array | Array of user IDs. Used by the non-standard method message.isOwner |
+| processes | number | Total number of processes running this bot if running multiple instances manually. Ignored when using pm2 cluster mode |
+| process | number | The zero-indexed id of the current process if running multiple instances manually. Ignored when using pm2 cluster mode |
+| shardsPerProcess | number | Manually specify the number of shards each process should spawn. Uses recommended shards if omitted or set to "auto" |
+| defaultPrefix | string | Default prefix for all guilds and dms |
+| customPrefix | function(guildID) | Function that should return a guild-specific prefix from a guild id |
+| enableLogger | boolean | Enables logging of connection statuses, messages and errors |
+| enableHandler | boolean/string | Command handler mode. See command handlers section |
+| enableRoles | boolean | If set to true, role events are enabled and roles and channel permissionOverwrites will be cached (required for permission checking) |
+| sendErrors | boolean | If set to true, the command handler will also attempt to send command errors instead of only logging them |
 
-All other discord.js client options continue to be available and should work normally.
+## Command handlers
 
+djs-shenanigans has 3 different ways of operating depending on the command handler mode. The command handler will process all messages from non-bot users that start with a valid prefix or a bot mention, all other messages will be ignored. All bot responses are cached by default. The command handler also listens to message edits and processes them as new messages. You can differentiate between new and updated messages by checking for the existence of message.editedTimestamp. If responding to a message edit using message.send(), the response will be sent as a message edit if the previous response is cached (see non-standard API). When using Router or File mode, empty commands (prefix + nothing or mention + nothing) will be processed as a "nocommand" command.
 
+### Message Event Mode
 
-## Intents
+options.enableHandler set to false or omitted.
 
-Discord released the Intents system some time ago, making it possible for developers to selectively subscribe to the events they want to receive, instead of being forced to receive and process all events. This enabled bot owners to greatly reduce cpu and bandwidth usage and thus reducing hosting costs.
+In this mode, client will listen to messages that start with a valid prefix and emit them as a "message" event. This is the most barebones setup, messages are captured from the raw event, checked for prefixes and bot users and then emitted. You can also use this event to capture messages from whitelisted channels, regardless of command handler mode (see non-standard API). Example:
 
-This library comes preconfigured with a set of Intents enabled by default as follows:
+```js
+const client = require("djs-shenanigans")({
+	defaultPrefix:"!"
+});
 
-| Intent | Enabled | Description |
-| ------------- | ------------- | ------------- |
-| GUILDS (1) | yes | Enables emitting and processing of guildCreate, guildUpdate, guildDelete, guildRoleCreate, guildRoleUpdate, guildRoleDelete, channelCreate, channelUpdate, channelDelete, channelPinsUpdate |
-| GUILD_MEMBERS (2) | no | Priviledged Intent - requires enabling in your Discord developer portal. Enables emitting and processing of guildMemberAdd, guildMemberRemove, guildMemberUpdate. Also keeps guild.memberCount updated and allows fetching all members |
-| GUILD_BANS (4) | no | Enables emitting and processing of guildBanAdd, guildBanRemove |
-| GUILD_EMOJIS (8) | no | Enables emitting and processing of emojiCreate, emojiUpdate, emojiDelete, guildEmojisUpdate |
-| GUILD_INTEGRATIONS (16) | no | Enables emitting and processing of guildIntegrationsUpdate |
-| GUILD_WEBHOOKS (32) | no | Enables emitting and processing of webhookUpdate |
-| GUILD_INVITES (64) | no | Enables emitting and processing of inviteCreate, inviteDelete |
-| GUILD_VOICE_STATES (128) | no | Enables emitting and processing of voiceStateUpdate. Also enables caching of and access to VoiceState objects. This intent is required for the majority of voice features to work |
-| GUILD_PRESENCES (256) | no | Priviledged Intent - requires enabling in your Discord developer portal. This Intent alone is responsible for about 90% of a bot's idle CPU and bandwidth usage so enabling it is not recommended unless you absolutely need it. Enables emitting and processing of presenceUpdate. Also allows fetching members with presences |
-| GUILD_MESSAGES (512) | yes | Enables emitting and processing of messageCreate, messageUpdate, messageDelete, messageDeleteBulk |
-| GUILD_MESSAGE_REACTIONS (1024) | yes | Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
-| GUILD_MESSAGE_TYPING (2048) | no | Enables emitting and processing of typingStart |
-| DIRECT_MESSAGES (4096) | yes | DMs only. Enables emitting and processing of channelCreate, messageCreate, messageUpdate, messageDelete, channelPinsUpdate |
-| DIRECT_MESSAGE_REACTIONS (8192) | yes | DMs only. Enables emitting and processing of messageReactionAdd, messageReactionRemove, messageReactionRemoveAll, messageReactionRemoveEmoji |
-| DIRECT_MESSAGE_TYPING (16384) | no | DMs only. Enables emitting and processing of typingStart |
+client.on("message", message => {
+	// only messages from non-bot users which start with a valid prefix are received (ie: "!somecommand")
+	// the message itself is not cached, but its channel and author/member are automatically cached.
+	// you must handle commands and errors by yourself
+	// also receives messages from whitelisted channels regardless of command handler mode
+});
+```
 
-You can enable/disable the above Intents by defining your own Intents combination in your client options as per the discord.js documentation.
+### Router Mode
 
+options.enableHandler set to true.
 
+In this mode, client will listen to messages that start with a valid prefix and contain a command registered as an event. This is for those who like the idea of handling commands like a webserver. Registered command events are prefixed with a slash to avoid interfering with standard events. Example:
 
-## Events Behavior
+```js
+const client = require("djs-shenanigans")({
+	defaultPrefix:"!",
+	enableHandler:true
+});
 
-Most events should be identical to the originals aside from the caching behavior. Events will always emit, regardless of the required data being available or not, similar to enabling all partials in discord.js but including additional partials that discord.js doesnt support. When required data is missing, the event will emit a partial structure where only an id is guaranteed (the `.partial` property is not guaranteed to exist in all partials).
+client.on("/ping", message => {
+	// only messages from non-bot users which start with a valid prefix followed by the command "ping" are received (ie: "!ping")
+	// this message, its channel and author/member are automatically cached.
+	// you must handle errors by yourself.
+});
 
-Events that emit multiple versions of a structure, such as update events, will emit `null` instead if not available.
+client.on("/nocommand", message => {
+	// empty commands go here (ie: prefix+nothing or mention+nothing)
+})
+```
 
-| Event | Emits | Notes |
-| ------------- | ------------- | ------------- |
-| message | Message | This event is fired by both new messages and edited messages. The messageUpdate event was merged into the message event in order to make it easy for the client to reply to edited messages. Edited messages can be identified by checking for the existence of message.editedTimestamp and be accessed from message.edits if cached |
-| messageUpdate | - | This event is currently not available (see above) |
-| messageDelete | Message | Partial Message if not cached |
-| messageDeleteBulk | Collection | Provides a Collection of deleted messages as above |
-| messageReactionAdd | Reaction, User | User may be partial if DM. Does not include reaction count nor list of users if not cached |
-| messageReactionRemove | Reaction, User | User may be partial if DM. Does not include reaction count nor list of users if not cached |
-| messageReactionRemoveAll | Message | Partial Message if not cached |
-| messageReactionRemoveEmoji | Reaction | Does not include reaction count nor reaction users if not cached |
-| channelCreate | Channel | - |
-| channelUpdate | Channel or NULL, Channel | Old Channel is NULL if not cached |
-| channelDelete | Channel | - |
-| channelPinsUpdate | Channel, Date | Partial Channel if not cached |
-| roleCreate | Role | - |
-| roleUpdate | Role or NULL, Role | Old Role is NULL if not cached |
-| roleDelete | Role | Partial Role if not cached |
-| inviteCreate | Invite | - |
-| inviteDelete | Invite | - |
-| emojiCreate | Emoji | Only fires if guild emojis are cached |
-| emojiUpdate | Emoji, Emoji | Only fires if guild emojis are cached |
-| emojiDelete | Emoji | Only fires if guild emojis are cached |
-| guildEmojisUpdate | Collection | Non-standard event that fires when guild emojis are not cached. Provides a Collection of up-to-date Emojis |
-| guildBanAdd | Guild, User | Partial Guild if not cached |
-| guildBanRemove | Guild, User | Partial Guild if not cached |
-| guildCreate | Guild | - |
-| guildUpdate | Guild or NULL, Guild | Old Guild is NULL if not cached |
-| guildDelete | Guild | Partial Guild if not cached |
-| guildUnavailable | Guild | Partial Guild if not cached |
-| guildMemberAdd | Member | - |
-| guildMemberUpdate | Member or NULL, Member | Old Member is NULL if not cached |
-| guildMemberRemove | Member | Partial Member if not cached |
-| guildIntegrationsUpdate | Guild | - |
-| presenceUpdate | Presence or NULL, Presence | Old Presence is NULL if not cached |
-| typingStart | Channel, User | Partial Channel and/or User if not cached |
-| userUpdate | User or NULL, User | Old User is NULL if not cached |
-| voiceStateUpdate | VoiceState or NULL, VoiceState or NULL | NULL if not connected to a voice channel |
-| webhookUpdate | Channel | Partial Channel if not cached |
+### File Mode
 
-Non-partial structures only guarantee the contents of its top-level properties. Linked structures such as message**.channel** or reaction**.message** may be partials if not previously cached or fetched. This is especially true for Guild objects, which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
+options.enableHandler set to a string pointing to a folder.
 
-All events require their respective Intents to be enabled in your client options. Events not listed above should work normally as per the discord.js documentation
+In this mode, client will listen to messages that start with a valid prefix and contain a valid command file. This is the standard command handler approach, the client will scan the supplied folder and register all files found as commands using their file names. This mode also enables a built-in command reloading function (see non-standard API). Example:
 
+```js
+// index.js
+const client = require("djs-shenanigans")({
+	defaultPrefix:"!",
+	enableHandler:"commands"
+});
 
+// scans the "commands" folder for js files and registers them in client.commands
+// client.commands is a Map object with the file name serving as the key, and its exported object as the value.
+```
 
-## Caching Behavior
+```js
+// commands/ping.js
+module.exports.run = message => {
+	// only messages from non-bot users which start with a valid prefix followed by the command "ping" are received (ie: "!ping")
+	// this message, its channel and author/member are automatically cached.
+	// errors that happen inside here are handled and logged automatically. if options.sendErrors is set to true, the error is also sent as a response
+	// commands must contain a "run" function, other props such as module.exports.help can be optionally added for management and interaction with client.commands
+}
+```
 
-This library alters the default caching behavior as follows:
-
-| Store | Behavior | How to Fetch |
-| ------------- | ------------- | ------------- |
-| client.users | Cached when responding to DMs or when responding with message.reply() or when members are cached | client.users.fetch()  guild.members.fetch() |
-| client.channels | Cached when `enableChannels` is enabled or when responding with channel.send() or message.reply() | client.channels.fetch()  guild.channels.fetch() |
-| client.guilds | Always cached unless manually sweeped | client.guilds.fetch() |
-| channel.messages | Own messages are cached by default, author messages are cached when responding with message.reply() | channel.messages.fetch() |
-| channel.permissionOverwrites | Cached when `enablePermissions` is enabled or when guild roles are cached | client.channels.fetch()  guild.channels.fetch() |
-| guild.emojis | Never automatically cached | guild.emojis.fetch()  guild.fetch()  client.guilds.fetch() |
-| guild.roles | Cached when `enablePermissions` is enabled | guild.roles.fetch()  guild.fetch()  client.guilds.fetch() |
-| guild.channels | Cached when channels are cached | client.channels.fetch()  guild.channels.fetch() |
-| guild.members | Cached when responding with message.reply() | guild.members.fetch() |
-| guild.voiceStates | Cached while the relevant members are connected to a voice channel (requires GUILD_VOICE_STATES intent) | - |
-| guild.presences | Cached when `trackPresences` is enabled or when the relevant member is cached (requires GUILD_PRESENCES intent) | guild.members.fetch() (requires GUILD_PRESENCES intent) |
-| member.roles | Always available but contains partial roles if guild roles are not cached | guild.roles.fetch()  guild.fetch()  client.guilds.fetch() |
-| message.edits | Limited to 1 history state | - |
-
-All structures are replaced with a partial when the necessary data is not available. These partials only guarantee an id property but most of its class methods should still work. Depending on your needs, you may need to fetch these structures before being able to access their data.
-
-The client itself will always be cached as a User and as a GuildMember in all cached guilds.
-
-Unlike discord.js, this library will continue to function and emit partial events even if nothing is cached. You can send/receive messages and reactions to/from uncached channels and messages, receive update/delete events from uncached objects and even completely sweep the guild cache without breaking the library.
-
-
+```js
+// commands/nocommand.js
+module.exports.run = message => {
+	// empty commands go here (ie: prefix+nothing or mention+nothing)
+}
+```
 
 ## Non-standard API
 
-Some functionality was added and/or modified for dealing with the above caching changes among other conveniences:
+djs-shenanigans has some extra functions built in for convenience:
+
+| Func/Prop | Returns | Description |
+| ------------- | ------------- | ------------- |
+| message.send(content,options) | promise>message | This function is the same as message.channel.send() but adds several improvements: can send unresolved promises, objects, falsey values and other non-string types, truncates large strings if no split options are provided, logs response times and sending errors/warnings if logging is enabled, adds request-response pairing if messages are cached and if possible sends responses as edits when triggered by message edits |
+| message.asyncEval(string) | promise>anything | An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this` (should be locked to owners only) |
+| message.isOwner | boolean | Quickly check if the user who sent the message is a bot owner. Uses the array of owners from options.owners |
+| message.commandResponse | message | The message object that was sent as a response to this command. Only available if it was sent with message.send() and the message is cached |
+| message.commandMessage | message | The message object that triggered this response. Only available if this response was sent with message.send() and the triggering message is cached |
+| message.commandResponseTime | number | Message response time in milliseconds. Only available in response messages if they were sent with message.send() and are cached; |
+| message.command | string | The command used without prefix and content. Only available with the command handler in router or file mode |
+| message.argument | string | The message content without prefix and command. Only available with the command handler in router or file mode |
+| channel.whitelisted | boolean | If set to true, this channel will fire "message" events for all messages, instead of only messages that start with a valid prefix or command. Whitelisted channels also fire "messageDelete" and "messageDeleteBulk" events |
+| channel.createCollector(filter,options) | messageCollector | The same as channel.createMessageCollector() but whitelists the channel during the duration of the collector |
+| client.getInfo() | promise>object | Gather several statistics about the client including all shards and, if running in pm2 cluster mode, all processes. Statistics include total guild count, total user count at login, total active users and channels, websocket pings, uptimes, cpu usage, memory usage and more |
+| client.shutdown() | boolean | Begins graceful shutdown in this process, replaces all functions and commands with a temporary message and exits the process after a few seconds |
+| client.pm2shutdown() | boolean | Sends a shutdown signal to all processes in the pm2 cluster. Only available when running in pm2 cluster mode |
+| client.survey(string) | promise>array | Similar to broadcastEval() but for pm2 clusters. Sends a string to be evaluated by all processes in the cluster and returns an array of responses indexed by process number. Only available when running in pm2 cluster mode |
+| client.broadcast(string) | promise>array | Same as client.survey() but it does not wait for a response. It returns an array of booleans representing whether the message was received by the target processes or not. Only available when running in pm2 cluster mode |
+| client.commands | map | Where commands are stored when running the command handler in file mode |
+| client.commands.reload(command) | boolean | Function to reload a command managed by the command handler in file mode. Can be used to add/re-enable/reload commands without restarting the bot |
+| client.commands.disable(command) | boolean | Function to disable a command managed by the command handler in file mode |
+
+## Non-standard behavior
+
+Since this library tampers with discord.js's functions and caches, there is a lot of unexpected behavior, here are a few documented behavior changes from my tests (there might be other untested unexpected behaviors, feel free to contribute with your tests and use cases)
+
+| Reactions | Changes |
+| ------------- | ------------- |
+| reactions | All message reaction events and collectors should work, but the reaction object is a bit different and might contain partials (a partial is an object that only contains an id and nothing else) |
+| reaction.channel | The channel object or channel partial if not cached |
+| reaction.message | The message object or message partial if not cached |
+| reaction.guild | The guild object or null if DM |
+| reaction.user | The user object or user partial if not cached |
+| reaction.emoji | The emoji object as per the Discord Gateway API (not the reaction emoji object from discord.js) |
+
+| Channels | Changes |
+| ------------- | ------------- |
+| client.channels | Channels are cached only when a valid command is used in them, messages are only cached when using the command handler in router or file mode, channel permissions are cached if options.enableRoles is set to true |
+| channel.messages | Caches only messages that were processed by the command handler in router or file mode |
+| channel.permissionOverwrites | Empty, unless options.enableRoles is set to true. Can also be manually cached by channel.fetch() or client.channels.fetch(id) (roles are required for permission checking functions) |
+
+| Guilds | Changes |
+| ------------- | ------------- |
+| client.guilds | All guilds are cached and auto-updated by default but not all properties and stores are available |
+| guild.channels | Only channels where commands are used are cached |
+| guild.members | Only members that used commands are cached. Cached members are updated as they send new messages. Specific members can be cached by guild.members.fetch(id) (fetching all members is disabled) |
+| guild.roles | Empty unless options.enableRoles is set to true. Can also be manually cached using guild.fetch() or guild.roles.fetch() (role caching is required for permission checking functions) |
+| guild.emojis | Always empty, unless manually cached using guild.fetch() |
+| guild.presences | Always empty |
+| guild.voiceStates | Always empty |
+
+| Users | Changes |
+| ------------- | ------------- |
+| client.users | Only users that used valid commands are cached. Specific users can be cached by client.users.fetch(id). Users are updated as they send new messages |
+
+| Events | Changes |
+| ------------- | ------------- |
+| events | Many events are modified or disabled |
+| messageUpdate | The messageUpdate event is fired only in whitelisted channels. Message updates that contain valid commands are processed by the command handler and sent as new messages and contain message.editedTimestamp and a history of changes in message.edits if cached |
+| messageDelete / messageDeleteBulk | Message delete events are fired only in whitelisted channels |
+| memberUpdate / userUpdate | These events are unavailable as a side effect of disabling guild subscriptions, however, as a workaround, all messages sent by cached users/members will be checked for updated user/member data and will fire userUpdate/memberUpdate events when changes are detected |
+| memberCreate / memberDelete | These events are unavailable as a side effect of disabling guild subscriptions. Detecting member joins and leaves is currently not possible without guild subscriptions |
+| channelUpdate / channelDelete | These events are enabled only for cached channels |
+| roleCreate / roleUpdate / roleDelete | Role events are enabled only if options.enableRoles is set to true (role caching is required for permission checking functions) |
+| channelCreate / channelPinsUpdate / emojiCreate / emojiDelete / emojiUpdate / guildIntegrationsUpdate / guildBanAdd / guildBanRemove / webhookUpdate / voiceStateUpdate / presenceUpdate / typingStart | These events are all disabled |
+
+Some disabled events may eventually be re-enabled further down the road when more testing is done.
+
+## PM2 Cluter Mode
+
+djs-shenanigans is compatible with pm2 clusters, all you need to do is run it like this:
+
+```
+pm2 start yourFileName.js -i numberOfProcesses --name=yourProcessName
+```
+
+To scale your bot, all processes need to be restarted. This can also be done easily with pm2 clusters:
+
+```
+pm2 scale yourProcessName numberOfProcesses && pm2 restart yourProcessName
+```
+
+When running in pm2 cluster mode, you have access to cluster specific functions such as client.broadcast() client.survey() and client.pm2shutdown().
+Cluster mode automatically negotiates shards and spreads them equally across processes, or you can set a specific amount of shards using options.shardsPerProcess.
+Client logins are queued using a lockfile to avoid too many login attempts.
+
+## Manual Instances
+
+Running multiple instances manually across a single machine or multiple machines is possible but each instance must be configured with a process id and total processes count in the client options. Sharding is then negotiated automatically. Be aware that login queueing will not be available, so you will need wait for each process to fully login before firing another process to avoid being banned by discord (discord only allows one login every 5 seconds, shards count as logins), as well as use your own inter-process communication if needed. You can also use a master process to control everything like traditional sharders.
+
+## Performance
+
+This test case was done on ubuntu 18 (1vcpu, 1gb ram) running around 1500 guilds with all optional libraries installed (zlib-sync, erlpack, bufferutil, utf-8-validate). Data was recorded using `top` and `nethogs`. The following scripts were used:
+
+```js
+// discord.js default settings
+const { Client } = require("discord.js");
+const client = new Client();
+client.login("TOKEN");
+```
+
+```js
+// discord.js with most things disabled
+const { Client } = require("discord.js");
+const client = new Client({
+    messageCacheMaxSize:0,
+    messageCacheLifetime:30,
+    messageSweepInterval:60,
+    disableEveryone:true,
+    disabledEvents:["GUILD_MEMBER_ADD","GUILD_MEMBER_REMOVE","GUILD_MEMBER_UPDATE","GUILD_MEMBERS_CHUNK","GUILD_INTEGRATIONS_UPDATE","GUILD_ROLE_CREATE","GUILD_ROLE_DELETE","GUILD_ROLE_UPDATE","GUILD_BAN_ADD","GUILD_BAN_REMOVE","GUILD_EMOJIS_UPDATE","CHANNEL_PINS_UPDATE","CHANNEL_CREATE","CHANNEL_DELETE","CHANNEL_UPDATE","MESSAGE_CREATE","MESSAGE_DELETE","MESSAGE_UPDATE","MESSAGE_DELETE_BULK","MESSAGE_REACTION_ADD","MESSAGE_REACTION_REMOVE","MESSAGE_REACTION_REMOVE_ALL","USER_UPDATE","USER_SETTINGS_UPDATE","PRESENCE_UPDATE","TYPING_START","VOICE_STATE_UPDATE","VOICE_SERVER_UPDATE","WEBHOOKS_UPDATE"]
+});
+client.login("TOKEN");
+```
+
+```js
+// djs-shenanigans
+const client = require("djs-shenanigans")({
+	token:"TOKEN",
+	defaultPrefix:"!",
+	enableLogger: true,
+	enableHandler: "commands",
+	sendErrors:true
+});
+```
+
+Results:
+
+![CPU Usage](bench/cpu.jpg)
+![Memory Usage](bench/mem.jpg)
+![Network Usage](bench/net.jpg)
+
+As you can see, djs-shenanigans uses significantly less resources compared to discord.js v12 in this test case. Roughly 5-6x less memory, 5-10x less cpu and 5-20x less network bandwidth.
+
+## About
+
+This project is highly experimental, so the code is quite rough and there might be bugs and broken features especially in untested scenarios (i have tested only features that my bots need). You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions or contributions you might find.
+
+You can also find me in my [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
-### guild.channels.fetch(id,cache,withOverwrites)
-
-Fetches channels from the `/guilds/:id/channels` endpoint. This endpoint bypasses VIEW_CHANNEL permissions.
-
-**`id (string)`** - id of the channel to fetch. if omitted, fetches all guild channels instead, and the first and second parameters are treated as `cache` and `withOverwrites`
-
-**`cache (boolean)`** - whether to cache the result. returns the guild channel cache if set to true without specifying a channel id, otherwise returns a channel or a collection of channels. defaults to true
-
-**`withOverwrites (boolean)`** - whether to include channel permissionOverwrites. always true if `enablePermissions` is enabled or if guild roles are cached, otherwise defaults to false
-
-**`returns`** - `Promise (Channel | Collection of Channels | guild.channels.cache)`
-
-### guild.members.fetch(options)
-
-Replaces the original guild.members.fetch() method. Fetches guild members from the gateway or from the `/guilds/:id/members` endpoint based on the options below.
-
-**`options (object)`** - object of options
-
-**`options.rest (boolean)`** - whether to use the rest endpoint instead of the gateway. defaults to false
-
-**`options.id (string)`** - id of the member to fetch (rest & gateway)
-
-**`options.ids (array)`** - array of member ids to fetch (gateway only, requires GUILD_MEMBERS intent)
-
-**`options.query (string)`** - query to search for members by username (gateway only). set to empty string for all members (requires GUILD_MEMBERS intent)
-
-**`options.limit (number)`** - max amount of results (rest & gateway). set to 0 for unlimited (gateway only, requires GUILD_MEMBERS intent). max 1000 for rest. defaults to 50
-
-**`options.after (string)`** - last member id from the previous request (rest only). used for pagination in the rest endpoint
-
-**`options.cache (boolean)`** - whether to cache results (rest & gateway). returns the member cache if results match guild.memberCount, otherwise returns a member or a collection of members. defaults to true
-
-**`options.withPresences (boolean)`** - whether to include presences (gateway only, requires GUILD_PRESENCES intent, requires `trackPresences` to be enabled or relevant members to be cached)
-
-**`options.time (number)`** - time limit to wait for a response in milliseconds (gateway only). defaults to 60 seconds
-
-**`returns`** - `Promise (GuildMember | Collection of GuildMembers | guild.members.cache)`
-
-### guild.emojis.fetch(cache)
-
-Fetches all guild emojis from the `/guilds/:id/emojis` endpoint.
-
-**`cache (boolean)`** - whether to cache the results. returns the emoji cache if set to true, otherwise returns a collection of emojis. defaults to true
-
-**`returns`** - `Promise (Collection of Emojis | guild.emojis.cache)`
-
-### guild.roles.fetch(cache)
-
-Fetches all guild roles from the `/guilds/:id/roles` endpoint.
-
-**`cache (boolean)`** - whether to cache the results. returns the role cache if set to true, otherwise returns a collection of roles. defaults to true
-
-**`returns`** - `Promise (Collection of Roles | guild.roles.cache)`
-
-### client.guilds.fetch(id,cache)
-
-Fetches a single guild from the `/guilds/:id` endpoint.
-
-**`id (string)`** - id of the guild to fetch
-
-**`cache (boolean)`** - whether to cache the results. defaults to true
-
-**`returns`** - `Promise (Guild)`
-
-### client.sweepInactive()
-
-Sweep inactive users and channels from the cache
-
-**`returns`** - `Void`
-
-### client.checkShards()
-
-Check internal shards for activity and force them to restart if inactive
-
-**`returns`** - `Void`
-
-### client.getInfo()
-
-Fetches information about the current client and process, its caches, resource usage and shard information
-
-**`returns`** - `Promise (Object)`
-
-### message.eval(content)
-
-An eval function compatible with promises, async/await syntax and complex code. Can access the client via `client` and the message object via `this`
-
-**`content (string)`** - string to evaluate. if evaluated to a promise, returns `{Promise:result}`, otherwise returns `result`
-
-**`returns`** - `Promise (Object | Anything)`
-
-### message.reply(content,options)
-
-Replaces the original message.reply() method and includes the following changes:
-
-* Does not automatically mention the author
-* Handles promises, objects, falsey values and other non-string types
-* Truncates large strings if no split options are provided
-* Automatically caches the channel, author and messages involved
-* Adds a lastActive timestamp to the author for activity tracking
-* Adds response times and request-response pairing properties to both messages
-* When triggered by a message update, replies by editing the previous response if possible
-
-**`content (anything)`** - content to send. non-strings will be serialized. pass an empty string as a first parameter if you dont want to send any text content.
-
-**`options (object)`** - message options object as per discord.js. the options object can only be passed as the second parameter, otherwise it will be serialized and sent as text.
-
-**`returns`** - `Promise (Message)`
-
-### message.commandResponse
-
-(Message) The message object that was sent in response to this message (only if responded with message.reply)
-
-### message.commandMessage
-
-(Message) The message object that triggered this response (only if responded with message.reply)
-
-### message.commandResponseTime
-
-(number) Message response time in milliseconds (only if responded with message.reply)
-
-### user.lastActive
-
-(number) Timestamp of the last time the client interacted with this user
-
-### user.noSweep
-
-(boolean) Set to true to disable sweeping of this user
-
-### channel.lastActive
-
-(number) Timestamp of the last time the client interacted with this channel
-
-### channel.noSweep
-
-(boolean) Set to true to disabled sweeping of this channel
-
-
-
-## Notes
-
-This project is somewhat experimental, so there might be bugs and broken features in untested scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you may find.
-
-You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
-
-## Bots using discord.js-light
-
-[Astrobot](https://top.gg/bot/astrobot)
-
-[Message Viewer](https://top.gg/bot/642052166982303754)
-
-[Helper](https://top.gg/bot/409538753997307915)
-
-(using discord.js-light? let me know if you're interested in having your bot being listed here)
