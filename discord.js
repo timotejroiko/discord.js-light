@@ -121,7 +121,7 @@ Discord.Structures.extend("Message", M => {
 				this.channel = await this.client.channels.fetch(this.channel.id);
 			}
 			if(this.member && !this.channel.guild.members.cache.has(this.author.id)) {
-				this.guild.members.add(this.member);
+				this.guild.members.cache.set(this.member.id,this.member);
 			}
 			if(!this.client.users.cache.has(this.author.id)) {
 				this.author = this.client.users.add(this.author);
