@@ -54,22 +54,19 @@ Discord.Structures.extend("Message", M => {
 					this.author = client.users.add(data.author,client.users.cache.has(data.author.id));
 				}
 			}
-			if(this.guild && data.member) {
-				if(this.guild.members.cache.has(data.author.id)) {
+			if(data.member && this.guild && this.author) {
+				if(this.guild.members.cache.has(this.author.id)) {
 					this.member._patch(data.member);
 				} else {
-					if(data.member instanceof Discord.GuildMember) {
-						this._member = data.member;
-					} else {
-						this._member = this.guild.members.add(Object.assign(data.member,{user:this.author}),false);
-					}
+					this._member = this.guild.members.add(Object.assign(data.member,{user:this.author}),false);
 				}
 			}
 			if(data.mentions && data.mentions.length) {
 				for(let mention of data.mentions) {
-					this.mentions.users.set(mention.id,client.users.cache.get(mention.id) || client.users.add(mention,false));
+					this.mentions.users.set(mention.id,client.users.add(mention,client.users.cache.has(mention.id)));
 					if(mention.member && this.guild) {
-						if(!this.mentions._members) { this.mentions._members = {} }
+						if(!this.mentions._members) { this.mentions._members = {}; }
+						if(this.guild.members.cache.has(mention.id)) { this.guild.members.cache.get(mention.id)._patch(mention.member); }
 						this.mentions._members[mention.id] = mention.member;
 					}
 				}
@@ -104,12 +101,7 @@ Discord.Structures.extend("GuildMember", G => {
 			}
 			super(client, d, guild);
 			if(data.user) {
-				if(data.user instanceof Discord.User) {
-					if(data._cache && !client.users.cache.has(data.user.id)) { client.users.cache.set(data.user.id, data.user); }
-					this.user = data.user;
-				} else {
-					this.user = client.users.add(data.user, data._cache);
-				}
+				this.user = client.users.add(data.user, data._cache);
 			}
 		}
 		equals(member) {
