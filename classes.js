@@ -2,17 +2,26 @@ const GC = require("discord.js/src/structures/GuildChannel.js");
 require.cache[require.resolve("discord.js/src/structures/GuildChannel.js")].exports = class GuildChannel extends GC {
 	constructor(guild, data) {
 		super({client: guild.client}, data);
-		this._guildID = guild.id;
-		this._shardID = guild.shardID;
-		Object.defineProperty(this, "guild", {
-			enumerable: false,
-			get: function() {
-				return this.client.guilds.cache.get(this._guildID) || this.client.guilds.add({id:this._guildID,shardID:this._shardID}, false);
-			}
-		});
+		if(!this.client.options.cacheGuilds) {
+			this._guildID = guild.id;
+			this._shardID = guild.shardID;
+			Object.defineProperty(this, "guild", {
+				enumerable: false,
+				get: function() {
+					return this.client.guilds.cache.get(this._guildID) || this.client.guilds.add({id:this._guildID,shardID:this._shardID}, false);
+				}
+			});
+		}
 	}
 	get deletable() {
 		return this.guild.roles.cache.size && this.permissionOverwrites.size ? this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_CHANNELS, false) : false;
+	}
+}
+
+const RM = require("discord.js/src/managers/ReactionManager.js");
+require.cache[require.resolve("discord.js/src/managers/ReactionManager.js")].exports = class ReactionManager extends RM {
+	fake(id) {
+		return this.add({emoji:{id}},false);
 	}
 }
 
@@ -224,7 +233,9 @@ Discord.Channel.create = (client, data, guild) => {
 			channel = new PartialGroupDMChannel(client, data);
 		}
 	} else {
-		guild = guild || client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:data.shardID},false);
+		if(!(guild instanceof Discord.Guild)) {
+			guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:data.shardID},false);
+		}
 		if(guild) {
 			switch(data.type) {
 				case Discord.Constants.ChannelTypes.TEXT: {
@@ -258,9 +269,17 @@ Discord.Channel.create = (client, data, guild) => {
 	return channel;
 }
 
+Discord.UserManager.prototype.fake = function(id) {
+	return this.add({id},false);
+}
+
 Discord.GuildManager.prototype.fetch = async function(id, cache = true) {
 	let guild = await this.client.api.guilds(id).get();
 	return this.add(guild,cache);
+}
+
+Discord.GuildManager.prototype.fake = function(id) {
+	return this.add({id},false);
 }
 
 Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
@@ -290,7 +309,6 @@ Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
 	}
 	return channel;
 }
-Discord.ChannelManager.prototype._guilds = {};
 
 Discord.ChannelManager.prototype.fetch = async function(id, cache = true, withOverwrites) {
 	let existing = this.cache.get(id);
@@ -298,6 +316,10 @@ Discord.ChannelManager.prototype.fetch = async function(id, cache = true, withOv
 	let data = await this.client.api.channels(id).get();
 	if(withOverwrites !== undefined) { data._withOverwrites = Boolean(withOverwrites); }
 	return this.add(data, null, cache);
+}
+
+Discord.ChannelManager.prototype.fake = function(id) {
+	return this.add({id,type:1},null,false);
 }
 
 Discord.GuildChannelManager.prototype.fetch = async function(id, cache = true, withOverwrites) {
@@ -331,6 +353,10 @@ Discord.GuildChannelManager.prototype.fetch = async function(id, cache = true, w
 		}
 		return collection;
 	}
+}
+
+Discord.GuildChannelManager.prototype.fake = function(id,type) {
+	return this.client.channels.add({id,type:Discord.Constants.ChannelTypes[type.toUpperCase()]},{id:this.guild.id,shardID:this.guild.shardID},false);
 }
 
 Discord.GuildMemberManager.prototype.add = function(data, cache = true) {
@@ -436,6 +462,10 @@ Discord.GuildMemberManager.prototype.fetch = async function(options = {}) {
 	}
 }
 
+Discord.GuildMemberManager.prototype.fake = function(id) {
+	return this.add({user:{id}},false);
+}
+
 Discord.GuildEmojiManager.prototype.fetch = async function(id, cache = true) {
 	if(arguments.length < 2 && typeof arguments[0] !== "string") {
 		cache = arguments[0] || true;
@@ -463,6 +493,10 @@ Discord.GuildEmojiManager.prototype.fetch = async function(id, cache = true) {
 	}
 }
 
+Discord.GuildEmojiManager.prototype.fake = function(id) {
+	return this.add({id},false);
+}
+
 Discord.RoleManager.prototype.fetch = async function(id, cache = true) {
 	if(arguments.length < 2 && typeof arguments[0] !== "string") {
 		cache = arguments[0] || true;
@@ -488,6 +522,18 @@ Discord.RoleManager.prototype.fetch = async function(id, cache = true) {
 		}
 		return collection;
 	}
+}
+
+Discord.RoleManager.prototype.fake = function(id) {
+	return this.add({id},false);
+}
+
+Discord.MessageManager.prototype.fake = function(id) {
+	return this.add({id},false);
+}
+
+Discord.PresenceManager.prototype.fake = function(id) {
+	return this.add({user:{id}},false);
 }
 
 Object.defineProperty(Discord.RoleManager.prototype, "everyone", {
