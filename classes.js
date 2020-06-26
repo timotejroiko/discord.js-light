@@ -11,6 +11,8 @@ require.cache[require.resolve("discord.js/src/structures/GuildChannel.js")].expo
 					return this.client.guilds.cache.get(this._guildID) || this.client.guilds.add({id:this._guildID,shardID:this._shardID}, false);
 				}
 			});
+		} else {
+			this.guild = guild;
 		}
 	}
 	get deletable() {
