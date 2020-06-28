@@ -20,7 +20,7 @@ module.exports = client => {
 				}
 			}
 			setImmediate(() => {
-				shard.lastActive = Date.now();
+				shard.lastPacket = Date.now();
 				PacketHandlers[packet.t](this.client, packet, shard);
 			});
 		}
