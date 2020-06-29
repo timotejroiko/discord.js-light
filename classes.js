@@ -75,9 +75,6 @@ Discord.Structures.extend("GuildMember", G => {
 
 Discord.Structures.extend("Guild", G => {
 	return class Guild extends G {
-		constructor(client,data) {
-			super(client,data);
-		}
 		get nameAcronym() {
 			return this.name ? this.name.replace(/\w+/g, name => name[0]).replace(/\s/g, '') : undefined;
 		}
@@ -86,7 +83,7 @@ Discord.Structures.extend("Guild", G => {
 		}
 		_patch(data) {
 			this.shardID = data.shardID;
-			this.emojis = new Discord.GuildEmojiManager(this);
+			if(!this.emojis) { this.emojis = new Discord.GuildEmojiManager(this); }
 			let d = {};
 			for(let key in data) {
 				if(!["channels","roles","members","presences","voice_states","emojis"].includes(key)) {
@@ -224,7 +221,7 @@ Discord.Channel.create = (client, data, guild) => {
 	return channel;
 }
 
-Discord.UserManager.prototype.fake = function(id) {
+Discord.UserManager.prototype.forge = function(id) {
 	return this.add({id},false);
 }
 
@@ -233,7 +230,7 @@ Discord.GuildManager.prototype.fetch = async function(id, cache = true) {
 	return this.add(guild,cache);
 }
 
-Discord.GuildManager.prototype.fake = function(id) {
+Discord.GuildManager.prototype.forge = function(id) {
 	return this.add({id},false);
 }
 
@@ -284,7 +281,7 @@ Discord.ChannelManager.prototype.fetch = async function(id, cache) {
 	return this.add(data, null, options.cache);
 }
 
-Discord.ChannelManager.prototype.fake = function(id,type = "dm") {
+Discord.ChannelManager.prototype.forge = function(id,type = "dm") {
 	let g = null;
 	let t = Discord.Constants.ChannelTypes[type.toUpperCase()];
 	if(type !== 1) { g = this.client.guilds.add({id:"0"},false); }
@@ -331,7 +328,7 @@ Discord.GuildChannelManager.prototype.fetch = async function(id, cache) {
 	}
 }
 
-Discord.GuildChannelManager.prototype.fake = function(id,type) {
+Discord.GuildChannelManager.prototype.forge = function(id,type) {
 	return this.client.channels.add({id,type:Discord.Constants.ChannelTypes[type.toUpperCase()]},{id:this.guild.id,shardID:this.guild.shardID},false);
 }
 
@@ -448,7 +445,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 	}
 }
 
-Discord.GuildMemberManager.prototype.fake = function(id) {
+Discord.GuildMemberManager.prototype.forge = function(id) {
 	return this.add({user:{id}},false);
 }
 
@@ -478,7 +475,7 @@ Discord.GuildEmojiManager.prototype.fetch = async function(id, cache) {
 	}
 }
 
-Discord.GuildEmojiManager.prototype.fake = function(id) {
+Discord.GuildEmojiManager.prototype.forge = function(id) {
 	return this.add({id},false);
 }
 
@@ -508,15 +505,15 @@ Discord.RoleManager.prototype.fetch = async function(id, cache) {
 	}
 }
 
-Discord.RoleManager.prototype.fake = function(id) {
+Discord.RoleManager.prototype.forge = function(id) {
 	return this.add({id},false);
 }
 
-Discord.MessageManager.prototype.fake = function(id) {
+Discord.MessageManager.prototype.forge = function(id) {
 	return this.add({id},false);
 }
 
-Discord.PresenceManager.prototype.fake = function(id) {
+Discord.PresenceManager.prototype.forge = function(id) {
 	return this.add({user:{id}},false);
 }
 
@@ -532,6 +529,17 @@ Object.defineProperty(Discord.GuildMemberRoleManager.prototype, "_roles", {
 		let roles = new Discord.Collection();
 		roles.set(everyone.id, everyone);
 		for(let role of this.member._roles) {
+			roles.set(role, this.guild.roles.cache.get(role) || this.guild.roles.add({id:role},false));
+		}
+		return roles;
+	}
+});
+
+Object.defineProperty(Discord.GuildEmojiRoleManager.prototype, "_roles", {
+	get: function() {
+		return this.guild.roles.cache.filter(role => this.emoji._roles.includes(role.id));
+		let roles = new Discord.Collection();
+		for(let role of this.emoji._roles) {
 			roles.set(role, this.guild.roles.cache.get(role) || this.guild.roles.add({id:role},false));
 		}
 		return roles;
