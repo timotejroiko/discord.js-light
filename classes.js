@@ -111,6 +111,9 @@ Discord.Structures.extend("Guild", G => {
 						this.members.add(member);
 					}
 				}
+				if(!this.members.cache.has(this.client.user.id)) {
+					this.members.add({user:this.client.user});
+				}
 			}
 			if(data.presences && Array.isArray(data.presences)) {
 				for(let presence of data.presences) {
@@ -131,6 +134,25 @@ Discord.Structures.extend("Guild", G => {
 					emojis: data.emojis,
 				});
 			}
+		}
+		fetchBan(user) {
+			let id = this.client.users.resolveID(user);
+			if(!id) throw new Error('FETCH_BAN_RESOLVE_ID');
+			return this.client.api.guilds(this.id).bans(id).get().then(ban => ({
+				reason: ban.reason,
+				user: this.client.users.add(ban.user,false)
+			}));
+		}
+		fetchBans() {
+			return this.client.api.guilds(this.id).bans.get().then(bans =>
+				bans.reduce((collection, ban) => {
+					collection.set(ban.user.id, {
+						reason: ban.reason,
+						user: this.client.users.add(ban.user,false),
+					});
+					return collection;
+				}, new Discord.Collection())
+			);
 		}
 	}
 });
