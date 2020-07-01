@@ -1,8 +1,8 @@
-# discord.js-light v3
+# discord.js-light v3 (v3 is not released yet, for the v2 docs, check the v2 branch)
 
 All the power of [discord.js](https://discord.js.org), zero caching.
 
-This library overrides several of discord.js's internal classes giving you full control over the caching process. Say goodbye to exorbitant memory usage!
+This library overrides discord.js's internal classes and functions in order to give you full control over its caching behavior. Say goodbye to exorbitant memory usage!
 
 [![npm](https://img.shields.io/npm/v/discord.js-light?label=current%20version)](https://www.npmjs.com/package/discord.js-light)
 [![GitHub Release Date](https://img.shields.io/github/release-date/timotejroiko/discord.js-light?label=last%20updated)](https://github.com/timotejroiko/discord.js-light/releases)
@@ -17,7 +17,7 @@ This library overrides several of discord.js's internal classes giving you full 
 
 Discord.js has been THE javascript discord library for a long time now, and successfully powers thousands of bots, but as your bot grows larger, you will often notice a substantial increase in resource usage, especially in memory consumption.
 
-This is due to the fact that discord.js caches nearly everything it can in order to avoid hitting the Discord API as much as possible and also to provide all its features. This behavior can however make your bot feel bloated because the library is caching and processing data that your bot will likely never use.
+This is due to the fact that discord.js caches nearly everything it can in order to avoid hitting the Discord API as much as possible and also to better provide many of its features. This behavior can however make your bot feel bloated because the library is caching and processing data that your bot will likely never use.
 
 This library is an attempt at solving the problem by giving developers full control over how and when discord.js should cache the data it receives from the API.
 
@@ -27,7 +27,7 @@ This library is an attempt at solving the problem by giving developers full cont
 
 * Provides all of discord.js's events without any automatic caching
 * Most classes have their structures intact and can be used the same way as the original library
-* Partial classes are given when the required data is not available and can be manually fetched and/or cached when needed
+* Partials are given when the required data is not available and can be manually fetched and/or cached when needed
 * Fully compatible with any combination of Gateway Intents
 * Drastically lower resource usage at scale
 
@@ -66,14 +66,14 @@ client.on("message", message => {
 	}
 });
 
-client.login("DISCORD-TOKEN").catch(console.error);
+client.login("TOKEN").catch(console.error);
 ```
 
 Generally usage should be very similar to discord.js and you can safely refer to its documentation as long as you respect the caching differences explained later on in this readme.
 
 
 
-## Client options
+## Client Options and Caching Behavior
 
 The following client options were added to control caching behavior:
 
@@ -81,22 +81,27 @@ The following client options were added to control caching behavior:
 | ------------- | ------------- | ------------- | ------------- |
 | cacheGuilds | boolean | true | Enables caching of all Guilds |
 | cacheChannels | boolean | false | Enables caching of all Channels |
-| cacheOverwrites | boolean | false | Enables caching of all Channel PermissionOverwrites |
-| cacheRoles | boolean | false | Enables caching of all Roles |
+| cacheOverwrites | boolean | false | Enables caching of all Channel PermissionOverwrites. Required for channel permission checking |
+| cacheRoles | boolean | false | Enables caching of all Roles. Required for permission checking |
 | cacheEmojis | boolean | false | Enables caching of all Emojis |
-| cachePresences | boolean | false | Enables caching of all Presences |
-| partials | - | - | This library implements its own partials system which is always enabled, therefore this option was removed |
+| cachePresences | boolean | false | Enables caching of all Presences. If not enabled, Presences are cached only for cached Users |
 
-If `cacheGuilds` is disabled, the library will completely give up control of guilds and will emit the guildCreate event as per the Discord API, including the initial GUILD_CREATE packets as well as when guilds come back from being unavailable, so that you can implement your own guild tracking system.
+If `cacheGuilds` is disabled, the library will completely give up control of guilds and will emit guildCreate events as per the Discord API, including the initial GUILD_CREATE packets as well as when guilds come back from being unavailable, so that you can implement your own guild tracking.
+
+Users and Members are never cached automatically. The `fetchAllMembers` client option can be used to cache them, otherwise they must be manually fetched when required.
+
+Voice States are cached while users are connected to a voice channel, and uncached when they leave. Requires the `GUILD_VOICE_STATES` intent.
+
+This library implements its own partials system which is always enabled, therefore the `partials` client option is not available.
 
 All other discord.js client options continue to be available and should work normally.
 
 
 ## Events Behavior
 
-Most events should be identical to the originals aside from the caching behavior. Events will always emit, regardless of the required data being cached or not, similar to enabling all partials in discord.js but including additional partials that discord.js doesnt support. When required data is missing, the event will emit a partial structure where only an id is guaranteed (the `.partial` property is not guaranteed to exist in all partials).
+Most events should be identical to the originals aside from the caching behavior. Events always emit, regardless of the required data being cached or not, similar to enabling all partials in discord.js but including additional partials that discord.js doesnt support. When required data is missing, the event will emit a partial structure where only an id is guaranteed (the `.partial` property is not guaranteed to exist in all partials).
 
-Events that emit multiple versions of a structure, such as update events, will emit `null` instead if not cached.
+Events that emit past versions of a structure, such as update events, will emit `null` instead if not cached.
 
 | Event | Emits | Notes |
 | ------------- | ------------- | ------------- |
@@ -104,8 +109,8 @@ Events that emit multiple versions of a structure, such as update events, will e
 | messageUpdate | Message or NULL, Message | - |
 | messageDelete | Message | Partial Message if not cached |
 | messageDeleteBulk | Collection | Collection of deleted Messages or Message Partials. |
-| messageReactionAdd | Reaction, User | User may be partial if DM. Does not include reaction count nor list of users if not cached |
-| messageReactionRemove | Reaction, User | User may be partial if DM. Does not include reaction count nor list of users if not cached |
+| messageReactionAdd | Reaction, User | Partial User if DM and not cached. Does not include reaction count nor list of users if not cached |
+| messageReactionRemove | Reaction, User | Partial User if DM and not cached. Does not include reaction count nor list of users if not cached |
 | messageReactionRemoveAll | Message | Partial Message if not cached |
 | messageReactionRemoveEmoji | Reaction | Does not include reaction count nor reaction users if not cached |
 | channelCreate | Channel | - |
@@ -117,10 +122,9 @@ Events that emit multiple versions of a structure, such as update events, will e
 | roleDelete | Role | Partial Role if not cached |
 | inviteCreate | Invite | - |
 | inviteDelete | Invite | - |
-| emojiCreate | Emoji | Only fires if guild emojis are cached |
-| emojiUpdate | Emoji, Emoji | Only fires if guild emojis are cached |
-| emojiDelete | Emoji | Only fires if guild emojis are cached |
-| guildEmojisUpdate | Collection | Non-standard event that fires when guild emojis are not cached. Provides a Collection of up-to-date Emojis |
+| emojiCreate | Emoji | Only fires if Emojis are cached |
+| emojiUpdate | Emoji, Emoji | Only fires if Emojis are cached |
+| emojiDelete | Emoji | Only fires if Emojis are cached |
 | guildBanAdd | Guild, User | Partial Guild if not cached |
 | guildBanRemove | Guild, User | Partial Guild if not cached |
 | guildCreate | Guild | - |
@@ -136,10 +140,12 @@ Events that emit multiple versions of a structure, such as update events, will e
 | userUpdate | User or NULL, User | Old User is NULL if not cached |
 | voiceStateUpdate | VoiceState or NULL, VoiceState or NULL | NULL if not connected to a voice channel |
 | webhookUpdate | Channel | Partial Channel if not cached |
+| guildEmojisUpdate | Collection | Non-standard event. Collection of up-to-date Emojis. Fired instead of Emoji events when Emojis are not cached |
+| shardConnect | Number, Collection | Non-standard event. Shard ID and Collection of Partial Guilds assigned to this shard |
 
 Non-partial structures only guarantee the contents of its top-level properties. Linked structures such as message**.channel** or reaction**.message** may be partials if not previously cached or fetched. This is especially true for Guild objects, which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
 
-All events require their respective Intents to be enabled in your client options. Events not listed above should work normally as per the discord.js documentation
+Events not listed above should work normally as per the discord.js documentation.
 
 
 
