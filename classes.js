@@ -250,6 +250,12 @@ Discord.Channel.create = (client, data, guild) => {
 	return channel;
 }
 
+Discord.GuildAuditLogs.build = (guild,data) => {
+	delete data.users;
+	const logs = new Discord.GuildAuditLogs(guild,data);
+	return Promise.all(logs.entries.map(e => e.target)).then(() => logs);
+}
+
 Discord.Invite.prototype._patch = function(data) {
 	let d = {};
 	for(let i in data) {
