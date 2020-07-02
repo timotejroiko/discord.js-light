@@ -21,6 +21,12 @@ module.exports = client => {
 			}
 			setImmediate(() => {
 				shard.lastPacket = Date.now();
+				if(packet.d && packet.d.guild_id) {
+					let g = this.client.guilds.cache.get(packet.d.guild_id);
+					if(g && g.shardID === undefined) {
+						g.shardID = shard.id;
+					}
+				}
 				PacketHandlers[packet.t](this.client, packet, shard);
 			});
 		}
