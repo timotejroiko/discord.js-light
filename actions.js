@@ -205,13 +205,7 @@ module.exports = client => {
 		let c = this.client;
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
-		let inviter = data.inviter ? c.users.cache.get(data.inviter.id) || c.users.add(data.inviter, false) : null;
-		let target = data.target_user ? c.users.cache.get(data.target_user.id) || c.users.add(data.target_user, false) : null;
-		data.inviter = null;
-		data.target_user = null;
 		let invite = new Invite(c, Object.assign(data, { channel, guild }));
-		invite.inviter = inviter;
-		invite.targetUser = target;
 		return { invite };
 	}
 	client.actions.InviteDelete.handle = function(data) {

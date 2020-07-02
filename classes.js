@@ -243,6 +243,22 @@ Discord.Channel.create = (client, data, guild) => {
 	return channel;
 }
 
+Discord.Invite.prototype._patch = function(data) {
+	this.guild = data.guild ? this.client.guilds.add(data.guild, this.client.guilds.cache.has(data.guild.id)) : null;
+	this.code = data.code;
+	this.presenceCount = 'approximate_presence_count' in data ? data.approximate_presence_count : null;
+	this.memberCount = 'approximate_member_count' in data ? data.approximate_member_count : null;
+	this.temporary = 'temporary' in data ? data.temporary : null;
+	this.maxAge = 'max_age' in data ? data.max_age : null;
+	this.uses = 'uses' in data ? data.uses : null;
+	this.maxUses = 'max_uses' in data ? data.max_uses : null;
+	this.inviter = data.inviter ? this.client.users.add(data.inviter,this.client.users.cache.has(data.inviter.id)) : null;
+	this.targetUser = data.target_user ? this.client.users.add(data.target_user,this.client.users.cache.has(data.target_user.id)) : null;
+	this.targetUserType = typeof data.target_user_type === 'number' ? data.target_user_type : null;
+	this.channel = this.client.channels.add(data.channel, this.guild, this.client.channels.cache.has(data.channel.id));
+	this.createdTimestamp = 'created_at' in data ? new Date(data.created_at).getTime() : null;
+}
+
 Discord.UserManager.prototype.forge = function(id) {
 	return this.add({id},false);
 }
@@ -270,13 +286,13 @@ Discord.GuildManager.prototype.fetch = async function(id, cache = true) {
 	} else {
 		let c = new Discord.Collection();
 		let l = options.limit > 100 ? 100 : options.limit || 100;
-		let guilds = await this.client.api.users("@me")[`guilds?limit=${l}&after=${options.after || 0}`].get();
+		let guilds = await this.client.api.users("@me")[`guilds?limit=${l}&after=${options.after || 0}&before=${options.before || 0}`].get();
 		while(guilds.length) {
 			for(let guild of guilds) {
 				c.set(guild.id, this.add(guild,options.cache || this.cache.has(guild.id)));
 				if(options.limit && c.size >= options.limit) { return c; }
 			}
-			guilds = guilds.length === 100 && (!options.limit || c.size < options.limit) ? await this.client.api.users("@me")["guilds?limit=100&after="+c.last()].get() : [];
+			guilds = guilds.length === 100 && (!options.limit || c.size < options.limit) ? await this.client.api.users("@me")[`guilds?limit=100&after=${c.last()}&before=${options.before || 0}`].get() : [];
 		}
 		return options.cache && !options.limit ? this.cache : c;
 	}
