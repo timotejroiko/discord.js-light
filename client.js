@@ -1,5 +1,4 @@
 const GC = require("discord.js/src/structures/GuildChannel.js");
-
 require.cache[require.resolve("discord.js/src/structures/GuildChannel.js")].exports = class GuildChannel extends GC {
 	constructor(guild, data) {
 		super({client: guild.client}, data);
@@ -23,18 +22,16 @@ require.cache[require.resolve("discord.js/src/structures/GuildChannel.js")].expo
 
 const RM = require("discord.js/src/managers/ReactionManager.js");
 require.cache[require.resolve("discord.js/src/managers/ReactionManager.js")].exports = class ReactionManager extends RM {
-	fake(id) {
-		return this.add({emoji:{id}},false);
+	forge(id) {
+		let emoji = {};
+		id.length > 16 ? emoji.id = id : emoji.name = id;
+		return this.add({emoji},false);
 	}
 }
 
 const Action = require("discord.js/src/client/actions/Action.js");
 Action.prototype.getPayload = function(data, manager, id, partialType, cache) {
-	const existing = manager.cache.get(id);
-	if(!existing) {
-		return manager.add(data, cache);
-	}
-	return existing;
+	return manager.cache.get(id) || manager.add(data, cache);
 }
 
 const Discord = require("./classes.js");

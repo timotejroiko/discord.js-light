@@ -59,16 +59,20 @@ Discord.Structures.extend("Message", M => {
 Discord.Structures.extend("GuildMember", G => {
 	return class GuildMember extends G {
 		constructor(client, data, guild) {
-			let user = data.user;
-			delete data.user;
-			super(client, data, guild);
-			if(user) { this.user = client.users.add(user, data._cache || client.users.cache.has(user.id)); }
+			let d = {};
+			for(let i in data) {
+				if(i !== "user") { d[i] = data[i]; }
+			}
+			super(client, d, guild);
+			if(data.user) { this.user = client.users.add(data.user, data._cache || client.users.cache.has(data.user.id)); }
 		}
 		_patch(data) {
-			let user = data.user;
-			delete data.user;
-			super._patch(data);
-			if(user) { this.user = this.client.users.add(user, data._cache || this.client.users.cache.has(user.id)); }
+			let d = {};
+			for(let i in data) {
+				if(i !== "user") { d[i] = data[i]; }
+			}
+			super._patch(d);
+			if(data.user) { this.user = this.client.users.add(data.user, data._cache || this.client.users.cache.has(data.user.id)); }
 		}
 		equals(member) {
 			return member && this.deleted === member.deleted && this.nickname === member.nickname && this.roles.cache.size === member.roles.cache.size;
@@ -187,11 +191,13 @@ Discord.Structures.extend("VoiceChannel", V => {
 Discord.Structures.extend("DMChannel", D => {
 	return class DMChannel extends D {
 		_patch(data) {
-			let recipients = data.recipients;
-			delete data.recipients;
-			super._patch(data);
-			if(recipients) {
-				this.recipient = this.client.users.add(recipients[0], this.client.users.cache.has(recipients[0].id));
+			let d = {};
+			for(let i in data) {
+				if(i !== "recipients") { d[i] = data[i]; }
+			}
+			super._patch(d);
+			if(data.recipients) {
+				this.recipient = this.client.users.add(data.recipients[0], this.client.users.cache.has(data.recipients[0].id));
 			}
 		}
 	}
@@ -349,7 +355,7 @@ Discord.ChannelManager.prototype.fetch = async function(id, cache) {
 Discord.ChannelManager.prototype.forge = function(id,type = "dm") {
 	let g = null;
 	let t = Discord.Constants.ChannelTypes[type.toUpperCase()];
-	if(type !== 1) { g = this.client.guilds.add({id:"0"},false); }
+	if(t !== 1) { g = this.client.guilds.add({id:"0"},false); }
 	return this.add({id,type:t},g,false);
 }
 
@@ -579,7 +585,7 @@ Discord.RoleManager.prototype.fetch = async function(id, cache) {
 Discord.ReactionUserManager.prototype.fetch = async function({ limit = 100, after, before, cache = true } = {}) {
 	let message = this.reaction.message;
 	let data = await this.client.api.channels[message.channel.id].messages[message.id].reactions[this.reaction.emoji.identifier].get({ query: { limit, before, after } });
-	let users = new Collection();
+	let users = new Discord.Collection();
 	for(let rawUser of data) {
 		let user = this.client.users.add(rawUser,this.client.users.cache.has(rawUser.id));
 		this.cache.set(user.id, user);
