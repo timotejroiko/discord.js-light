@@ -576,6 +576,18 @@ Discord.RoleManager.prototype.fetch = async function(id, cache) {
 	}
 }
 
+Discord.ReactionUserManager.prototype.fetch = async function({ limit = 100, after, before, cache = true } = {}) {
+	let message = this.reaction.message;
+	let data = await this.client.api.channels[message.channel.id].messages[message.id].reactions[this.reaction.emoji.identifier].get({ query: { limit, before, after } });
+	let users = new Collection();
+	for(let rawUser of data) {
+		let user = this.client.users.add(rawUser,this.client.users.cache.has(rawUser.id));
+		this.cache.set(user.id, user);
+		users.set(user.id, user);
+	}
+	return users;
+}
+
 Discord.RoleManager.prototype.forge = function(id) {
 	return this.add({id},false);
 }
