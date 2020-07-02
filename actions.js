@@ -35,7 +35,7 @@ module.exports = client => {
 	client.actions.ChannelCreate.handle = function(data) {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
-		let channel = c.channels.cache.get(data.id) || c.channels.add(data, guild, false);
+		let channel = c.channels.add(data, guild, c.channels.cache.has(data.id));
 		return { channel };
 	}
 	client.actions.ChannelDelete.handle = function(data) {
@@ -178,7 +178,7 @@ module.exports = client => {
 	client.actions.GuildRoleCreate.handle = function(data) {
 		let c = this.client;
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
-		let role = guild.roles.add(data.role, Boolean(guild.roles.cache.size));
+		let role = guild.roles.add(data.role, guild.roles.cache.size);
 		return { role };
 	}
 	client.actions.GuildRoleDelete.handle = function(data) {
@@ -219,7 +219,7 @@ module.exports = client => {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
-		let message = channel.messages.cache.get(data.id) || channel.messages.add(data, false);
+		let message = channel.messages.add(data, channel.messages.cache.has(data.id));
 		channel.lastMessageID = data.id;
 		if(message.author) {
 			message.author.lastMessageID = data.id;
@@ -331,16 +331,13 @@ module.exports = client => {
 	}
 	client.actions.PresenceUpdate.handle = function(data) {
 		let c = this.client;
+		let user = c.users.cache.get(data.user.id);
+		if(user && data.user.username && !user.equals(data.user)) { c.actions.UserUpdate.handle(data.user); }
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
 		let presence = guild.presences.cache.get(data.user.id);
 		let old = null;
-		if(presence || c.options.cachePresences || c.users.cache.has(data.user.id)) {
-			if(presence) {
-				old = presence._clone();
-				if(c.users.cache.has(data.user.id) && !c.users.cache.get(data.user.id).equals(data.user)) {
-					c.actions.UserUpdate.handle(data.user);
-				}
-			}
+		if(presence || user || c.options.cachePresences) {
+			if(presence) { old = presence._clone(); }
 			presence = guild.presences.add(Object.assign(data,{guild}));
 		}
 		if(c.listenerCount(Constants.Events.PRESENCE_UPDATE)) {

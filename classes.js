@@ -3,20 +3,13 @@ const Discord = require("discord.js");
 
 Discord.Structures.extend("Message", M => {
 	return class Message extends M {
-		constructor(client, data, channel) {
+		_patch(data) {
 			let d = {};
-			let list = ["author","member","mentions","mention_roles"];
 			for(let i in data) {
-				if(!list.includes(i)) { d[i] = data[i]; }
+				if(!["author","member","mentions","mention_roles"].includes(i)) { d[i] = data[i]; }
 			}
-			super(client, d, channel);
-			if(data.author) {
-				if(data.author instanceof Discord.User) {
-					this.author = data.author;
-				} else {
-					this.author = client.users.add(data.author,client.users.cache.has(data.author.id));
-				}
-			}
+			super._patch(d);
+			this.author = data.author ? this.client.users.add(data.author, this.client.users.cache.has(data.author.id)) : null;
 			if(data.member && this.guild && this.author) {
 				if(this.guild.members.cache.has(this.author.id)) {
 					this.member._patch(data.member);
@@ -24,13 +17,21 @@ Discord.Structures.extend("Message", M => {
 					this._member = this.guild.members.add(Object.assign(data.member,{user:this.author}),false);
 				}
 			}
+			this.mentions = new Discord.MessageMentions(this,null,null, data.mention_everyone, data.mention_channels);
+			this.mentions._members = {};
 			if(data.mentions && data.mentions.length) {
 				for(let mention of data.mentions) {
-					this.mentions.users.set(mention.id,client.users.add(mention,client.users.cache.has(mention.id)));
+					this.mentions.users.set(mention.id,this.client.users.add(mention,this.client.users.cache.has(mention.id)));
 					if(mention.member && this.guild) {
-						if(!this.mentions._members) { this.mentions._members = {}; }
-						if(this.guild.members.cache.has(mention.id)) { this.guild.members.cache.get(mention.id)._patch(mention.member); }
-						this.mentions._members[mention.id] = mention.member;
+						if(this.client.users.cache.has(mention.id)) {
+							if(this.guild.members.cache.has(mention.id)) {
+								this.guild.members.cache.get(mention.id)._patch(mention.member);
+							} else {
+								this.guild.members.add(mention.member);
+							}
+						} else {
+							this.mentions._members[mention.id] = mention.member;
+						}
 					}
 				}
 			}
@@ -58,14 +59,16 @@ Discord.Structures.extend("Message", M => {
 Discord.Structures.extend("GuildMember", G => {
 	return class GuildMember extends G {
 		constructor(client, data, guild) {
-			let d = {};
-			for(let i in data) {
-				if(i !== "user") { d[i] = data[i]; }
-			}
-			super(client, d, guild);
-			if(data.user) {
-				this.user = client.users.add(data.user, data._cache);
-			}
+			let user = data.user;
+			delete data.user;
+			super(client, data, guild);
+			if(user) { this.user = client.users.add(user, data._cache || client.users.cache.has(user.id)); }
+		}
+		_patch(data) {
+			let user = data.user;
+			delete data.user;
+			super._patch(data);
+			if(user) { this.user = this.client.users.add(user, data._cache || this.client.users.cache.has(user.id)); }
 		}
 		equals(member) {
 			return member && this.deleted === member.deleted && this.nickname === member.nickname && this.roles.cache.size === member.roles.cache.size;
@@ -75,12 +78,6 @@ Discord.Structures.extend("GuildMember", G => {
 
 Discord.Structures.extend("Guild", G => {
 	return class Guild extends G {
-		get nameAcronym() {
-			return this.name ? this.name.replace(/\w+/g, name => name[0]).replace(/\s/g, '') : undefined;
-		}
-		get joinedAt() {
-			return this.joinedTimestamp ? new Date(this.joinedTimestamp) : undefined;
-		}
 		_patch(data) {
 			this.shardID = data.shardID;
 			if(!this.emojis) { this.emojis = new Discord.GuildEmojiManager(this); }
@@ -135,12 +132,18 @@ Discord.Structures.extend("Guild", G => {
 				});
 			}
 		}
+		get nameAcronym() {
+			return this.name ? this.name.replace(/\w+/g, name => name[0]).replace(/\s/g, '') : undefined;
+		}
+		get joinedAt() {
+			return this.joinedTimestamp ? new Date(this.joinedTimestamp) : undefined;
+		}
 		fetchBan(user) {
 			let id = this.client.users.resolveID(user);
 			if(!id) throw new Error('FETCH_BAN_RESOLVE_ID');
 			return this.client.api.guilds(this.id).bans(id).get().then(ban => ({
 				reason: ban.reason,
-				user: this.client.users.add(ban.user,false)
+				user: this.client.users.add(ban.user, this.client.users.cache.has(ban.user.id))
 			}));
 		}
 		fetchBans() {
@@ -148,7 +151,7 @@ Discord.Structures.extend("Guild", G => {
 				bans.reduce((collection, ban) => {
 					collection.set(ban.user.id, {
 						reason: ban.reason,
-						user: this.client.users.add(ban.user,false),
+						user: this.client.users.add(ban.user, this.client.users.cache.has(ban.user.id)),
 					});
 					return collection;
 				}, new Discord.Collection())
@@ -184,13 +187,11 @@ Discord.Structures.extend("VoiceChannel", V => {
 Discord.Structures.extend("DMChannel", D => {
 	return class DMChannel extends D {
 		_patch(data) {
-			let d = {}
-			for(let i in data) {
-				if(i !== "recipients") { d[i] = data[i]; }
-			}
-			super._patch(d);
-			if(data.recipients) {
-				this.recipient = this.client.users.cache.get(data.recipients[0].id) || this.client.users.add(data.recipients[0],false);
+			let recipients = data.recipients;
+			delete data.recipients;
+			super._patch(data);
+			if(recipients) {
+				this.recipient = this.client.users.add(recipients[0], this.client.users.cache.has(recipients[0].id));
 			}
 		}
 	}
@@ -244,19 +245,15 @@ Discord.Channel.create = (client, data, guild) => {
 }
 
 Discord.Invite.prototype._patch = function(data) {
-	this.guild = data.guild ? this.client.guilds.add(data.guild, this.client.guilds.cache.has(data.guild.id)) : null;
-	this.code = data.code;
-	this.presenceCount = 'approximate_presence_count' in data ? data.approximate_presence_count : null;
-	this.memberCount = 'approximate_member_count' in data ? data.approximate_member_count : null;
-	this.temporary = 'temporary' in data ? data.temporary : null;
-	this.maxAge = 'max_age' in data ? data.max_age : null;
-	this.uses = 'uses' in data ? data.uses : null;
-	this.maxUses = 'max_uses' in data ? data.max_uses : null;
+	let d = {};
+	for(let i in data) {
+		if(!["inviter","target_user","guild","channel"].includes(i)) { d[i] = data[i]; }
+	}
+	Object.getPrototypeOf(this.constructor.prototype)._patch.call(this, data);
 	this.inviter = data.inviter ? this.client.users.add(data.inviter,this.client.users.cache.has(data.inviter.id)) : null;
 	this.targetUser = data.target_user ? this.client.users.add(data.target_user,this.client.users.cache.has(data.target_user.id)) : null;
-	this.targetUserType = typeof data.target_user_type === 'number' ? data.target_user_type : null;
-	this.channel = this.client.channels.add(data.channel, this.guild, this.client.channels.cache.has(data.channel.id));
-	this.createdTimestamp = 'created_at' in data ? new Date(data.created_at).getTime() : null;
+	this.guild = data.guild instanceof Discord.Guild ? data.guild : this.client.guilds.add(data.guild, this.client.guilds.cache.has(data.guild.id));
+	this.channel = data.channel instanceof Discord.Channel ? data.channel : this.client.channels.add(data.channel, this.guild, this.client.channels.cache.has(data.channel.id));
 }
 
 Discord.UserManager.prototype.forge = function(id) {

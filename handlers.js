@@ -47,13 +47,13 @@ PacketHandlers.CHANNEL_PINS_UPDATE = (client, { d: data }, shard) => {
 
 PacketHandlers.GUILD_BAN_ADD = (client, { d: data }, shard) => {
 	let guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.id}, false);
-	let user = client.users.cache.get(data.user.id) || client.users.add(data.user, false);
+	let user = client.users.add(data.user, client.users.cache.has(data.user.id));
 	client.emit(Constants.Events.GUILD_BAN_ADD, guild, user);
 }
 
 PacketHandlers.GUILD_BAN_REMOVE = (client, { d: data }, shard) => {
 	let guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.id}, false);
-	let user = client.users.cache.get(data.user.id) || client.users.add(data.user, false);
+	let user = client.users.add(data.user, client.users.cache.has(data.user.id));
 	client.emit(Constants.Events.GUILD_BAN_REMOVE, guild, user);
 }
 
@@ -110,7 +110,7 @@ PacketHandlers.GUILD_MEMBERS_CHUNK = (client, { d: data }, shard) => {
 
 PacketHandlers.GUILD_MEMBER_ADD = (client, { d: data }, shard) => {
 	let guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.id}, false);
-	let member = guild.members.add(data, false);
+	let member = guild.members.add(data, client.users.cache.has(data.user.id));
 	if(guild.memberCount) { guild.memberCount++; }
 	client.emit(Constants.Events.GUILD_MEMBER_ADD, member);
 }
@@ -129,7 +129,7 @@ PacketHandlers.GUILD_MEMBER_UPDATE = (client, { d: data }, shard) => {
 			client.emit(Constants.Events.GUILD_MEMBER_UPDATE, old, member);
 		}
 	} else {
-		member = guild.members.add(data, false);
+		member = guild.members.add(data, client.users.cache.has(data.user.id));
 		client.emit(Constants.Events.GUILD_MEMBER_UPDATE, null, member);
 	}
 }
