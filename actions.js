@@ -1,5 +1,4 @@
 const PacketHandlers = require("./handlers.js");
-const { Error, TypeError, RangeError } = require("discord.js/src/errors");
 const { Constants, Collection, Channel, DMChannel, Invite } = require('discord.js');
 
 module.exports = client => {
