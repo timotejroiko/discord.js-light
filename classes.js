@@ -92,6 +92,11 @@ Discord.Structures.extend("Guild", G => {
 				}
 			}
 			super._patch(d);
+			if(data.approximate_member_count) {
+				this.approximateMemberCount = data.approximate_member_count;
+				this.approximatePresenceCount = data.approximate_presence_count;
+				if(!this.memberCount) { this.memberCount = data.approximate_member_count; }
+			}
 			if(data.channels && Array.isArray(data.channels)) {
 				if(this.client.options.cacheChannels) { this.channels.cache.clear(); }
 				for(let channel of data.channels) {
@@ -160,6 +165,12 @@ Discord.Structures.extend("Guild", G => {
 					return collection;
 				}, new Discord.Collection())
 			);
+		}
+		fetch() {
+			return this.client.api.guilds(this.id+"?with_counts=true").get().then(data => {
+				this._patch(data);
+				return this;
+			});
 		}
 	}
 });
@@ -289,7 +300,7 @@ Discord.GuildManager.prototype.fetch = async function(id, cache = true) {
 		if(existing && existing.name) {
 			return existing;
 		} else {
-			let guild = await this.client.api.guilds(options.id).get();
+			let guild = await this.client.api.guilds(options.id+"?with_counts=true").get();
 			return this.add(guild, options.cache || this.cache.has(options.id));
 		}
 	} else {
@@ -538,23 +549,22 @@ Discord.GuildEmojiManager.prototype.fetch = async function(id, cache) {
 	if(id) {
 		let existing = this.cache.get(id);
 		if(existing) { return existing; }
-	}
-	let emojis = await this.client.api.guilds(this.guild.id).emojis().get();
-	if(id) {
-		let e = emojis.find(t => t.id === id);
-		if(!e) { throw new Discord.DiscordAPIError(this.client.api.guilds(this.guild.id).emojis() + ":id", {message:"Unknown Emoji"}, "GET", 404) }
-		return this.add(e, cache);
-	} else if(cache) {
-		for(let emoji of emojis) {
-			this.add(emoji);
-		}
-		return this.cache;
+		let emoji = await this.client.api.guilds(this.guild.id).emojis(id).get();
+		return this.add(emoji, cache);
 	} else {
-		let collection = new Discord.Collection();
-		for(let emoji of emojis) {
-			collection.set(emoji.id, this.add(emoji, false));
+		let emojis = await this.client.api.guilds(this.guild.id).emojis().get();
+		if(cache) {
+			for(let emoji of emojis) {
+				this.add(emoji);
+			}
+			return this.cache;
+		} else {
+			let collection = new Discord.Collection();
+			for(let emoji of emojis) {
+				collection.set(emoji.id, this.add(emoji, false));
+			}
+			return collection;
 		}
-		return collection;
 	}
 }
 
