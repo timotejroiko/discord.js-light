@@ -241,14 +241,14 @@ Fetches channels from the `/guilds/:id/channels` endpoint. This endpoint bypasse
 
 **`returns`** - `Promise (GuildMember | Collection of GuildMembers)`
 
-Fetches guild members from the gateway or from the `/guilds/:id/members` endpoint. This method is a little different from the original and includes a few additional options. Fetching multiple members using the `rest` option is extremely slow and not recommended (roughly 8 seconds per 1000 members), but is fast for fetching a single member by id.
+Fetches guild members from the gateway or from the `/guilds/:id/members` endpoint. This method is a little different from the original and includes a few additional options. The `rest` option can fetch multiple/all members without the `GUILD_MEMBERS` intent, however it is very slow (roughly 8 seconds per 1000 members).
 
 * **`id or options.id (string)`** - id of the member to fetch. if not provided, fetched all guild members instead.
 * **`cache or options.cache (boolean)`** - whether to cache results. defaults to true.
-* **`options.rest (boolean)`** - whether to use the rest endpoint instead of the gateway. defaults to false.
+* **`options.rest (boolean)`** - whether to use the rest endpoint instead of the gateway. defaults to true when fetching a single id, otherwise defaults to false.
 * **`options.ids (array)`** - array of member ids to fetch (gateway only, requires the `GUILD_MEMBERS` intent).
-* **`options.query (string)`** - query to search for members by username (gateway only). set to `""` to match all usernames (setting to `""` requires `GUILD_MEMBERS` intent). defaults to `""`;
-* **`options.limit (number)`** - max amount of results (0 for no limit. setting to 0 requires the `GUILD_MEMBERS` intent). defaults to 0.
+* **`options.query (string)`** - query to search for members by username (gateway only). set to `""` to match all usernames (setting to `""` requires the `GUILD_MEMBERS` intent). defaults to `""`;
+* **`options.limit (number)`** - max amount of results (0 for no limit. setting to 0 without `rest` requires the `GUILD_MEMBERS` intent). defaults to 0.
 * **`options.after (string)`** - a user id to search only users with a bigger id (rest only).
 * **`options.withPresences (boolean)`** - whether to include presence data (gateway only, requires the `GUILD_PRESENCES` intent). this option also requires the `cachePresences` client option to be enabled, or that the `cache` option is true or that the relevant users are cached.
 * **`options.time (number)`** - max amount of time to wait for a response in milliseconds (gateway only). defaults to 60 seconds.
