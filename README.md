@@ -295,42 +295,42 @@ Forge methods avoid unnecessary round trips and give you direct access to the re
 
 The following forge methods are available:
 
-## client.users.forge(id)
+### client.users.forge(id)
 
 Creates a User instance from a user ID.
 
-## client.guilds.forge(id)
+### client.guilds.forge(id)
 
 Creates a Guild instance from a guild ID.
 
-## client.channels.forge(id,type)
+### client.channels.forge(id,type)
 
 Creates a Channel instance from a channel ID and channel type. Defaults to DMChannel.
 
-## guild.channels.forge(id,type)
+### guild.channels.forge(id,type)
 
 Creates a Channel instance from a channel ID and channel type. Defaults to TextChannel.
 
-## guild.members.forge(id)
+### guild.members.forge(id)
 
 Creates a GuildMember instance from a user ID and the current guild.
 
-## guild.emojis.forge(id)
+### guild.emojis.forge(id)
 
 Creates an Emoji instance from an emoji ID.
 
-## guild.roles.forge(id)
+### guild.roles.forge(id)
 
 Creates a Role instance from a role ID.
 
-## guild.presences.forge(id)
+### guild.presences.forge(id)
 
 Creates a Presnece instance from a user ID.
 
-## channel.messages.forge(id)
+### channel.messages.forge(id)
 
 Creates a Message instance from a message ID.
 
-## message.reactions.forge(emoji or id)
+### message.reactions.forge(emoji or id)
 
 Creates a Reaction instance from an emoji id or emoji unicode and the current message.
