@@ -150,7 +150,7 @@ Events not listed above should work normally as per the discord.js documentation
 
 
 
-## Fetchers
+## Fetch Methods
 
 Fetch methods are used to obtain data from the Discord API when needed and optionally cached for reuse. Once data is cached, it will remain in the cache until manually removed. Cached data will be automatically updated as new Discord events are received.
 
@@ -163,15 +163,13 @@ Some fetchers are already included in by default discord.js, others were added o
 `.fetch(id,options)`  
 `.fetch(options)`  
 
+**`returns`** - `Promise (Channel)`
+
 Fetches a channel from the `/channels/:id` endpoint. This method is identical to the original except that it includes an additional `withOverwrites` option.
 
-**`id or options.id (string)`** - id of the channel to fetch.
-
-**`cache or options.cache (boolean)`** - whether to cache the result. defaults to true.
-
-**`options.withOverwrites (boolean)`** - whether to include permissionOverwrites. always true if the `cacheOverwrites` client option is enabled or if guild roles are cached, otherwise defaults to false.
-
-**`returns`** - `Promise (Channel)`
+* **`id or options.id (string)`** - id of the channel to fetch.
+* **`cache or options.cache (boolean)`** - whether to cache the result. defaults to true.
+* **`options.withOverwrites (boolean)`** - whether to include permissionOverwrites. always true if the `cacheOverwrites` client option is enabled or if guild roles are cached, otherwise defaults to false.
 
 ### client.guilds.fetch()
 
@@ -182,19 +180,15 @@ Fetches a channel from the `/channels/:id` endpoint. This method is identical to
 `.fetch(id,options)`  
 `.fetch(options)`  
 
+**`returns`** - `Promise (Guild | Collection of Guilds)`
+
 Fetches a single guild from the `/guilds/:id` endpoint, or multiple guilds from the `/users/@me/guilds` endpoint. When fetching multiple guilds, only basic information about each guild is returned. Additionally fetching multiple guilds is extremely slow, taking roughly 20 seconds per 1000 guilds. If you need to fetch thousands of guilds, its much faster to create a new connection to the gateway. Fetching multiple guilds also bypasses the guild cache, whereas fetching a specific guild id will always check the cache first.
 
-**`id or options.id (string)`** - id of the guild to fetch. if not provided, fetches all guilds instead.
-
-**`cache or options.cache (boolean)`** - whether to cache the results. defaults to true.
-
-**`options.limit (number)`** - max amount of results (0 for no limit). defaults to 0.
-
-**`options.before (string)`** - a guild id to search only guilds with a smaller id (0 for any). defaults to 0.
-
-**`options.after (string)`** - a guild id to search only guilds with a bigger id (0 for any). defaults to 0.
-
-**`returns`** - `Promise (Guild | Collection of Guilds)`
+* **`id or options.id (string)`** - id of the guild to fetch. if not provided, fetches all guilds instead.
+* **`cache or options.cache (boolean)`** - whether to cache the results. defaults to true.
+* **`options.limit (number)`** - max amount of results (0 for no limit). defaults to 0.
+* **`options.before (string)`** - a guild id to search only guilds with a smaller id (0 for any). defaults to 0.
+* **`options.after (string)`** - a guild id to search only guilds with a bigger id (0 for any). defaults to 0.
 
 ### guild.channels.fetch()
 
@@ -205,15 +199,13 @@ Fetches a single guild from the `/guilds/:id` endpoint, or multiple guilds from 
 `.fetch(id,options)`  
 `.fetch(options)`  
 
+**`returns`** - `Promise (Channel | Collection of Channels)`
+
 Fetches channels from the `/guilds/:id/channels` endpoint. This endpoint bypasses the `VIEW_CHANNEL` permission. Fetching all channels also bypasses the channel cache, whereas fetching a specific channel id always checks the cache first.
 
-**`id or options.id (string)`** - id of the channel to fetch. if not provided, fetches all guild channels instead.
-
-**`cache or options.cache (boolean)`** - whether to cache the results. defaults to true.
-
-**`options.withOverwrites (boolean)`** - whether to include permissionOverwrites. always true if `cacheOverwrites` is enabled or if guild roles are cached, otherwise defaults to false.
-
-**`returns`** - `Promise (Channel | Collection of Channels)`
+* **`id or options.id (string)`** - id of the channel to fetch. if not provided, fetches all guild channels instead.
+* **`cache or options.cache (boolean)`** - whether to cache the results. defaults to true.
+* **`options.withOverwrites (boolean)`** - whether to include permissionOverwrites. always true if `cacheOverwrites` is enabled or if guild roles are cached, otherwise defaults to false.
 
 ### guild.members.fetch()
 
@@ -224,27 +216,19 @@ Fetches channels from the `/guilds/:id/channels` endpoint. This endpoint bypasse
 `.fetch(id,options)`  
 `.fetch(options)`  
 
+**`returns`** - `Promise (GuildMember | Collection of GuildMembers)`
+
 Fetches guild members from the gateway or from the `/guilds/:id/members` endpoint. This method is a little different from the original and includes a few additional options. Fetching multiple members using the `rest` option is extremely slow and not recommended (roughly 8 seconds per 1000 members), but is fast for fetching a single member by id.
 
-**`id or options.id (string)`** - id of the member to fetch. if not provided, fetched all guild members instead.
-
-**`cache or options.cache (boolean)`** - whether to cache results. defaults to true.
-
-**`options.rest (boolean)`** - whether to use the rest endpoint instead of the gateway. defaults to false.
-
-**`options.ids (array)`** - array of member ids to fetch (gateway only, requires the `GUILD_MEMBERS` intent).
-
-**`options.query (string)`** - query to search for members by username (gateway only). set to `""` to match all usernames (setting to `""` requires `GUILD_MEMBERS` intent). defaults to `""`;
-
-**`options.limit (number)`** - max amount of results (0 for no limit. setting to 0 requires the `GUILD_MEMBERS` intent). defaults to 0.
-
-**`options.after (string)`** - a user id to search only users with a bigger id (rest only).
-
-**`options.withPresences (boolean)`** - whether to include presence data (gateway only, requires the `GUILD_PRESENCES` intent). this option also requires the `cachePresences` client option to be enabled, or that the `cache` option is true or that the relevant users are cached.
-
-**`options.time (number)`** - max amount of time to wait for a response in milliseconds (gateway only). defaults to 60 seconds.
-
-**`returns`** - `Promise (GuildMember | Collection of GuildMembers)`
+* **`id or options.id (string)`** - id of the member to fetch. if not provided, fetched all guild members instead.
+* **`cache or options.cache (boolean)`** - whether to cache results. defaults to true.
+* **`options.rest (boolean)`** - whether to use the rest endpoint instead of the gateway. defaults to false.
+* **`options.ids (array)`** - array of member ids to fetch (gateway only, requires the `GUILD_MEMBERS` intent).
+* **`options.query (string)`** - query to search for members by username (gateway only). set to `""` to match all usernames (setting to `""` requires `GUILD_MEMBERS` intent). defaults to `""`;
+* **`options.limit (number)`** - max amount of results (0 for no limit. setting to 0 requires the `GUILD_MEMBERS` intent). defaults to 0.
+* **`options.after (string)`** - a user id to search only users with a bigger id (rest only).
+* **`options.withPresences (boolean)`** - whether to include presence data (gateway only, requires the `GUILD_PRESENCES` intent). this option also requires the `cachePresences` client option to be enabled, or that the `cache` option is true or that the relevant users are cached.
+* **`options.time (number)`** - max amount of time to wait for a response in milliseconds (gateway only). defaults to 60 seconds.
 
 ### guild.emojis.fetch()
 
@@ -253,13 +237,12 @@ Fetches guild members from the gateway or from the `/guilds/:id/members` endpoin
 `.fetch(id)`  
 `.fetch(id,cache)`  
 
+**`returns`** - `Promise (Emoji | Collection of Emojis)`
+
 Fetches guild emojis from the `/guilds/:id/emojis` endpoint.
 
-**`id (string)`** - the id of the emoji to fetch. if not provided, fetches all guild emojis instead.
-
-**`cache (boolean)`** - whether to cache the results. defaults to true.
-
-**`returns`** - `Promise (Emoji | Collection of Emojis)`
+* **`id (string)`** - the id of the emoji to fetch. if not provided, fetches all guild emojis instead.
+* **`cache (boolean)`** - whether to cache the results. defaults to true.
 
 ### guild.roles.fetch()
 
@@ -268,33 +251,27 @@ Fetches guild emojis from the `/guilds/:id/emojis` endpoint.
 `.fetch(id)`  
 `.fetch(id,cache)`  
 
+**`returns`** - `Promise (Role | Collection of Roles)`
+
 Fetches guild roles from the `/guilds/:id/roles` endpoint.
 
-**`id (string)`** - the id of the role to fetch. if not provided, fetches all guild roles instead.
-
-**`cache (boolean)`** - whether to cache the results. defaults to true
-
-**`returns`** - `Promise (Role | Collection of Roles)`
+* **`id (string)`** - the id of the role to fetch. if not provided, fetches all guild roles instead.
+* **`cache (boolean)`** - whether to cache the results. defaults to true
 
 ### reaction.users.fetch()
 
 `.fetch(options)`
 
-Fetches users from the */channels/:id/messages/:id/reactions/:emoji*. This endpoint is identical to the original except that it includes a `cache` option.
-
-{ limit = 100, after, before, cache = true }
-
-**`options.limit (number)`** - max amount of results (0 for no limit). defaults to 0.
-
-**`options.before (string)`** - a user id to search only users with a smaller id (0 for any). defaults to 0.
-
-**`options.after (string)`** - a user id to search only users with a bigger id (0 for any). defaults to 0.
-
-**`options.cache (boolean)`** - whether to cache the results. defaults to true.
-
 **`returns`** - `Promise (Collection of Users)`
 
-## Forgers
+Fetches users from the */channels/:id/messages/:id/reactions/:emoji*. This endpoint is identical to the original except that it includes a `cache` option.
+
+* **`options.limit (number)`** - max amount of results (0 for no limit). defaults to 0.
+* **`options.before (string)`** - a user id to search only users with a smaller id (0 for any). defaults to 0.
+* **`options.after (string)`** - a user id to search only users with a bigger id (0 for any). defaults to 0.
+* **`options.cache (boolean)`** - whether to cache the results. defaults to true.
+
+## Forge Methods
 
 Forge methods are used to interact with the Discord API without requiring a cache. They provide a way to create Partial instances on demand, and these instances give you full access to discord.js's API methods. This is especially useful when sharding, for example sending a message to a specific channel ID:
 
@@ -316,5 +293,15 @@ await client.channels.forge(id).send("message");
 
 Forge methods avoid unnecessary round trips and give you direct access to the rest api, however they dont provide any form of data validation, its up to you to provide valid IDs.
 
-The following forgers are available:
+The following forge methods are available:
 
+* **client.users.forge(id)**
+* **client.guilds.forge(id)**
+* **client.channels.forge(id,type)**
+* **guild.channels.forge(id,type)**
+* **guild.members.forge(id)**
+* **guild.emojis.forge(id)**
+* **guild.roles.forge(id)**
+* **guild.presences.forge(id)**
+* **channel.messages.forge(id)**
+* **message.reactions.forge(emoji or id)**

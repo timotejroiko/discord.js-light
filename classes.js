@@ -647,12 +647,12 @@ Discord.RoleManager.prototype.forge = function(id) {
 	return this.add({id},false);
 }
 
-Discord.MessageManager.prototype.forge = function(id) {
-	return this.add({id},false);
-}
-
 Discord.PresenceManager.prototype.forge = function(id) {
 	return this.add({user:{id}},false);
+}
+
+Discord.MessageManager.prototype.forge = function(id) {
+	return this.add({id},false);
 }
 
 Discord.VoiceState.prototype._patch = function(data) {
