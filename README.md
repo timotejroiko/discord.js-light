@@ -33,6 +33,27 @@ This library solves the problem by giving developers full control over how and w
 
 
 
+## Differences from v2
+
+Version 3 of this library is a complete rewrite and taps further into discord.js's internal code instead of relying on the `raw` event, which provides finer control and less bugs or strange behavior. It is also a redesign of its core concepts and goals, therefore there are many important differences: 
+
+| v2 | v3 |
+| ------------- | ------------- |
+| designed to cache only whats actually being used | designed to cache as little as possible |
+| works by disabling handlers and relying on the `raw` event | works by directly replacing or extending internal event handlers |
+| automatically sets intents and sharding default options | does not set any default options |
+| includes client options for automated functionality and behavior | included client options are exclusively for caching |
+| automatically caches users and channels when they are used | does not automatically cache users or channels when used |
+| automatically sweeps unused users and channels | does not automatically sweep users or channels |
+| requires fetching missing data to intract with the api | introduces `forge` methods to interact with the api without caching |
+| includes several convenience methods | does not include any convenience methods |
+| custom message and messageUpdate mixed event | normal message and messageUpdate events |
+| automatically logs important events | does not automatically log anything |
+
+Version 3 aims to be a cleaner discord.js experience.
+
+
+
 ## Usage
 
 ### Installation:
@@ -86,13 +107,13 @@ The following client options are available to control caching behavior:
 | cacheEmojis | boolean | false | Enables caching of all Emojis at login |
 | cachePresences | boolean | false | Enables caching of Presences. If not enabled, Presences will be cached only for cached Users |
 
-If `cacheGuilds` is disabled, the library will give you full control of guilds and will instead emit guildCreate events as per the Discord API, including the initial GUILD_CREATE packets as well as when guilds come back from being unavailable, so that you can implement your own guild tracking.
+If `cacheGuilds` is disabled, the library will give up control of guilds and emit `guildCreate` events as per the Discord API, including the initial `GUILD_CREATE` packets as well as when guilds come back from being unavailable, so that you can implement your own guild tracking.
 
-Users and Members are never cached automatically. The `fetchAllMembers` client option can be used to cache them, otherwise they must be manually fetched when required.
+Users and Members are never cached automatically. The `fetchAllMembers` client option can be used to cache them, otherwise they must be manually fetched if required. Events that include User and/or Member data normaly dont require fetching the relevant User/Member as the event itself contains enough information to build them.
 
-Voice States and Voice Channels will be cached while users are connected if the `GUILD_VOICE_STATES` intent is enabled (required for voice features to work).
+Voice States and Voice Channels will be cached automatically when needed if the `GUILD_VOICE_STATES` intent is enabled (required for voice features to work).
 
-Caching of Roles and PermissionOverwrites is required for permission checking functions to work.
+Caching of Roles and PermissionOverwrites is required for permission checking functions to work correctly. If permission checking is desired, the ideal setup is to enable `cacheRoles` and `cacheOverwrites` and then manually fetch channels before checking.
 
 This library implements its own partials system, therefore the `partials` client option is not available. All other discord.js client options continue to be available and should work normally.
 
@@ -107,44 +128,46 @@ Events that emit past versions of a structure, such as update events, will emit 
 | Event | Emits | Notes |
 | ------------- | ------------- | ------------- |
 | message | Message | Includes some User and Member data |
-| messageUpdate | Message or NULL, Message | Old Message is null if not cached. New Message includes some User and Member data |
+| messageUpdate | Message?  Message | Old Message is null if not cached. New Message includes some User and Member data |
 | messageDelete | Message | Partial Message if not cached |
 | messageDeleteBulk | Collection | Collection of deleted Messages or Partial Messages as above |
-| messageReactionAdd | Reaction, User | Includes some User and Member data (partial if DMs) |
-| messageReactionRemove | Reaction, User | Partial User if not cached |
+| messageReactionAdd | Reaction  User | Includes some User and Member data (partial if DMs) |
+| messageReactionRemove | Reaction  User | Partial User if not cached |
 | messageReactionRemoveAll | Message | Partial Message if not cached |
 | messageReactionRemoveEmoji | Reaction | - |
 | channelCreate | Channel | - |
-| channelUpdate | Channel or NULL, Channel | Old Channel is NULL if not cached |
+| channelUpdate | Channel?  Channel | Old Channel is NULL if not cached |
 | channelDelete | Channel | - |
-| channelPinsUpdate | Channel, Date | Partial Channel if not cached |
+| channelPinsUpdate | Channel  Date | Partial Channel if not cached |
 | roleCreate | Role | - |
-| roleUpdate | Role or NULL, Role | Old Role is NULL if not cached |
+| roleUpdate | Role?  Role | Old Role is NULL if not cached |
 | roleDelete | Role | Partial Role if not cached |
 | inviteCreate | Invite | Includes some User data |
 | inviteDelete | Invite | - |
 | emojiCreate | Emoji | Only emits if Emojis are cached |
-| emojiUpdate | Emoji, Emoji | Only emits if Emojis are cached |
+| emojiUpdate | Emoji  Emoji | Only emits if Emojis are cached |
 | emojiDelete | Emoji | Only emits if Emojis are cached |
 | guildEmojisUpdate | Collection | Non-standard event. Emitted instead of Emoji events when Emojis are not cached. Provides a Collection of updated Emojis |
-| guildBanAdd | Guild, User | Partial Guild if not cached |
-| guildBanRemove | Guild, User | Partial Guild if not cached |
+| guildBanAdd | Guild  User | Partial Guild if not cached |
+| guildBanRemove | Guild  User | Partial Guild if not cached |
 | guildCreate | Guild | Does not include disabled data |
-| guildUpdate | Guild or NULL, Guild | Old Guild is NULL if not cached |
+| guildUpdate | Guild?  Guild | Old Guild is NULL if not cached |
 | guildDelete | Guild | Partial Guild if not cached |
 | guildUnavailable | Guild | Partial Guild if not cached |
 | guildMemberAdd | Member | Includes some User data |
-| guildMemberUpdate | Member or NULL, Member | Old Member is NULL if not cached. new Member includes some User data |
+| guildMemberUpdate | Member?  Member | Old Member is NULL if not cached. new Member includes some User data |
 | guildMemberRemove | Member | Partial Member if not cached |
 | guildIntegrationsUpdate | Guild | Partial Guild if not cached |
-| presenceUpdate | Presence or NULL, Presence | Old Presence is NULL if not cached. New Presence includes some Member data |
-| typingStart | Channel, User | Partial Channel. Includes some User and Member data (partial if DMs) |
-| userUpdate | User or NULL, User | Old User is NULL if not cached |
-| voiceStateUpdate | VoiceState or NULL, VoiceState or NULL | NULL when data does not include a Channel ID (indicates disconnection). Includes some User and Member data |
+| presenceUpdate | Presence?  Presence | Old Presence is NULL if not cached. New Presence includes some Member data |
+| typingStart | Channel  User | Partial Channel. Includes some User and Member data (partial if DMs) |
+| userUpdate | User?  User | Old User is NULL if not cached |
+| voiceStateUpdate | VoiceState?  VoiceState? | NULL when data does not include a Channel ID (indicates disconnection). Includes some User and Member data |
 | webhookUpdate | Channel | Partial Channel if not cached |
-| shardConnect | Number, Collection | Non-standard event. Emitted when a shard connects to Discord. Provides a Shard ID and a Collection of Partial Guilds assigned to this shard |
+| shardConnect | Number  Collection | Non-standard event. Emitted when a shard connects to Discord. Provides a Shard ID and a Collection of Partial Guilds assigned to this shard |
 
-Non-partial structures only guarantee the contents of its top-level properties. Linked structures such as message**.channel** or reaction**.message** may be partials if not previously cached or fetched. This is especially true for Guild objects, which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
+Events that include some User and/or Member data will contain User and/or Member information even if not cached, for example `message.author` will always contain a full User object, including most of its properties, even if said user is not cached.
+
+Non-partial structures only guarantee the contents of its top-level properties. Linked structures such as `message`**`.channel`** or `reaction`**`.message`** may still be partials if not previously cached or fetched. This is especially true for Guild objects, which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
 
 Events not listed above should work normally as per the discord.js documentation.
 

@@ -470,6 +470,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		case "object": options = id; break;
 	}
 	if(options.cache === undefined) { options.cache = true; }
+	if(typeof options.id === "string" && typeof options.rest === undefined) { options.rest = true; }
 	if(options.rest) {
 		if(typeof options.id === "string") {
 			let existing = this.cache.get(options.id);
