@@ -167,7 +167,7 @@ Discord.Structures.extend("Guild", G => {
 			);
 		}
 		fetch() {
-			return this.client.api.guilds(this.id+"?with_counts=true").get().then(data => {
+			return this.client.api.guilds(this.id).get({query:{with_counts:true}}).then(data => {
 				this._patch(data);
 				return this;
 			});
@@ -210,6 +210,39 @@ Discord.Structures.extend("DMChannel", D => {
 			if(data.recipients) {
 				this.recipient = this.client.users.add(data.recipients[0], this.client.users.cache.has(data.recipients[0].id));
 			}
+		}
+	}
+});
+
+Discord.Structures.extend("Presence", P => {
+	return class Presence extends P {
+		patch(data) {
+			super.patch(data);
+			if(!this.guild.members.cache.has(data.user.id)) {
+				this._member = {
+					user: data.user,
+					roles: data.roles,
+					nick: data.nick,
+					premium_since: data.premium_since
+				}
+			}
+		}
+		get user() {
+			return this.client.users.cache.get(this.userID) || this.client.users.add((this.member || {}).user || {id:this.userID}, false);
+		}
+		get member() {
+			return this.guild ? (this.guild.members.cache.get(this.id) || this.guild.members.add(this._member, false)) : null;
+		}
+	}
+});
+
+Discord.Structures.extend("ClientPresence", P => {
+	return class ClientPresence extends P {
+		get user() {
+			return this.client.user;
+		}
+		get member() {
+			return null;
 		}
 	}
 });
@@ -283,7 +316,7 @@ Discord.UserManager.prototype.forge = function(id) {
 	return this.add({id},false);
 }
 
-Discord.GuildManager.prototype.fetch = async function(id, cache = true) {
+Discord.GuildManager.prototype.fetch = async function(id, cache) {
 	let options = {};
 	switch(typeof cache) {
 		case "boolean": options.cache = cache; break;
@@ -300,19 +333,19 @@ Discord.GuildManager.prototype.fetch = async function(id, cache = true) {
 		if(existing && existing.name) {
 			return existing;
 		} else {
-			let guild = await this.client.api.guilds(options.id+"?with_counts=true").get();
+			let guild = await this.client.api.guilds(options.id).get({query:{with_counts:true}});
 			return this.add(guild, options.cache || this.cache.has(options.id));
 		}
 	} else {
 		let c = new Discord.Collection();
 		let l = options.limit > 100 ? 100 : options.limit || 100;
-		let guilds = await this.client.api.users("@me")[`guilds?limit=${l}&after=${options.after || 0}&before=${options.before || 0}`].get();
+		let guilds = await this.client.api.users("@me").guilds().get({query:{limit:l,after:options.after || 0,before:options.before || 0}});
 		while(guilds.length) {
 			for(let guild of guilds) {
 				c.set(guild.id, this.add(guild,options.cache || this.cache.has(guild.id)));
 				if(options.limit && c.size >= options.limit) { return c; }
 			}
-			guilds = guilds.length === 100 && (!options.limit || c.size < options.limit) ? await this.client.api.users("@me")[`guilds?limit=100&after=${c.last()}&before=${options.before || 0}`].get() : [];
+			guilds = guilds.length === 100 && (!options.limit || c.size < options.limit) ? await this.client.api.users("@me").guilds().get({query:{limit:100,after:c.last(),before:options.before || 0}}) : [];
 		}
 		return options.cache && !options.limit ? this.cache : c;
 	}
@@ -446,13 +479,13 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		} else {
 			let c = new Discord.Collection();
 			let l = options.limit > 1000 ? 1000 : options.limit || 1000;
-			let members = await this.client.api.guilds(this.guild.id)[`members?limit=${l}&after=${options.after || 0}`].get();
+			let members = await this.client.api.guilds(this.guild.id).members().get({query:{limit:l,after:options.after || 0}});
 			while(members.length) {
 				for(let member of members) {
 					c.set(member.user.id, this.add(member, options.cache));
 					if(options.limit && c.size >= options.limit) { return c; }
 				}
-				members = members.length === 1000 && (!options.limit || c.size < options.limit) ? await this.client.api.guilds(this.guild.id)["members?limit=1000&after="+c.last()].get() : [];
+				members = members.length === 1000 && (!options.limit || c.size < options.limit) ? await this.client.api.guilds(this.guild.id).members().get({query:{limit:1000,after:c.last()}}) : [];
 			}
 			if(!options.limit && !this.guild.memberCount) { this.guild.memberCount = c.size; }
 			return options.cache && fetched.size >= this.guild.memberCount ? this.cache : c;
@@ -603,7 +636,7 @@ Discord.ReactionUserManager.prototype.fetch = async function({ limit = 100, afte
 	let data = await this.client.api.channels[message.channel.id].messages[message.id].reactions[this.reaction.emoji.identifier].get({ query: { limit, before, after } });
 	let users = new Discord.Collection();
 	for(let rawUser of data) {
-		let user = this.client.users.add(rawUser,this.client.users.cache.has(rawUser.id));
+		let user = this.client.users.add(rawUser, cache || this.client.users.cache.has(rawUser.id));
 		this.cache.set(user.id, user);
 		users.set(user.id, user);
 	}
@@ -621,6 +654,25 @@ Discord.MessageManager.prototype.forge = function(id) {
 Discord.PresenceManager.prototype.forge = function(id) {
 	return this.add({user:{id}},false);
 }
+
+Discord.VoiceState.prototype._patch = function(data) {
+	Object.getPrototypeOf(this.constructor.prototype)._patch.call(this, data);
+	if(data.member && data.member.user && !this.guild.members.cache.has(data.member.user.id)) {
+		this._member = data.member;
+	}
+}
+
+Object.defineProperty(Discord.VoiceState.prototype, "channel", {
+	get: function() {
+		return this.client.channels.cache.get(this.channelID) || this.client.channels.add({id:this.channelID,type:2}, this.guild, false);
+	}
+});
+
+Object.defineProperty(Discord.VoiceState.prototype, "member", {
+	get: function() {
+		return this.guild.members.cache.get(this.id) || this.guild.members.add(this._member,false);
+	}
+});
 
 Object.defineProperty(Discord.RoleManager.prototype, "everyone", {
 	get: function() {

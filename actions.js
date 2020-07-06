@@ -300,7 +300,7 @@ module.exports = client => {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
-		let user = c.users.cache.get(data.user_id) || c.users.add((data.member || {}).user || {id:data.user_id}, false);
+		let user = c.users.cache.get(data.user_id) || c.users.add({id:data.user_id}, false);
 		let message = channel.messages.cache.get(data.message_id) || channel.messages.add({id:data.message_id}, false);
 		let reaction = message.reactions.cache.get(data.emoji.id || data.emoji.name) || message.reactions.add({emoji:data.emoji,count:null,me:null}, channel.messages.cache.has(data.message_id));
 		reaction.me = data.user_id === c.user.id;
@@ -330,12 +330,16 @@ module.exports = client => {
 	}
 	client.actions.PresenceUpdate.handle = function(data) {
 		let c = this.client;
-		let user = c.users.cache.get(data.user.id);
-		if(user && data.user.username && !user.equals(data.user)) { c.actions.UserUpdate.handle(data.user); }
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
+		let member = guild.members.cache.get(data.user.id);
+		if(member) {
+			member._update(data);
+		} else if(c.users.cache.has(data.user.id)) {
+			guild.members.add({user: data.user,	roles: data.roles, nick: data.nick, premium_since: data.premium_since, deaf: false, mute: false});
+		}
 		let presence = guild.presences.cache.get(data.user.id);
 		let old = null;
-		if(presence || user || c.options.cachePresences) {
+		if(presence || c.users.cache.has(data.user.id) || c.options.cachePresences) {
 			if(presence) { old = presence._clone(); }
 			presence = guild.presences.add(Object.assign(data,{guild}));
 		}
@@ -358,6 +362,20 @@ module.exports = client => {
 	client.actions.VoiceStateUpdate.handle = function(data) {
 		let c = this.client;
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
+		let user = c.users.cache.get(data.user_id);
+		if(user && data.member) {
+			if(data.member.user && data.member.user.username && !user.equals(data.member.user)) {
+				c.actions.UserUpdate.handle(data.member.user);
+			}
+			let member = guild.members.cache.get(data.user_id);
+			if(member) {
+				member._update(data.member);
+			} else {
+				guild.members.add(data.member);
+			}
+		} else if(!user) {
+			user = client.users.add((data.member || {}).user || {id:data.user_id}, false);
+		}
 		let oldState = guild.voiceStates.cache.has(data.user_id) ? guild.voiceStates.cache.get(data.user_id)._clone() : null;
 		let newState = data.channel_id ? guild.voiceStates.add(data) : null;
 		if(oldState && !newState) { guild.voiceStates.cache.delete(data.user_id); }
