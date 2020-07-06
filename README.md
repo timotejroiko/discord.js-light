@@ -154,7 +154,7 @@ Events not listed above should work normally as per the discord.js documentation
 
 Fetch methods are used to obtain data from the Discord API when needed and optionally cached for reuse. Once data is cached, it will remain in the cache until manually removed. Cached data will be automatically updated as new Discord events are received.
 
-Some fetchers are already included in by default discord.js, others were added or tweaked as below:
+Some fetch methods are already included in by default discord.js, others were added or tweaked as below:
 
 ### client.channels.fetch()
 
@@ -264,7 +264,7 @@ Fetches guild roles from the `/guilds/:id/roles` endpoint.
 
 **`returns`** - `Promise (Collection of Users)`
 
-Fetches users from the */channels/:id/messages/:id/reactions/:emoji*. This endpoint is identical to the original except that it includes a `cache` option.
+Fetches users from the `/channels/:id/messages/:id/reactions/:emoji`. This endpoint is identical to the original except that it includes a `cache` option.
 
 * **`options.limit (number)`** - max amount of results (0 for no limit). defaults to 0.
 * **`options.before (string)`** - a user id to search only users with a smaller id (0 for any). defaults to 0.
@@ -273,21 +273,21 @@ Fetches users from the */channels/:id/messages/:id/reactions/:emoji*. This endpo
 
 ## Forge Methods
 
-Forge methods are used to interact with the Discord API without requiring a cache. They provide a way to create Partial instances on demand, and these instances give you full access to discord.js's API methods. This is especially useful when sharding, for example sending a message to a specific channel ID:
+Forge methods are used to interact with the Discord API without requiring a cache. They provide a way to create Partial instances on demand, which is especially useful when sharding. Example for sending a message to a specific channel ID:
 
 ```js
-// fetching it if uncached or if in not in the current shard
+// fetch method, requires an API round trip if channel is not available
 let channel = await client.channels.fetch(id, false);
 await channel.send("message");
 
-// using broadcastEval if cached in another shard
+// using broadcastEval if channel is available in another shard
 await client.broadcastEval(`
 	let channel = client.channels.cache.get("${id}");
 	if(channel) { channel.send("message"); }
 `);
 
 
-// forge method, works from any shard and regardless of cache state
+// forge method, works from any shard and regardless of availability
 await client.channels.forge(id).send("message");
 ```
 
@@ -295,13 +295,42 @@ Forge methods avoid unnecessary round trips and give you direct access to the re
 
 The following forge methods are available:
 
-* **client.users.forge(id)**
-* **client.guilds.forge(id)**
-* **client.channels.forge(id,type)**
-* **guild.channels.forge(id,type)**
-* **guild.members.forge(id)**
-* **guild.emojis.forge(id)**
-* **guild.roles.forge(id)**
-* **guild.presences.forge(id)**
-* **channel.messages.forge(id)**
-* **message.reactions.forge(emoji or id)**
+## client.users.forge(id)
+
+Creates a User instance from a user ID.
+
+## client.guilds.forge(id)
+
+Creates a Guild instance from a guild ID.
+
+## client.channels.forge(id,type)
+
+Creates a Channel instance from a channel ID and channel type. Defaults to DMChannel.
+
+## guild.channels.forge(id,type)
+
+Creates a Channel instance from a channel ID and channel type. Defaults to TextChannel.
+
+## guild.members.forge(id)
+
+Creates a GuildMember instance from a user ID and the current guild.
+
+## guild.emojis.forge(id)
+
+Creates an Emoji instance from an emoji ID.
+
+## guild.roles.forge(id)
+
+Creates a Role instance from a role ID.
+
+## guild.presences.forge(id)
+
+Creates a Presnece instance from a user ID.
+
+## channel.messages.forge(id)
+
+Creates a Message instance from a message ID.
+
+## message.reactions.forge(emoji or id)
+
+Creates a Reaction instance from an emoji id or emoji unicode and the current message.
