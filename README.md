@@ -223,25 +223,25 @@ Fetches channels from the `/guilds/:id/channels` endpoint. This endpoint bypasse
 
 **`returns`** - `Promise (Channel | Collection of Channels | guild.channels.cache)`
 
-### guild.members.fetch(options)
+### guild.members.fetch(id or oprions, cache or options)
 
 Replaces the original guild.members.fetch() method. Fetches guild members from the gateway or from the `/guilds/:id/members` endpoint based on the options below.
 
 **`options (object)`** - object of options
 
-**`options.rest (boolean)`** - whether to use the rest endpoint instead of the gateway. defaults to false
+**`options.rest (boolean)`** - whether to use the rest endpoint instead of the gateway. defaults to true for fetching a single id, false otherwise
 
-**`options.id (string)`** - id of the member to fetch (rest & gateway)
+**`id or options.id (string)`** - id of the member to fetch (rest & gateway)
 
 **`options.ids (array)`** - array of member ids to fetch (gateway only, requires GUILD_MEMBERS intent)
 
 **`options.query (string)`** - query to search for members by username (gateway only). set to empty string for all members (requires GUILD_MEMBERS intent)
 
-**`options.limit (number)`** - max amount of results (rest & gateway). set to 0 for unlimited (gateway only, requires GUILD_MEMBERS intent). max 1000 for rest. defaults to 50
+**`options.limit (number)`** - max amount of results (rest & gateway). set to 0 for unlimited (requires GUILD_MEMBERS intent). defaults to 0
 
 **`options.after (string)`** - last member id from the previous request (rest only). used for pagination in the rest endpoint
 
-**`options.cache (boolean)`** - whether to cache results (rest & gateway). returns the member cache if results match guild.memberCount, otherwise returns a member or a collection of members. defaults to true
+**`cache or options.cache (boolean)`** - whether to cache results (rest & gateway). returns the member cache if results match guild.memberCount, otherwise returns a member or a collection of members. defaults to true
 
 **`options.withPresences (boolean)`** - whether to include presences (gateway only, requires GUILD_PRESENCES intent, requires `trackPresences` to be enabled or relevant members to be cached)
 
@@ -249,17 +249,21 @@ Replaces the original guild.members.fetch() method. Fetches guild members from t
 
 **`returns`** - `Promise (GuildMember | Collection of GuildMembers | guild.members.cache)`
 
-### guild.emojis.fetch(cache)
+### guild.emojis.fetch(id cache)
 
 Fetches all guild emojis from the `/guilds/:id/emojis` endpoint.
+
+**`id (string)`** - id of the emoji to fetch
 
 **`cache (boolean)`** - whether to cache the results. returns the emoji cache if set to true, otherwise returns a collection of emojis. defaults to true
 
 **`returns`** - `Promise (Collection of Emojis | guild.emojis.cache)`
 
-### guild.roles.fetch(cache)
+### guild.roles.fetch(id cache)
 
 Fetches all guild roles from the `/guilds/:id/roles` endpoint.
+
+**`id (string)`** - id of the role to fetch
 
 **`cache (boolean)`** - whether to cache the results. returns the role cache if set to true, otherwise returns a collection of roles. defaults to true
 
