@@ -356,4 +356,4 @@ Creates a Message instance from a message ID.
 
 ### message.reactions.forge(emoji or id)
 
-Creates a Reaction instance from an emoji id or emoji unicode and the current message.
+Creates a MessageReaction instance from an emoji id or emoji unicode and the current message.
