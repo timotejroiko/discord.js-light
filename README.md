@@ -1,4 +1,6 @@
-# discord.js-light v3 (v3 is not released yet, for the v2 docs, check the v2 branch)
+# discord.js-light
+
+**This is the readme for the unreleased version 3. For the current stable release check the v2 branch.**
 
 All the power of [discord.js](https://discord.js.org), zero caching.
 
@@ -58,7 +60,7 @@ Version 3 aims to be a cleaner discord.js experience.
 
 ### Installation:
 
-```npm install discord.js-light```
+```npm install timotekroiko/discord.js-light#v3```
 
 Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and discord.js will pick them up automatically.
 
