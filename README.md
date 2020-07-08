@@ -123,42 +123,42 @@ Events that emit past versions of a structure, such as update events, will emit 
 | Event | Emits | Notes |
 | ------------- | ------------- | ------------- |
 | message | Message | Includes some User and Member data |
-| messageUpdate | Message?  Message | Old Message is null if not cached. New Message includes some User and Member data |
+| messageUpdate | Message?,  Message | Old Message is null if not cached. New Message includes some User and Member data |
 | messageDelete | Message | Partial Message if not cached |
 | messageDeleteBulk | Collection | Collection of deleted Messages or Partial Messages as above |
-| messageReactionAdd | Reaction  User | Includes some User and Member data (partial if DMs) |
-| messageReactionRemove | Reaction  User | Partial User if not cached |
+| messageReactionAdd | Reaction,  User | Includes some User and Member data (partial if DMs) |
+| messageReactionRemove | Reaction,  User | Partial User if not cached |
 | messageReactionRemoveAll | Message | Partial Message if not cached |
 | messageReactionRemoveEmoji | Reaction | - |
 | channelCreate | Channel | - |
-| channelUpdate | Channel?  Channel | Old Channel is NULL if not cached |
+| channelUpdate | Channel?,  Channel | Old Channel is NULL if not cached |
 | channelDelete | Channel | - |
-| channelPinsUpdate | Channel  Date | Partial Channel if not cached |
+| channelPinsUpdate | Channel,  Date | Partial Channel if not cached |
 | roleCreate | Role | - |
-| roleUpdate | Role?  Role | Old Role is NULL if not cached |
+| roleUpdate | Role?,  Role | Old Role is NULL if not cached |
 | roleDelete | Role | Partial Role if not cached |
 | inviteCreate | Invite | Includes some User data |
 | inviteDelete | Invite | - |
 | emojiCreate | Emoji | Only emits if Emojis are cached |
-| emojiUpdate | Emoji  Emoji | Only emits if Emojis are cached |
+| emojiUpdate | Emoji,  Emoji | Only emits if Emojis are cached |
 | emojiDelete | Emoji | Only emits if Emojis are cached |
 | guildEmojisUpdate | Collection | Non-standard event. Emitted instead of Emoji events when Emojis are not cached. Provides a Collection of updated Emojis |
-| guildBanAdd | Guild  User | Partial Guild if not cached |
-| guildBanRemove | Guild  User | Partial Guild if not cached |
+| guildBanAdd | Guild,  User | Partial Guild if not cached |
+| guildBanRemove | Guild,  User | Partial Guild if not cached |
 | guildCreate | Guild | Does not include disabled data |
-| guildUpdate | Guild?  Guild | Old Guild is NULL if not cached |
+| guildUpdate | Guild?,  Guild | Old Guild is NULL if not cached |
 | guildDelete | Guild | Partial Guild if not cached |
 | guildUnavailable | Guild | Partial Guild if not cached |
 | guildMemberAdd | Member | Includes some User data |
-| guildMemberUpdate | Member?  Member | Old Member is NULL if not cached. new Member includes some User data |
+| guildMemberUpdate | Member?,  Member | Old Member is NULL if not cached. new Member includes some User data |
 | guildMemberRemove | Member | Partial Member if not cached |
 | guildIntegrationsUpdate | Guild | Partial Guild if not cached |
-| presenceUpdate | Presence?  Presence | Old Presence is NULL if not cached. New Presence includes some Member data |
-| typingStart | Channel  User | Partial Channel. Includes some User and Member data (partial if DMs) |
-| userUpdate | User?  User | Old User is NULL if not cached |
-| voiceStateUpdate | VoiceState?  VoiceState? | NULL when data does not include a Channel ID (indicates disconnection). Includes some User and Member data |
+| presenceUpdate | Presence?,  Presence | Old Presence is NULL if not cached. New Presence includes some Member data |
+| typingStart | Channel,  User | Partial Channel. Includes some User and Member data (partial if DMs) |
+| userUpdate | User?,  User | Old User is NULL if not cached |
+| voiceStateUpdate | VoiceState?,  VoiceState? | NULL when data does not include a Channel ID (indicates disconnection). Includes some User and Member data |
 | webhookUpdate | Channel | Partial Channel if not cached |
-| shardConnect | Number  Collection | Non-standard event. Emitted when a shard connects to Discord. Provides a Shard ID and a Collection of Partial Guilds assigned to this shard |
+| shardConnect | Number,  Collection | Non-standard event. Emitted when a shard connects to Discord. Provides a Shard ID and a Collection of Partial Guilds assigned to this shard |
 
 Events that include some User and/or Member data will contain User and/or Member information even if not cached, for example `message.author` will always contain a full User object, including most of its properties, even if said user is not cached.
 
