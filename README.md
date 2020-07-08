@@ -352,3 +352,21 @@ Creates a Message instance from a message ID.
 ### message.reactions.forge(emoji or id)
 
 Creates a MessageReaction instance from an emoji id or emoji unicode and the current message.
+
+## Notes
+
+This project is has come a long way and has gone through a lot of testing, but it is still somewhat experimental. There might be silly bugs or broken features in untested scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you may find.
+
+You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
+
+## Bots using discord.js-light
+
+[Astrobot](https://top.gg/bot/astrobot)
+
+[Message Viewer](https://top.gg/bot/642052166982303754)
+
+[Helper](https://top.gg/bot/409538753997307915)
+
+[Art Prompts](https://eledris.com/art-prompts/discord-bot/)
+
+(using discord.js-light? let me know if you're interested in having your bot being listed here)
