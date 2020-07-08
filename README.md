@@ -367,4 +367,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Helper](https://top.gg/bot/409538753997307915)
 
+[Art Prompts](https://eledris.com/art-prompts/discord-bot/)
+
 (using discord.js-light? let me know if you're interested in having your bot being listed here)
