@@ -218,7 +218,7 @@ module.exports = client => {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
-		let message = channel.messages.add(data, channel.messages.cache.has(data.id));
+		let message = channel.messages.add(data, c.channels.cache.has(channel.id));
 		channel.lastMessageID = data.id;
 		if(message.author) {
 			message.author.lastMessageID = data.id;

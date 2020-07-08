@@ -450,7 +450,7 @@ Discord.GuildChannelManager.prototype.fetch = async function(id, cache) {
 }
 
 Discord.GuildChannelManager.prototype.forge = function(id,type) {
-	return this.client.channels.add({id,type:Discord.Constants.ChannelTypes[type.toUpperCase()]},{id:this.guild.id,shardID:this.guild.shardID},false);
+	return this.client.channels.add({id,type:Discord.Constants.ChannelTypes[type.toUpperCase()]},this.guild,false);
 }
 
 Discord.GuildMemberManager.prototype.add = function(data, cache = true) {

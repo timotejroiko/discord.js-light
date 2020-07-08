@@ -19,7 +19,7 @@ This library overrides discord.js's internal classes and functions in order to g
 
 Discord.js has been THE javascript discord library for a long time now, and successfully powers thousands of bots, but as your bot grows larger, you will often notice a substantial increase in resource usage, especially in memory consumption.
 
-This is due to the fact that discord.js caches nearly everything it can in order to avoid hitting the Discord API as much as possible as well as to better provide many of its features. This can however make your bot feel bloated because the library is caching and processing data that your bot will likely never use.
+This is because discord.js caches as much as it can in order to avoid hitting the Discord API as well as to better provide many of its features. This can however make your bots feel bloated because the library is caching and processing data that your bot will likely never use.
 
 This library solves the problem by giving developers full control over how and when discord.js should cache the data it receives from the API.
 
@@ -31,28 +31,21 @@ This library solves the problem by giving developers full control over how and w
 * Most structures remain intact so your existing discord.js code should work without many changes
 * Custom partials system ensures events always emit regardless of caching state
 * Partials are given when data is missing and most things can be manually fetched and/or cached when needed
-* Drastically lower resource usage at scale
+* Drastically lower resource usage at scale (see below)
 
 
 
-## Differences from v2
+## The Impact of Caching
 
-Version 3 of this library is a complete rewrite and taps further into discord.js's internal code instead of relying on the `raw` event, which provides finer control and less bugs or strange behavior. It is also a redesign of its core concepts and goals, therefore there are many important differences: 
+Caching is the process of keeping a copy of something in memory. In the case of most discord libraries, most of the data received is kept in memory for any eventual needs, such as going through channels or users, finding something by name, by timestamp or by anything other than an ID, keeping a backup for update and delete events to be able to show older versions of data, and so on. Caching is very useful and makes a lot of features possible, but at a cost...
 
-| v2 | v3 |
-| ------------- | ------------- |
-| designed to cache only whats actually being used | designed to cache as little as possible |
-| works by disabling handlers and relying on the `raw` event | works by directly replacing or extending internal event handlers |
-| automatically sets intents and sharding default options | does not set any default options |
-| includes client options for automated functionality and behavior | included client options are exclusively for caching |
-| automatically caches users and channels when they are used | does not automatically cache users or channels when used |
-| automatically sweeps unused users and channels | does not automatically sweep users or channels |
-| requires fetching missing data to intract with the api | introduces `forge` methods to interact with the api without caching |
-| includes several convenience methods | does not include any convenience methods |
-| custom message and messageUpdate mixed event | normal message and messageUpdate events |
-| automatically logs important events | does not automatically log anything |
+The following test is a \~3 hour run (each tick is 10 minutes), with \~3700 guilds total (4 internal shards), with all intents enabled (including presences), and with message caching disabled (messageCacheMaxSize:0). This test measures `process.memoryUsage().heapUsed` in MB. Your actual memory usage will further depend on your code, your node.js and your environment.
 
-Version 3 aims to be a cleaner discord.js experience.
+![The Impact of Caching](bench.jpg)
+
+As you can see, excessive caching can be very costly in terms of memory requirments, especially at scale, and unfortunately neither discord.js nor eris, the two most popular javascript libraries, provide a way to control or disable their caching systems. This library attempts to fill this much needed gap.
+
+Some other projects such as `klasa-core` and `detritus` are also starting to offer the possibility of controlling or disabling their caching systems so be sure to check them out as well.
 
 
 
