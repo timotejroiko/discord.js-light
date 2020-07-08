@@ -41,7 +41,7 @@ Caching is the process of keeping a copy of something in memory. In the case of 
 
 The following test is a \~3 hour run (each tick is 10 minutes), with \~3700 guilds total (4 internal shards), with all intents enabled (including presences), and with message caching disabled (messageCacheMaxSize:0). This test measures `process.memoryUsage().heapUsed` in MB. Your actual memory usage will further depend on your code, your node.js and your environment.
 
-![The Impact of Caching](bench.jpg)
+![The Impact of Caching](bench.png)
 
 As you can see, excessive caching can be very costly in terms of memory requirments, especially at scale, and unfortunately neither discord.js nor eris, the two most popular javascript libraries, provide a way to control or disable their caching systems. This library attempts to fill this much needed gap.
 
