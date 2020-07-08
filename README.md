@@ -33,9 +33,9 @@ The following test is a \~3 hour run (each tick is 10 minutes), with \~3700 guil
 
 ![The Impact of Caching](bench.png)
 
-As you can see, excessive caching can be very costly in terms of memory requirments, especially at scale, and unfortunately neither discord.js nor eris, the two most popular javascript libraries, provide a way to control or disable parts of their caching systems. This library attempts to fill this gap.
+As you can see, excessive caching can be very costly in terms of memory requirments, especially at scale, and unfortunately neither discord.js nor eris, the two most popular javascript libraries, provide a way to control or disable parts of their caching systems. The ability to selectively disable caches that your bot doesnt need can greatly reduce resource usage, so much that it becomes invaluable at scale.
 
-Some other projects such as `klasa-core` and `detritus` are also starting to offer the possibility of controlling or disabling their caching systems so be sure to check them out as well.
+More and more projects are being developed with such flexibility in mind, such as `klasa-core` and `detritus`, and this library brings this much needed caching flexibility to discord.js with as little side effects as possible.
 
 
 
