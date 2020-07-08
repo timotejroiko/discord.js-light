@@ -162,7 +162,7 @@ Events that emit past versions of a structure, such as update events, will emit 
 
 Events that include some User and/or Member data will contain User and/or Member information even if not cached, for example `message.author` will always contain a full User object, including most of its properties, even if said user is not cached.
 
-Non-partial structures only guarantee the contents of its top-level properties. Linked structures such as `message`**`.channel`** or `reaction`**`.message`** may still be partials if not previously cached or fetched. This is especially true for Guild objects, which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
+Non-partial structures only guarantee the contents of its top-level properties. Linked structures such as message`.channel` or reaction`.message` may still be partials if not previously cached or fetched. This is especially true for Guild objects, which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
 
 Events not listed above should work normally as per the discord.js documentation.
 
