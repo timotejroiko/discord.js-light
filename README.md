@@ -4,7 +4,7 @@
 
 All the power of [discord.js](https://discord.js.org), zero caching.
 
-This library overrides discord.js's internal classes and functions in order to give you full control over its caching behavior. Say goodbye to exorbitant memory usage!
+This library modifies discord.js's internal classes and functions in order to give you full control over its caching behavior. Say goodbye to exorbitant memory usage!
 
 [![npm](https://img.shields.io/npm/v/discord.js-light?label=current%20version)](https://www.npmjs.com/package/discord.js-light)
 [![GitHub Release Date](https://img.shields.io/github/release-date/timotejroiko/discord.js-light?label=last%20updated)](https://github.com/timotejroiko/discord.js-light/releases)
@@ -17,11 +17,25 @@ This library overrides discord.js's internal classes and functions in order to g
 
 ## Why?
 
-Discord.js has been THE javascript discord library for a long time now, and successfully powers thousands of bots, but as your bot grows larger, you will often notice a substantial increase in resource usage, especially in memory consumption.
+Discord.js has been THE javascript discord library for a long time now, and successfully powers thousands of bots, but as your bot grows larger, you will notice a substantial increase in resource usage, especially in memory consumption.
 
 This is because discord.js caches as much as it can in order to avoid hitting the Discord API as well as to better provide many of its features. This can however make your bots feel bloated because the library is caching and processing data that your bot will likely never use.
 
 This library solves the problem by giving developers full control over how and when discord.js should cache the data it receives from the API.
+
+
+
+## The Impact of Caching
+
+Caching is the process of keeping a copy of something in memory. Most Discord libraries will keep data received from Discord in memory for any eventual needs. Caching Discord data gives you access to features such as looping through channels, finding something by name or by anything other than an ID, keeping a backup of old data accessible to update and delete events, perform permission checking and so on. Caching is very useful and makes a lot of features possible, but at a cost...
+
+The following test is a \~3 hour run (each tick is 10 minutes), with \~3700 guilds total (4 internal shards), with all intents enabled (including presences), and with message caching disabled (messageCacheMaxSize:0). This test measures caching overhead by periodically checking `process.memoryUsage().heapUsed` in MB. Your actual memory usage still depends on your code and the node.js overhead so it will likely be higher.
+
+![The Impact of Caching](bench.png)
+
+As you can see, excessive caching can be very costly in terms of memory requirments, especially at scale, and unfortunately neither discord.js nor eris, the two most popular javascript libraries, provide a way to control or disable parts of their caching systems. This library attempts to fill this gap.
+
+Some other projects such as `klasa-core` and `detritus` are also starting to offer the possibility of controlling or disabling their caching systems so be sure to check them out as well.
 
 
 
@@ -31,21 +45,7 @@ This library solves the problem by giving developers full control over how and w
 * Most structures remain intact so your existing discord.js code should work without many changes
 * Custom partials system ensures events always emit regardless of caching state
 * Partials are given when data is missing and most things can be manually fetched and/or cached when needed
-* Drastically lower resource usage at scale (see below)
-
-
-
-## The Impact of Caching
-
-Caching is the process of keeping a copy of something in memory. In the case of most discord libraries, most of the data received is kept in memory for any eventual needs, such as going through channels or users, finding something by name, by timestamp or by anything other than an ID, keeping a backup for update and delete events to be able to show older versions of data, and so on. Caching is very useful and makes a lot of features possible, but at a cost...
-
-The following test is a \~3 hour run (each tick is 10 minutes), with \~3700 guilds total (4 internal shards), with all intents enabled (including presences), and with message caching disabled (messageCacheMaxSize:0). This test measures `process.memoryUsage().heapUsed` in MB. Your actual memory usage will further depend on your code, your node.js and your environment.
-
-![The Impact of Caching](bench.png)
-
-As you can see, excessive caching can be very costly in terms of memory requirments, especially at scale, and unfortunately neither discord.js nor eris, the two most popular javascript libraries, provide a way to control or disable their caching systems. This library attempts to fill this much needed gap.
-
-Some other projects such as `klasa-core` and `detritus` are also starting to offer the possibility of controlling or disabling their caching systems so be sure to check them out as well.
+* Drastically lower resource usage at scale
 
 
 
@@ -55,7 +55,7 @@ Some other projects such as `klasa-core` and `detritus` are also starting to off
 
 ```npm install timotekroiko/discord.js-light#v3```
 
-Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and discord.js will pick them up automatically.
+Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and they will be picked up automatically.
 
 ```
 npm install zlib-sync
@@ -64,7 +64,7 @@ npm install discordapp/erlpack
 npm install utf-8-validate
 ```
 
-Additionally, using an alternative memory allocator such as [jemalloc](http://jemalloc.net/) can further reduce memory usage by a substantial amount in exchange for slightly higher cpu usage.
+Additionally, using an alternative memory allocator such as [jemalloc](http://jemalloc.net/) can further reduce memory usage by avoiding fragmentation in exchange for slightly higher cpu usage.
 
 ### Usage example:
 
@@ -85,7 +85,7 @@ client.on("message", message => {
 client.login("TOKEN").catch(console.error);
 ```
 
-General usage should be identical to discord.js and you can safely refer to its documentation as long as you respect the caching differences explained below.
+Generally, usage should be identical to discord.js and you can safely refer to its documentation as long as you respect the caching differences explained below.
 
 
 
@@ -100,13 +100,13 @@ The following client options are available to control caching behavior:
 | cacheOverwrites | boolean | false | Enables PermissionOverwrites in cached and fetched channels |
 | cacheRoles | boolean | false | Enables caching of all Roles at login |
 | cacheEmojis | boolean | false | Enables caching of all Emojis at login |
-| cachePresences | boolean | false | Enables caching of Presences. If not enabled, Presences will be cached only for cached Users |
+| cachePresences | boolean | false | Enables caching of all Presences. If not enabled, Presences will be cached only for cached Users |
 
 If `cacheGuilds` is disabled, the library will give up control of guilds and emit `guildCreate` events as per the Discord API, including the initial `GUILD_CREATE` packets as well as when guilds come back from being unavailable, so that you can implement your own guild tracking.
 
-Users and Members are never cached automatically. The `fetchAllMembers` client option can be used to cache them, otherwise they must be manually fetched if required. Events that include User and/or Member data normaly dont require fetching the relevant User/Member as the event itself contains enough information to build them.
+Users and Members are never cached automatically. The `fetchAllMembers` client option can be used to cache them, otherwise they must be manually fetched if required. Events that include User and/or Member data may not require fetching as the event itself contains enough information to provide them.
 
-Voice States and Voice Channels will be cached automatically when needed if the `GUILD_VOICE_STATES` intent is enabled (required for voice features to work).
+Voice States will be cached if the `GUILD_VOICE_STATES` intent is enabled (required for voice features to work).
 
 Caching of Roles and PermissionOverwrites is required for permission checking functions to work correctly. If permission checking is desired, the ideal setup is to enable `cacheRoles` and `cacheOverwrites` and then manually fetch channels before checking.
 
@@ -116,7 +116,7 @@ This library implements its own partials system, therefore the `partials` client
 
 ## Events Behavior
 
-Most events should be identical to the originals aside from the caching behavior and they always emit regardless of the required data being cached or not. When required data is missing, a partial structure where only an id is guaranteed will be given (even the `.partial` property is not guaranteed to exist).
+Most events should be identical to the originals aside from the caching behavior and they always emit regardless of the required data being cached or not. When required data is missing, a partial structure where only an id is guaranteed will be given (the `.partial` property is not guaranteed to exist).
 
 Events that emit past versions of a structure, such as update events, will emit `null` if not cached instead of not being emitted at all.
 
@@ -160,7 +160,7 @@ Events that emit past versions of a structure, such as update events, will emit 
 | webhookUpdate | Channel | Partial Channel if not cached |
 | shardConnect | Number,  Collection | Non-standard event. Emitted when a shard connects to Discord. Provides a Shard ID and a Collection of Partial Guilds assigned to this shard |
 
-Events that include some User and/or Member data will contain User and/or Member information even if not cached, for example `message.author` will always contain a full User object, including most of its properties, even if said user is not cached.
+Events that include some User and/or Member data will contain User and/or Member objects even if not cached, for example `message.author` will always contain a full User object, including most of its properties, even if said user is not cached.
 
 Non-partial structures only guarantee the contents of its top-level properties. Linked structures such as message`.channel` or reaction`.message` may still be partials if not previously cached or fetched. This is especially true for Guild objects, which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
 
