@@ -585,6 +585,25 @@ Discord.RoleManager.prototype.fetch = async function(id, cache) {
 	}
 }
 
+Discord.VoiceState.prototype._patch = function(data) {
+	Object.getPrototypeOf(this.constructor.prototype)._patch.call(this, data);
+	if(data.member && data.member.user && !this.guild.members.cache.has(data.member.user.id)) {
+		this._member = data.member;
+	}
+}
+
+Object.defineProperty(Discord.VoiceState.prototype, "channel", {
+	get: function() {
+		return this.client.channels.cache.get(this.channelID) || this.client.channels.add({id:this.channelID,type:2}, this.guild, false);
+	}
+});
+
+Object.defineProperty(Discord.VoiceState.prototype, "member", {
+	get: function() {
+		return this.guild.members.cache.get(this.id) || this.guild.members.add(this._member,false);
+	}
+});
+
 Object.defineProperty(Discord.RoleManager.prototype, "everyone", {
 	get: function() {
 		return this.cache.get(this.guild.id) || this.guild.roles.add({id:this.guild.id},false);
