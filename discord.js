@@ -586,10 +586,17 @@ Discord.RoleManager.prototype.fetch = async function(id, cache) {
 }
 
 Discord.VoiceState.prototype._patch = function(data) {
-	Object.getPrototypeOf(this.constructor.prototype)._patch.call(this, data);
+	this.serverDeaf = data.deaf;
+	this.serverMute = data.mute;
+	this.selfDeaf = data.self_deaf;
+	this.selfMute = data.self_mute;
+	this.sessionID = data.session_id;
+	this.streaming = data.self_stream || false;
+	this.channelID = data.channel_id;
 	if(data.member && data.member.user && !this.guild.members.cache.has(data.member.user.id)) {
 		this._member = data.member;
 	}
+	return this;
 }
 
 Object.defineProperty(Discord.VoiceState.prototype, "channel", {
