@@ -665,7 +665,7 @@ Discord.VoiceState.prototype._patch = function(data) {
 
 Object.defineProperty(Discord.VoiceState.prototype, "channel", {
 	get: function() {
-		return this.client.channels.cache.get(this.channelID) || this.client.channels.add({id:this.channelID,type:2}, this.guild, false);
+		return this.channelID ? this.client.channels.cache.get(this.channelID) || this.client.channels.add({id:this.channelID,type:2}, this.guild, false) : null;
 	}
 });
 
