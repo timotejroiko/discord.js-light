@@ -301,11 +301,15 @@ Discord.GuildAuditLogs.build = (guild,data) => {
 }
 
 Discord.Invite.prototype._patch = function(data) {
-	let d = {};
-	for(let i in data) {
-		if(!["inviter","target_user","guild","channel"].includes(i)) { d[i] = data[i]; }
-	}
-	Object.getPrototypeOf(this.constructor.prototype)._patch.call(this, data);
+	this.code = data.code;
+	this.presenceCount = 'approximate_presence_count' in data ? data.approximate_presence_count : null;
+	this.memberCount = 'approximate_member_count' in data ? data.approximate_member_count : null;
+	this.temporary = 'temporary' in data ? data.temporary : null;
+	this.maxAge = 'max_age' in data ? data.max_age : null;
+	this.uses = 'uses' in data ? data.uses : null;
+	this.maxUses = 'max_uses' in data ? data.max_uses : null;
+	this.targetUserType = typeof data.target_user_type === 'number' ? data.target_user_type : null;
+	this.createdTimestamp = 'created_at' in data ? new Date(data.created_at).getTime() : null;
 	this.inviter = data.inviter ? this.client.users.add(data.inviter,this.client.users.cache.has(data.inviter.id)) : null;
 	this.targetUser = data.target_user ? this.client.users.add(data.target_user,this.client.users.cache.has(data.target_user.id)) : null;
 	this.guild = data.guild instanceof Discord.Guild ? data.guild : this.client.guilds.add(data.guild, this.client.guilds.cache.has(data.guild.id));
@@ -657,10 +661,17 @@ Discord.MessageManager.prototype.forge = function(id) {
 }
 
 Discord.VoiceState.prototype._patch = function(data) {
-	Object.getPrototypeOf(this.constructor.prototype)._patch.call(this, data);
+	this.serverDeaf = data.deaf;
+	this.serverMute = data.mute;
+	this.selfDeaf = data.self_deaf;
+	this.selfMute = data.self_mute;
+	this.sessionID = data.session_id;
+	this.streaming = data.self_stream || false;
+	this.channelID = data.channel_id;
 	if(data.member && data.member.user && !this.guild.members.cache.has(data.member.user.id)) {
 		this._member = data.member;
 	}
+	return this;
 }
 
 Object.defineProperty(Discord.VoiceState.prototype, "channel", {
