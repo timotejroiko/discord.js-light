@@ -83,7 +83,7 @@ Discord.Structures.extend("GuildMember", G => {
 Discord.Structures.extend("Guild", G => {
 	return class Guild extends G {
 		_patch(data) {
-			this.shardID = data.shardID;
+			if(this.shardID === undefined && data.shardID !== undefined) { this.shardID = data.shardID; }
 			if(!this.emojis) { this.emojis = new Discord.GuildEmojiManager(this); }
 			let d = {};
 			for(let key in data) {
@@ -346,7 +346,7 @@ Discord.GuildManager.prototype.fetch = async function(id, cache) {
 		let guilds = await this.client.api.users("@me").guilds().get({query:{limit:l,after:options.after || 0,before:options.before || 0}});
 		while(guilds.length) {
 			for(let guild of guilds) {
-				c.set(guild.id, this.add(guild,options.cache || this.cache.has(guild.id)));
+				c.set(guild.id, this.cache.get(guild.id) || this.add(guild,options.cache));
 				if(options.limit && c.size >= options.limit) { return c; }
 			}
 			guilds = guilds.length === 100 && (!options.limit || c.size < options.limit) ? await this.client.api.users("@me").guilds().get({query:{limit:100,after:c.last(),before:options.before || 0}}) : [];
@@ -469,19 +469,20 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		case "object": options = cache; break;
 	}
 	switch(typeof id) {
-		case "string": options.id = id; break;
+		case "string": options.user = id; break;
 		case "boolean": options.cache = id; break;
 		case "object": options = id; break;
 	}
 	if(options.cache === undefined) { options.cache = true; }
-	if(typeof options.id === "string" && typeof options.rest === undefined) { options.rest = true; }
+	if(typeof options.user === "string" && typeof options.rest === undefined) { options.rest = true; }
 	if(options.rest) {
-		if(typeof options.id === "string") {
-			let existing = this.cache.get(options.id);
+		if(typeof options.user === "string") {
+			let existing = this.cache.get(options.user);
 			if(existing && !existing.partial) return Promise.resolve(existing);
-			let member = await this.client.api.guilds(this.guild.id).members(options.id).get();
+			let member = await this.client.api.guilds(this.guild.id).members(options.user).get();
 			return this.add(member, options.cache);
 		} else {
+			if(Array.isArray(options.user)) { return j(new RangeError("CANNOT_FETCH_ARRAY_IN_REST_MODE")); }
 			let c = new Discord.Collection();
 			let l = options.limit > 1000 ? 1000 : options.limit || 1000;
 			let members = await this.client.api.guilds(this.guild.id).members().get({query:{limit:l,after:options.after || 0}});
@@ -497,7 +498,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		}
 	} else {
 		return new Promise((r,j) => {
-			let user_ids = options.id || (Array.isArray(options.ids) ? options.ids : undefined);
+			let user_ids = typeof options.user === "string" ? options.user : (Array.isArray(options.user) ? options.user : undefined);
 			let query = options.query;
 			let time = options.time || 60000;
 			let limit = Number.isInteger(options.limit) ? options.limit : 0;

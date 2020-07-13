@@ -236,17 +236,17 @@ Fetches channels from the `/guilds/:id/channels` endpoint. This endpoint bypasse
 
 **`returns`** - `Promise (GuildMember | Collection of GuildMembers)`
 
-Fetches guild members from the gateway or from the `/guilds/:id/members` endpoint. This method is a little different from the original and includes a few additional options. The `rest` option can fetch multiple/all members without the `GUILD_MEMBERS` intent, however it is very slow (roughly 8 seconds per 1000 members).
+Fetches guild members from the gateway or from the `/guilds/:id/members` endpoint. This method is identical to the original but includes a few additional options. The `rest` option allows fetching multiple/all members without the `GUILD_MEMBERS` intent, however it is very slow (roughly 8 seconds per 1000 members).
 
-* **`id or options.id (string)`** - id of the member to fetch. if not provided, fetched all guild members instead.
-* **`cache or options.cache (boolean)`** - whether to cache results. defaults to true.
+* **`id or options.user (string)`** - id of the member to fetch. if not provided, fetches all guild members instead.
+* **`id or options.user (array)`** - array of member ids to fetch (gateway only, requires the `GUILD_MEMBERS` intent).
+* **`cache or options.cache (boolean)`** - whether to cache all results. defaults to true.
 * **`options.rest (boolean)`** - whether to use the rest endpoint instead of the gateway. defaults to true when fetching a single id, otherwise defaults to false.
-* **`options.ids (array)`** - array of member ids to fetch (gateway only, requires the `GUILD_MEMBERS` intent).
-* **`options.query (string)`** - query to search for members by username (gateway only). set to `""` to match all usernames (setting to `""` requires the `GUILD_MEMBERS` intent). defaults to `""`;
-* **`options.limit (number)`** - max amount of results (0 for no limit. setting to 0 without `rest` requires the `GUILD_MEMBERS` intent). defaults to 0.
+* **`options.query (string)`** - query to search for members by username (gateway only). set to `""` for all members (setting to `""` requires the `GUILD_MEMBERS` intent). defaults to `""`;
+* **`options.limit (number)`** - max amount of results (0 for no limit. setting to 0 without the `rest` option requires the `GUILD_MEMBERS` intent). defaults to 0.
 * **`options.after (string)`** - a user id to search only users with a bigger id (rest only).
-* **`options.withPresences (boolean)`** - whether to include presence data (gateway only, requires the `GUILD_PRESENCES` intent). this option also requires the `cachePresences` client option to be enabled, or that the `cache` option is true or that the relevant users are cached.
-* **`options.time (number)`** - max amount of time to wait for a response in milliseconds (gateway only). defaults to 60 seconds.
+* **`options.withPresences (boolean)`** - whether to include presence data (gateway only, requires the `GUILD_PRESENCES` intent). this option also requires the `cachePresences` client option to be enabled, or that the `cache` option is enabled, or that the relevant users are already cached.
+* **`options.time (number)`** - max amount of time to wait for a response in milliseconds (gateway only). defaults to 60000.
 
 ### guild.emojis.fetch()
 
@@ -304,7 +304,6 @@ await client.broadcastEval(`
 	if(channel) { channel.send("message"); }
 `);
 
-
 // forge method, works from any shard and regardless of availability
 await client.channels.forge(id).send("message");
 ```
@@ -353,9 +352,33 @@ Creates a Message instance from a message ID.
 
 Creates a MessageReaction instance from an emoji id or emoji unicode and the current message.
 
+## Sweep Methods
+
+This library includes two additional sweep methods to help with manual cache control:
+
+### client.sweepUsers()
+
+`client.sweepUsers(lifetime)`
+
+**`returns`** - `Void`
+
+Uncaches all cached Users and Members whose last message is older than the supplied time.
+
+* **`lifetime (number)`** - User's max last message age in seconds. Defaults to 86400 (24 hours).
+
+### client.sweepUsers()
+
+`client.sweepChannels(lifetime)`
+
+**`returns`** - `Void`
+
+Uncaches all cached Channels whose last message is older than the supplied time.
+
+* **`lifetime (number)`** - Channel's max last message age in seconds. Defaults to 86400 (24 hours).
+
 ## Notes
 
-This project is has come a long way and has gone through a lot of testing, but it is still somewhat experimental. There might be silly bugs or broken features in untested scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you may find.
+This project is has come a long way and has gone through a lot of testing, however it is still somewhat experimental. There might be silly bugs or broken features in untested scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you may find.
 
 You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
