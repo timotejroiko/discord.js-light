@@ -308,7 +308,7 @@ await client.broadcastEval(`
 await client.channels.forge(id).send("message");
 ```
 
-Forge methods avoid unnecessary round trips and give you direct access to the rest api, however they dont provide any form of data validation, its up to you to provide valid IDs.
+Forge methods avoid unnecessary round trips and give you access to all the rest api methods, however there isnt any form of data validation, its up to you to provide valid IDs.
 
 The following forge methods are available:
 
@@ -366,7 +366,7 @@ Uncaches all cached Users and Members whose last message is older than the suppl
 
 * **`lifetime (number)`** - User's max last message age in seconds. Defaults to 86400 (24 hours).
 
-### client.sweepUsers()
+### client.sweepChannels()
 
 `client.sweepChannels(lifetime)`
 
@@ -392,4 +392,4 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Art Prompts](https://eledris.com/art-prompts/discord-bot/)
 
-(using discord.js-light? let me know if you're interested in having your bot being listed here)
+(using discord.js-light? let me know if you're interested in having your bot listed here)
