@@ -366,7 +366,7 @@ Uncaches all cached Users and Members whose last message is older than the suppl
 
 * **`lifetime (number)`** - User's max last message age in seconds. Defaults to 86400 (24 hours).
 
-### client.sweepUsers()
+### client.sweepChannels()
 
 `client.sweepChannels(lifetime)`
 
