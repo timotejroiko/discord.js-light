@@ -59,7 +59,7 @@ module.exports = client => {
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
 		if(c.channels.cache.has(data.id)) {
 			let newChannel = c.channels.cache.get(data.id);
-			if(guild && (!c.options.cacheOverwrites && !guild.roles.cache.size && !newChannel.permissionOverwrites.size)) { data.permission_overwrites = []; }
+			if(guild && (!c.options.cacheOverwrites && !newChannel.permissionOverwrites.size)) { data.permission_overwrites = []; }
 			let oldChannel = newChannel._update(data);
 			if(Constants.ChannelTypes[oldChannel.type.toUpperCase()] !== data.type) {
 				let changedChannel = Channel.create(c, data, guild);

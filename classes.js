@@ -361,10 +361,7 @@ Discord.GuildManager.prototype.forge = function(id) {
 
 Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
 	if(data.permission_overwrites && !data._withOverwrites && !this.client.options.cacheOverwrites) {
-		let g = this.client.guilds.cache.get(data.guild_id);
-		if(!g || !g.roles.cache.size) {
-			data.permission_overwrites = [];
-		}
+		data.permission_overwrites = [];
 	}
 	const existing = this.cache.get(data.id);
 	if(existing && !(data._withOverwrites && !existing.permissionOverwrites.size && !cache)) {

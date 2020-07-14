@@ -70,7 +70,14 @@ Additionally, using an alternative memory allocator such as [jemalloc](http://je
 
 ```js
 const Discord = require("discord.js-light");
-const client = new Discord.Client();
+const client = new Discord.Client({
+	cacheGuilds: true,
+	cacheChannels: false,
+	cacheOverwrites: false,
+	cacheRoles: false,
+	cacheEmojis: false,
+	cachePresences: false
+});
 
 client.on("ready", () => {
 	console.log("client ready");
@@ -89,7 +96,7 @@ Generally, usage should be identical to discord.js and you can safely refer to i
 
 
 
-## Client Options and Caching Behavior
+## Client Options
 
 The following client options are available to control caching behavior:
 
@@ -102,28 +109,56 @@ The following client options are available to control caching behavior:
 | cacheEmojis | boolean | false | Enables caching of all Emojis at login |
 | cachePresences | boolean | false | Enables caching of all Presences. If not enabled, Presences will be cached only for cached Users |
 
-If `cacheGuilds` is disabled, the library will give up control of guilds and emit `guildCreate` events as per the Discord API, including the initial `GUILD_CREATE` packets as well as when guilds come back from being unavailable, so that you can implement your own guild tracking.
-
-Users and Members are never cached automatically. The `fetchAllMembers` client option can be used to cache them, otherwise they must be manually fetched if required. Events that include User and/or Member data may not require fetching as the event itself contains enough information to provide them.
-
-Voice States will be cached if the `GUILD_VOICE_STATES` intent is enabled (required for voice features to work).
-
-Caching of Roles and PermissionOverwrites is required for permission checking functions to work correctly. If permission checking is desired, the ideal setup is to enable `cacheRoles` and `cacheOverwrites` and then manually fetch channels before checking.
-
 This library implements its own partials system, therefore the `partials` client option is not available. All other discord.js client options continue to be available and should work normally.
 
+## Caching Behavior
+
+Below is a quick summary and explanation on caches and caching behavior:
+
+### Guilds
+
+This cache has a very low memory footprint and provides lots of useful information that most bots will want to use at some point. If disabled, the library will give up control of guilds and instead emit `guildCreate` events as per the Discord API, including the initial `GUILD_CREATE` packets as well as when guilds come back from being unavailable. This is so that you can implement your own guild tracking and/or caching if needed.
+
+### Channels
+
+Channels have a pretty large impact on memory usage and most common bot features should work normally without them. You only need to enable this cache if you want to loop over channels and/or to find channels by anything other than a channel ID, and even then there might be be more efficient solutions.
+
+### Overwrites
+
+PermissionOverwrites may have a moderate impact on memory usage when combined with channels. This cache is required for checking permissions on specific channels. Enabling this cache without enabling `cacheChannels` will eliminate its memory footprint but require you to fetch the relevant channel before being able to check permissions on it.
+
+### Roles
+
+Roles may have a moderate memory footprint but are required for general permission checking. You can still access Member roles without enabling this cache, but they will be partials instead.
+
+### Emojis
+
+Emojis usually have a moderate-low memory footprint but are only really needed if you want to loop over emojis, or find emojis by name.
+
+### Presences
+
+Presences have a large impact on memory usage and are not needed most of the time. Presences are cached if the User they belong to is cached. Enabling this cache will enable caching of all Presences, including those belonging to uncached Users and Members. You only need this if you want to track people's statuses and activities in real time.
+
+### Users and Members
+
+Besides the bot user, all other Users and Members are never automatically cached. Having an incomplete user cache is not very useful most of the time, so we prefer an all-or-nothing approach. The `fetchAllMembers` client option can be used to cache all Users and Members, otherwise they must be manually fetched if required. Events that include User and/or Member data usually do not require fetching as the event itself already contains enough information to provide them.
+
+### VoiceStates
+
+Voice States will be cached if the `GUILD_VOICE_STATES` intent is enabled (required for voice features to work), otherwise they will not be cached.
 
 
-## Events Behavior
 
-Most events should be identical to the originals aside from the caching behavior and they always emit regardless of the required data being cached or not. When required data is missing, a partial structure where only an id is guaranteed will be given (the `.partial` property is not guaranteed to exist).
+## Events
 
-Events that emit past versions of a structure, such as update events, will emit `null` if not cached instead of not being emitted at all.
+Most events should be identical to the originals aside from the caching behavior and they always emit regardless of caches. When required data is missing, a partial structure where only an id is guaranteed will be given (the `.partial` property is not guaranteed to exist on all partials).
+
+Events that emit past versions of a structure, such as update and delete events, will emit either `null` or partial if not cached instead of not being emitted at all.
 
 | Event | Emits | Notes |
 | ------------- | ------------- | ------------- |
 | message | Message | Includes some User and Member data |
-| messageUpdate | Message?,  Message | Old Message is null if not cached. New Message includes some User and Member data |
+| messageUpdate | Message?,  Message | Old Message is NULL if not cached. New Message includes some User and Member data |
 | messageDelete | Message | Partial Message if not cached |
 | messageDeleteBulk | Collection | Collection of deleted Messages or Partial Messages as above |
 | messageReactionAdd | Reaction,  User | Includes some User and Member data (partial if DMs) |
@@ -162,7 +197,7 @@ Events that emit past versions of a structure, such as update events, will emit 
 
 Events that include some User and/or Member data will contain User and/or Member objects even if not cached, for example `message.author` will always contain a full User object, including most of its properties, even if said user is not cached.
 
-Non-partial structures only guarantee the contents of its top-level properties. Linked structures such as message`.channel` or reaction`.message` may still be partials if not previously cached or fetched. This is especially true for Guild objects, which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
+Structures not marked as partial only guarantee the contents of its top-level properties. Linked structures such as message`.channel` or reaction`.message` may still be partials if not previously cached or fetched. This is especially true for Guild objects, which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
 
 Events not listed above should work normally as per the discord.js documentation.
 
@@ -172,7 +207,7 @@ Events not listed above should work normally as per the discord.js documentation
 
 Fetch methods are used to obtain data from the Discord API when needed and optionally cached for reuse. Once data is cached, it will remain in the cache until manually removed. Cached data will be automatically updated as new Discord events are received.
 
-Some fetch methods are already included in by default discord.js, others were added or tweaked as below:
+Some fetch methods are already included by default in discord.js, others were added or tweaked as below:
 
 ### client.channels.fetch()
 
@@ -183,11 +218,11 @@ Some fetch methods are already included in by default discord.js, others were ad
 
 **`returns`** - `Promise (Channel)`
 
-Fetches a channel from the `/channels/:id` endpoint. This method is identical to the original except that it includes an additional `withOverwrites` option.
+Fetches a single channel from the `/channels/:id` endpoint. This method is identical to the original except that it includes an additional `withOverwrites` option.
 
 * **`id or options.id (string)`** - id of the channel to fetch.
 * **`cache or options.cache (boolean)`** - whether to cache the result. defaults to true.
-* **`options.withOverwrites (boolean)`** - whether to include permissionOverwrites. always true if the `cacheOverwrites` client option is enabled or if guild roles are cached, otherwise defaults to false.
+* **`options.withOverwrites (boolean)`** - whether to include permissionOverwrites. always true if `cacheOverwrites` is enabled. defaults to false.
 
 ### client.guilds.fetch()
 
@@ -223,7 +258,7 @@ Fetches channels from the `/guilds/:id/channels` endpoint. This endpoint bypasse
 
 * **`id or options.id (string)`** - id of the channel to fetch. if not provided, fetches all guild channels instead.
 * **`cache or options.cache (boolean)`** - whether to cache the results. defaults to true.
-* **`options.withOverwrites (boolean)`** - whether to include permissionOverwrites. always true if `cacheOverwrites` is enabled or if guild roles are cached, otherwise defaults to false.
+* **`options.withOverwrites (boolean)`** - whether to include permissionOverwrites. always true if `cacheOverwrites` is enabled. defaults to false.
 
 ### guild.members.fetch()
 
@@ -291,7 +326,7 @@ Fetches users from the `/channels/:id/messages/:id/reactions/:emoji`. This endpo
 
 ## Forge Methods
 
-Forge methods are used to interact with the Discord API without requiring a cache. They provide a way to create Partial instances on demand, which is especially useful when sharding. Example for sending a message to a specific channel ID:
+Forge methods a set of non-standard methods used to interact with the Discord API without requiring a cache. They provide a way to create Partial instances on demand, which is especially useful when sharding. For example, sending a message to a specific channel ID:
 
 ```js
 // fetch method, requires an API round trip if channel is not available
@@ -304,11 +339,11 @@ await client.broadcastEval(`
 	if(channel) { channel.send("message"); }
 `);
 
-// forge method, works from any shard and regardless of availability
+// forge method, works from any shard and regardless of caching
 await client.channels.forge(id).send("message");
 ```
 
-Forge methods avoid unnecessary round trips and give you access to all the rest api methods, however there isnt any form of data validation, its up to you to provide valid IDs.
+Forge methods avoid unnecessary round trips and give you access to all the api methods of each class, however there isnt any form of data validation, its up to you to provide valid IDs.
 
 The following forge methods are available:
 
@@ -362,9 +397,9 @@ This library includes two additional sweep methods to help with manual cache con
 
 **`returns`** - `Void`
 
-Uncaches all cached Users and Members whose last message is older than the supplied time.
+Sweeps all cached Users and Members whose last message is older than the supplied time.
 
-* **`lifetime (number)`** - User's max last message age in seconds. Defaults to 86400 (24 hours).
+* **`lifetime (number)`** - User's last message age in seconds. Defaults to 86400 (24 hours).
 
 ### client.sweepChannels()
 
@@ -372,13 +407,13 @@ Uncaches all cached Users and Members whose last message is older than the suppl
 
 **`returns`** - `Void`
 
-Uncaches all cached Channels whose last message is older than the supplied time.
+Sweeps all cached Channels whose last message is older than the supplied time.
 
-* **`lifetime (number)`** - Channel's max last message age in seconds. Defaults to 86400 (24 hours).
+* **`lifetime (number)`** - Channel's last message age in seconds. Defaults to 86400 (24 hours).
 
 ## Notes
 
-This project is has come a long way and has gone through a lot of testing, however it is still somewhat experimental. There might be silly bugs or broken features in untested scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you may find.
+This project has come a long way and gone through a lot of testing, however it is still somewhat experimental. There might be silly bugs or broken features in untested scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you may find.
 
 You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
@@ -392,4 +427,4 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Art Prompts](https://eledris.com/art-prompts/discord-bot/)
 
-(using discord.js-light? let me know if you're interested in having your bot being listed here)
+(using discord.js-light? let me know if you're interested in having your bot listed here)
