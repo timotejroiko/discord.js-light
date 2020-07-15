@@ -1,4 +1,5 @@
-const PacketHandlers = require("discord.js/src/client/websocket/handlers");
+const { resolve } = require("path");
+const PacketHandlers = require(resolve(require.resolve("discord.js").replace("index.js","/client/websocket/handlers")));
 const { Collection, ClientUser, Constants } = require("discord.js");
 
 PacketHandlers.READY = (client, { d: data }, shard) => {

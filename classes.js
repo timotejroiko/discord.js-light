@@ -1,4 +1,5 @@
-const { Error, RangeError } = require("discord.js/src/errors");
+const { resolve } = require("path");
+const { Error, RangeError } = require(resolve(require.resolve("discord.js").replace("index.js","/errors")));
 const Discord = require("discord.js");
 
 Discord.Structures.extend("Message", M => {
