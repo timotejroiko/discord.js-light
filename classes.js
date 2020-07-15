@@ -479,7 +479,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 			let member = await this.client.api.guilds(this.guild.id).members(options.user).get();
 			return this.add(member, options.cache);
 		} else {
-			if(Array.isArray(options.user)) { return j(new RangeError("CANNOT_FETCH_ARRAY_IN_REST_MODE")); }
+			if(Array.isArray(options.user)) { return new RangeError("CANNOT_FETCH_ARRAY_IN_REST_MODE"); }
 			let c = new Discord.Collection();
 			let l = options.limit > 1000 ? 1000 : options.limit || 1000;
 			let members = await this.client.api.guilds(this.guild.id).members().get({query:{limit:l,after:options.after || 0}});

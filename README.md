@@ -1,6 +1,4 @@
-# discord.js-light
-
-**This is the readme for the unreleased version 3. For the current stable release check the v2 branch.**
+# discord.js-light v3
 
 All the power of [discord.js](https://discord.js.org), zero caching.
 
@@ -35,7 +33,7 @@ The following test is a \~3 hour run (each tick is 10 minutes), with \~3700 guil
 
 As you can see, excessive caching can be very costly in terms of memory requirments, especially at scale, and unfortunately neither discord.js nor eris, the two most popular javascript libraries, provide a way to control or disable parts of their caching systems. The ability to selectively disable caches that your bot doesnt need can greatly reduce resource usage, so much that it becomes invaluable at scale.
 
-More and more projects are being developed with such flexibility in mind, such as `klasa-core` and `detritus`, and this library brings this much needed caching flexibility to discord.js with as little side effects as possible.
+More and more projects are being developed with such flexibility in mind, such as `@klasa/core` and `detritus`, and this library brings this much needed caching flexibility to discord.js with as little side effects as possible.
 
 
 
@@ -53,7 +51,7 @@ More and more projects are being developed with such flexibility in mind, such a
 
 ### Installation:
 
-```npm install timotekroiko/discord.js-light#v3```
+```npm install timotekroiko/discord.js-light```
 
 Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and they will be picked up automatically.
 
