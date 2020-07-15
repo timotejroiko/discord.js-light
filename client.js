@@ -48,4 +48,6 @@ Discord.Client = class Client extends Discord.Client {
 	}
 }
 
+Discord.version = `${require("./package.json").version} (${Discord.version})`;
+
 module.exports = Discord;
