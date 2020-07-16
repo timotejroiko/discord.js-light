@@ -51,7 +51,7 @@ More and more projects are being developed with such flexibility in mind, such a
 
 ### Installation:
 
-```npm install timotekroiko/discord.js-light```
+```npm install discord.js-light```
 
 Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and they will be picked up automatically.
 
