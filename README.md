@@ -145,6 +145,10 @@ Besides the bot user, all other Users and Members are never automatically cached
 
 Voice States will be cached if the `GUILD_VOICE_STATES` intent is enabled (required for voice features to work), otherwise they will not be cached.
 
+### Messages
+
+Messages are cached only if the Channel they belong to is cached. Message caching can be further controlled and limited via discord.js's `messageCacheMaxSize`, `messageCacheLifetime` and `messageSweepInterval` client options as usual. Additionally, the Edits cache contains the most recent edit only and older edits will be removed.
+
 
 
 ## Events
