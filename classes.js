@@ -101,7 +101,7 @@ Discord.Structures.extend("Guild", G => {
 			if(data.channels && Array.isArray(data.channels)) {
 				if(this.client.options.cacheChannels) { this.channels.cache.clear(); }
 				for(let channel of data.channels) {
-					if(this.client.options.cacheChannels || this.client.channels.cache.has(channel.id) || (this.client.options.ws.intents & 128 && data.voice_states && data.voice_states.find(v => v.channel_id === channel.id))) {
+					if(this.client.options.cacheChannels || this.client.channels.cache.has(channel.id)) {
 						this.client.channels.add(channel, this);
 					}
 				}
@@ -129,7 +129,7 @@ Discord.Structures.extend("Guild", G => {
 					}
 				}
 			}
-			if(data.voice_states && Array.isArray(data.voice_states) && this.client.options.ws.intents & 128) {
+			if(data.voice_states && Array.isArray(data.voice_states) && (this.client.options.ws.intents & 128 || !this.client.options.ws.intents)) {
 				this.voiceStates.cache.clear();
 				for(let voiceState of data.voice_states) {
 					this.voiceStates.add(voiceState);
@@ -681,7 +681,7 @@ Object.defineProperty(Discord.VoiceState.prototype, "channel", {
 
 Object.defineProperty(Discord.VoiceState.prototype, "member", {
 	get: function() {
-		return this.guild.members.cache.get(this.id) || this.guild.members.add(this._member,false);
+		return this.guild.members.cache.get(this.id) || this._member ? this.guild.members.add(this._member,false) : this.guild.members.add({user:{id:this.id}},false);
 	}
 });
 
