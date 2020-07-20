@@ -471,8 +471,11 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		case "boolean": options.cache = id; break;
 		case "object": options = id; break;
 	}
+	if(typeof options.user === "string") {
+		if(options.rest === undefined) { options.rest = true; }
+		if(isNaN(options.user)) { options.user = options.user.replace(/\D+/g,"0"); }
+	}
 	if(options.cache === undefined) { options.cache = true; }
-	if(typeof options.user === "string" && typeof options.rest === undefined) { options.rest = true; }
 	if(options.rest) {
 		if(typeof options.user === "string") {
 			let existing = this.cache.get(options.user);
@@ -507,11 +510,13 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 			if(this.guild.memberCount === this.cache.size && !query && !limit && !presences && !user_ids) {
 				return r(this.cache);
 			}
-			if(typeof user_ids === "string" && this.cache.has(user_ids)) {
-				return r(this.cache.get(user_ids));
+			if(typeof user_ids === "string") {
+				if(user_ids.length < 15 || user_ids.length > 25) { return j(new Discord.DiscordAPIError("GUILD_MEMBERS_CHUNK", {message:"Unknown User"}, "Gateway")) }
+				if(this.cache.has(user_ids)) { return r(this.cache.get(user_ids)); }
 			}
-			if(Array.isArray(user_ids) && user_ids.every(t => this.cache.has(t))) {
-				return r(user_ids.map(t => this.cache.get(t)));
+			if(Array.isArray(user_ids)) {
+				user_ids = user_ids.map(u => u.replace(/\D+/g,"0"));
+				if(user_ids.every(t => this.cache.has(t))) { return r(user_ids.map(t => this.cache.get(t))); }
 			}
 			this.guild.shard.send({
 				op: Discord.Constants.OPCodes.REQUEST_GUILD_MEMBERS,
