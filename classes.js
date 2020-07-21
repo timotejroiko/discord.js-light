@@ -686,7 +686,7 @@ Object.defineProperty(Discord.VoiceState.prototype, "channel", {
 
 Object.defineProperty(Discord.VoiceState.prototype, "member", {
 	get: function() {
-		return this.guild.members.cache.get(this.id) || this._member ? this.guild.members.add(this._member,false) : this.guild.members.add({user:{id:this.id}},false);
+		return this.guild.members.cache.get(this.id) || (this._member ? this.guild.members.add(this._member,false) : this.guild.members.add({user:{id:this.id}},false));
 	}
 });
 
