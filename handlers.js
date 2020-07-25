@@ -16,6 +16,11 @@ PacketHandlers.READY = (client, { d: data }, shard) => {
 		guilds.set(guild.id,client.guilds.add(guild,client.options.cacheGuilds));
 	}
 	client.emit("shardConnect",shard.id,guilds);
+	if(!client.options.cacheGuilds) {
+		shard.debug('Guild cache is disabled, skipping guild check.');
+		shard.expectedGuilds.clear();
+	}
+	shard.checkReady();
 }
 
 PacketHandlers.CHANNEL_CREATE = (client, packet, shard) => {

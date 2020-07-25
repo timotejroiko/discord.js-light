@@ -4,30 +4,20 @@ const { Constants, Collection, Channel, DMChannel, Invite } = require('discord.j
 module.exports = client => {
 	client.ws.handlePacket = function(packet, shard) {
 		if(packet && PacketHandlers[packet.t]) {
+			shard.lastPacket = Date.now();
 			if(packet.t === "READY") {
-				if(!client.options.cacheGuilds) {
-					if(shard.readyTimeout) {
-						shard.manager.client.clearTimeout(shard.readyTimeout);
-						shard.readyTimeout = undefined;
-					}
-					shard.debug('Guild cache is disabled. Marking as fully ready.');
-					shard.status = Constants.Status.READY;
-					shard.expectedGuilds = null;
-					shard.emit(Constants.ShardEvents.ALL_READY);
-				} else {
-					shard.checkReady();
-				}
-			}
-			setImmediate(() => {
-				shard.lastPacket = Date.now();
-				if(packet.d && packet.d.guild_id) {
-					let g = this.client.guilds.cache.get(packet.d.guild_id);
-					if(g && g.shardID === undefined) {
-						g.shardID = shard.id;
-					}
-				}
 				PacketHandlers[packet.t](this.client, packet, shard);
-			});
+			} else {
+				setImmediate(() => {
+					if(packet.d && packet.d.guild_id && client.options.cacheGuilds) {
+						let g = this.client.guilds.cache.get(packet.d.guild_id);
+						if(g && g.shardID === undefined) {
+							g.shardID = shard.id;
+						}
+					}
+					PacketHandlers[packet.t](this.client, packet, shard);
+				});
+			}
 		}
 		return true;
 	}

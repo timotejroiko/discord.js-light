@@ -31,7 +31,7 @@ The following test is a \~3 hour run (each tick is 10 minutes), with \~3700 guil
 
 ![The Impact of Caching](bench.png)
 
-As you can see, excessive caching can be very costly in terms of memory requirments, especially at scale, and unfortunately neither discord.js nor eris, the two most popular javascript libraries, provide a way to control or disable parts of their caching systems. The ability to selectively disable caches that your bot doesnt need can greatly reduce resource usage, so much that it becomes invaluable at scale.
+As you can see, excessive caching can be very costly in terms of memory requirments, especially at scale. By disabling all major caches we were able to reduce memory usage from \~500mb to less than 20mb. Unfortunately neither discord.js nor eris, the two most popular javascript libraries, provide a way to control or disable parts of their caching systems. The ability to selectively disable caches that your bot doesnt need can greatly reduce resource usage, so much that it becomes invaluable at scale.
 
 More and more projects are being developed with such flexibility in mind, such as `@klasa/core` and `detritus`, and this library brings this much needed caching flexibility to discord.js with as little side effects as possible.
 
@@ -41,8 +41,9 @@ More and more projects are being developed with such flexibility in mind, such a
 
 * Provides all of discord.js's events without any kind of automated caching
 * Most structures remain intact so your existing discord.js code should work without many changes
-* Custom partials system ensures events always emit regardless of caching state
-* Partials are given when data is missing and most things can be manually fetched and/or cached when needed
+* Custom partials system ensures events are always emitted regardless of caching state
+* Fully functional partials are given when the required data is not cached
+* Most things can be manually fetched and/or cached when needed
 * Drastically lower resource usage at scale
 
 
@@ -111,7 +112,7 @@ This library implements its own partials system, therefore the `partials` client
 
 ## Caching Behavior
 
-Below is a quick summary and explanation on caches and caching behavior:
+Below is a quick summary and explanation on caches:
 
 ### Guilds
 
@@ -119,11 +120,11 @@ This cache has a very low memory footprint and provides lots of useful informati
 
 ### Channels
 
-Channels have a pretty large impact on memory usage and most common bot features should work normally without them. You only need to enable this cache if you want to loop over channels and/or to find channels by anything other than a channel ID, and even then there might be be more efficient solutions.
+Channels have a pretty large impact on memory usage and most common bot features should work normally without them. You only need this cache if you track channel updates or if you want to find channels by anything other than an ID, and even then there might be be more efficient solutions.
 
 ### Overwrites
 
-PermissionOverwrites may have a moderate impact on memory usage when combined with channels. This cache is required for checking permissions on specific channels. Enabling this cache without enabling `cacheChannels` will eliminate its memory footprint but require you to fetch the relevant channel before being able to check permissions on it.
+PermissionOverwrites may have a moderate impact on memory usage when channels are cached, and is required for checking permissions on specific channels. Enabling this cache without enabling `cacheChannels` will eliminate its memory footprint but requires you to always fetch a channel before being able to check permissions on it.
 
 ### Roles
 
@@ -131,7 +132,7 @@ Roles may have a moderate memory footprint but are required for general permissi
 
 ### Emojis
 
-Emojis usually have a moderate-low memory footprint but are only really needed if you want to loop over emojis, or find emojis by name.
+Emojis usually have a low memory footprint but are only really needed if you want to loop over emojis, find emojis by name or keep track of emoji updates.
 
 ### Presences
 
@@ -139,7 +140,7 @@ Presences have a large impact on memory usage and are not needed most of the tim
 
 ### Users and Members
 
-Besides the bot user, all other Users and Members are never automatically cached. Having an incomplete user cache is not very useful most of the time, so we prefer an all-or-nothing approach. The `fetchAllMembers` client option can be used to cache all Users and Members, otherwise they must be manually fetched if required. Events that include User and/or Member data usually do not require fetching as the event itself already contains enough information to provide them.
+Besides the bot user, all other Users and Members are never automatically cached. Having an incomplete user cache is not very useful most of the time, so we prefer an all-or-nothing approach. The `fetchAllMembers` client option can be used to cache all Users and Members, otherwise they must be manually fetched if required. Events that include some User and/or Member data usually do not require fetching as the event itself already contains enough information to provide a complete User/Member object.
 
 ### VoiceStates
 
@@ -147,7 +148,7 @@ Voice States will be cached if the `GUILD_VOICE_STATES` intent is enabled (requi
 
 ### Messages
 
-Messages are cached only if the Channel they belong to is cached. Message caching can be further controlled and limited via discord.js's `messageCacheMaxSize`, `messageCacheLifetime` and `messageSweepInterval` client options as usual. Additionally, the Edits cache contains the most recent edit only and older edits will be removed.
+Messages are cached only if the Channel they belong to is cached. Message caching can be further controlled via discord.js's `messageCacheMaxSize`, `messageCacheLifetime` and `messageSweepInterval` client options as usual. Additionally, the MessageEdits cache only contains the most recent edit.
 
 
 
