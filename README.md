@@ -430,4 +430,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Art Prompts](https://eledris.com/art-prompts/discord-bot/)
 
+[Xeno](https://github.com/NathanPenwill/Xeno/)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
