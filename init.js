@@ -19,7 +19,7 @@ require.cache[GCPath].exports = class GuildChannel extends GC {
 		}
 	}
 	get deletable() {
-		return this.guild.roles.cache.size && this.permissionOverwrites.size ? this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_CHANNELS, false) : false;
+		return this.guild.roles.cache.size && this.permissionOverwrites.size ? this.permissionsFor(this.client.user).has(1 << 4, false) : false;
 	}
 }
 

@@ -188,8 +188,12 @@ Discord.Structures.extend("VoiceChannel", V => {
 		}
 		async join() {
 			if(Discord.Constants.browser) return Promise.reject(new Error('VOICE_NO_BROWSER'));
-			let channel = await this.client.channels.fetch(this.id);
-			return this.client.voice.joinChannel(channel);
+			if(!this.client.channels.cache.has(this.id)) {
+				this.client.channels.cache.set(this.id,this);
+				this.partial = true;
+				await this.fetch();
+			}
+			return this.client.voice.joinChannel(this);
 		}
 		leave() {
 			if(Discord.Constants.browser) return;
