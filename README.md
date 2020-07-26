@@ -432,4 +432,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Xeno](https://github.com/NathanPenwill/Xeno/)
 
+[Tamaki](https://top.gg/bot/716322665283059754)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)

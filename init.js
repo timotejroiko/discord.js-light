@@ -1,5 +1,34 @@
 const { resolve } = require("path");
 
+const ALPath = resolve(require.resolve("discord.js").replace("index.js","/structures/GuildAuditLogs.js"));
+const AL = require(ALPath);
+AL.Entry = class GuildAuditLogsEntry extends AL.Entry {
+	constructor(logs, guild, data) {
+		super(logs,guild,data);
+		if(!this.executor) { this.executor = guild.client.users.add({ id: data.user_id }, false); }
+		let c = logs.constructor;
+		let t = c.targetType(data.action_type);
+		if((t === c.Targets.USER || (t === c.Targets.MESSAGE && data.action_type !== c.Actions.MESSAGE_BULK_DELETE)) && data.target_id && !this.target) {
+			this.target = guild.client.users.add({ id: data.target_id }, false);
+		} else if(t === c.Targets.GUILD && !this.target) {
+			this.target = guild.client.guilds.add({ id: data.target_id }, false);
+		}
+	}
+}
+require.cache[ALPath].exports = class GuildAuditLogs extends AL {
+	constructor(guild, data) {
+		let o = {}
+		for(let i in data) {
+			if(!["users","data.audit_log_entries"].includes(i)) { o[i] = data[i]; }
+		}
+		super(guild,o);
+		for(const item of data.audit_log_entries) {
+			const entry = new this.constructor.Entry(this, guild, item);
+			this.entries.set(entry.id, entry);
+		}
+	}
+}
+
 const GCPath = resolve(require.resolve("discord.js").replace("index.js","/structures/GuildChannel.js"));
 const GC = require(GCPath);
 require.cache[GCPath].exports = class GuildChannel extends GC {
