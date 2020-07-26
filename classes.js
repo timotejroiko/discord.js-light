@@ -198,8 +198,10 @@ Discord.Structures.extend("VoiceChannel", V => {
 		leave() {
 			if(Discord.Constants.browser) return;
 			const connection = this.client.voice.connections.get(this.guild.id);
-			if(connection && connection.channel.id === this.id) { connection.disconnect(); }
-			if(!this.client.options.cacheChannels) { this.client.channels.remove(this.id); }
+			if(connection && connection.channel.id === this.id) {
+				connection.disconnect();
+				if(!this.client.options.cacheChannels) { this.client.channels.remove(this.id); }
+			}
 		}
 	}
 });
