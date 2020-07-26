@@ -24,6 +24,7 @@ Discord.Structures.extend("Message", M => {
 				for(let mention of data.mentions) {
 					this.mentions.users.set(mention.id,this.client.users.add(mention,this.client.users.cache.has(mention.id)));
 					if(mention.member && this.guild) {
+						mention.member = Object.assign(mention.member, {user:mention});
 						if(this.client.users.cache.has(mention.id)) {
 							if(this.guild.members.cache.has(mention.id)) {
 								this.guild.members.cache.get(mention.id)._patch(mention.member);
@@ -119,7 +120,7 @@ Discord.Structures.extend("Guild", G => {
 					}
 				}
 				if(!this.members.cache.has(this.client.user.id)) {
-					this.members.add({user:this.client.user});
+					this.members.fetch(this.client.user.id).catch(()=>{});
 				}
 			}
 			if(data.presences && Array.isArray(data.presences)) {
@@ -477,10 +478,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		case "boolean": options.cache = id; break;
 		case "object": options = id; break;
 	}
-	if(typeof options.user === "string") {
-		if(options.rest === undefined) { options.rest = true; }
-		if(isNaN(options.user)) { options.user = options.user.replace(/\D+/g,"0"); }
-	}
+	if(typeof options.user === "string" && options.rest === undefined) { options.rest = true; }
 	if(options.cache === undefined) { options.cache = true; }
 	if(options.rest) {
 		if(typeof options.user === "string") {
@@ -517,7 +515,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 				return r(this.cache);
 			}
 			if(typeof user_ids === "string") {
-				if(user_ids.length < 15 || user_ids.length > 25) { return j(new Discord.DiscordAPIError("GUILD_MEMBERS_CHUNK", {message:"Unknown User"}, "Gateway")) }
+				if(isNaN(user_ids) || user_ids.length < 15 || user_ids.length > 25) { return j(new Discord.DiscordAPIError("GUILD_MEMBERS_CHUNK", {message:"Unknown User"}, "Gateway")) }
 				if(this.cache.has(user_ids)) { return r(this.cache.get(user_ids)); }
 			}
 			if(Array.isArray(user_ids)) {
