@@ -13,7 +13,7 @@ module.exports = client => {
 				setImmediate(() => {
 					if(packet.d && packet.d.guild_id && client.options.cacheGuilds) {
 						let g = this.client.guilds.cache.get(packet.d.guild_id);
-						if(g && g.shardID === undefined) {
+						if(g && typeof g.shardID === "undefined") {
 							g.shardID = shard.id;
 						}
 					}
@@ -25,13 +25,13 @@ module.exports = client => {
 	}
 	client.actions.ChannelCreate.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
+		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		let channel = c.channels.add(data, guild, c.channels.cache.has(data.id));
 		return { channel };
 	}
 	client.actions.ChannelDelete.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
+		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		let channel = c.channels.cache.get(data.id);
 		if(channel) {
 			if(channel.messages && !(channel instanceof DMChannel)) {
@@ -48,7 +48,7 @@ module.exports = client => {
 	}
 	client.actions.ChannelUpdate.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
+		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		if(c.channels.cache.has(data.id)) {
 			let newChannel = c.channels.cache.get(data.id);
 			if(guild && (!c.options.cacheOverwrites && !newChannel.permissionOverwrites.size)) { data.permission_overwrites = []; }
@@ -205,7 +205,7 @@ module.exports = client => {
 	}
 	client.actions.MessageCreate.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
+		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let message = channel.messages.add(data, c.channels.cache.has(channel.id));
 		channel.lastMessageID = data.id;
@@ -221,7 +221,7 @@ module.exports = client => {
 	}
 	client.actions.MessageDelete.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
+		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let message = channel.messages.cache.get(data.id);
 		if(message) {
@@ -237,7 +237,7 @@ module.exports = client => {
 	}
 	client.actions.MessageDeleteBulk.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
+		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let deleted = new Collection();
 		for(let i = 0; i < data.ids.length; i++) {
@@ -258,7 +258,7 @@ module.exports = client => {
 	}
 	client.actions.MessageUpdate.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
+		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let message = channel.messages.cache.get(data.id);
 		let old = null;
@@ -273,7 +273,7 @@ module.exports = client => {
 	}
 	client.actions.MessageReactionAdd.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
+		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let user = c.users.cache.get(data.user_id) || c.users.add((data.member || {}).user || {id:data.user_id}, false);
 		let message = channel.messages.cache.get(data.message_id) || channel.messages.add({id:data.message_id}, false);
@@ -287,7 +287,7 @@ module.exports = client => {
 	}
 	client.actions.MessageReactionRemove.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
+		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let user = c.users.cache.get(data.user_id) || c.users.add({id:data.user_id}, false);
 		let message = channel.messages.cache.get(data.message_id) || channel.messages.add({id:data.message_id}, false);
@@ -302,7 +302,7 @@ module.exports = client => {
 	}
 	client.actions.MessageReactionRemoveAll.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
+		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let message = channel.messages.cache.get(data.message_id) || channel.messages.add({id:data.message_id}, false);
 		message.reactions.cache.clear();
@@ -310,7 +310,7 @@ module.exports = client => {
 	}
 	client.actions.MessageReactionRemoveEmoji.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
+		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let message = channel.messages.cache.get(data.message_id) || channel.messages.add({id:data.message_id}, false);
 		let reaction = message.reactions.cache.get(data.emoji.id || data.emoji.name) || message.reactions.add({emoji:data.emoji,count:null,me:null}, channel.messages.cache.has(data.message_id));

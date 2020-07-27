@@ -44,7 +44,7 @@ PacketHandlers.CHANNEL_UPDATE = (client, packet, shard) => {
 }
 
 PacketHandlers.CHANNEL_PINS_UPDATE = (client, { d: data }, shard) => {
-	let guild = data.guild_id ? client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.id}, false) : undefined;
+	let guild = data.guild_id ? client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.id}, false) : void 0;
 	let channel = client.channels.cache.get(data.channel_id) || client.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 	let time = new Date(data.last_pin_timestamp);
 	if(!Number.isNaN(time.getTime())) {
@@ -226,7 +226,7 @@ PacketHandlers.PRESENCE_UPDATE = (client, packet, shard) => {
 }
 
 PacketHandlers.TYPING_START = (client, { d: data }, shard) => {
-	let guild = data.guild_id ? client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.is}, false) : undefined;
+	let guild = data.guild_id ? client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.is}, false) : void 0;
 	let channel = client.channels.cache.get(data.channel_id) || client.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 	let user = client.users.cache.get(data.user_id);
 	if(user && data.member) {

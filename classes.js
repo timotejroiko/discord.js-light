@@ -147,10 +147,10 @@ Discord.Structures.extend("Guild", G => {
 			}
 		}
 		get nameAcronym() {
-			return this.name ? this.name.replace(/\w+/g, name => name[0]).replace(/\s/g, "") : undefined;
+			return this.name ? this.name.replace(/\w+/g, name => name[0]).replace(/\s/g, "") : void 0;
 		}
 		get joinedAt() {
-			return this.joinedTimestamp ? new Date(this.joinedTimestamp) : undefined;
+			return this.joinedTimestamp ? new Date(this.joinedTimestamp) : void 0;
 		}
 		get owner() {
 			return this.members.cache.get(this.ownerID) || this.members.add({ user: { id: this.ownerID } }, false);
@@ -336,7 +336,7 @@ Discord.GuildManager.prototype.fetch = async function(id, cache) {
 		case "boolean": options.cache = id; break;
 		case "object": options = id; break;
 	}
-	if(options.cache === undefined) { options.cache = true; }
+	if(typeof options.cache === "undefined") { options.cache = true; }
 	if(options.id) {
 		let existing = this.cache.get(options.id);
 		if(existing && existing.name) { return existing; }
@@ -396,11 +396,11 @@ Discord.ChannelManager.prototype.fetch = async function(id, cache) {
 		case "boolean": options.cache = id; break;
 		case "object": options = id; break;
 	}
-	if(options.cache === undefined) { options.cache = true; }
+	if(typeof options.cache === "undefined") { options.cache = true; }
 	let existing = this.cache.get(options.id);
 	if(existing && !existing.partial && (!existing.guild || !options.withOverwrites || existing.permissionOverwrites.size)) { return existing; }
 	let data = await this.client.api.channels(options.id).get();
-	if(options.withOverwrites !== undefined) { data._withOverwrites = options.withOverwrites; }
+	if(typeof options.withOverwrites !== "undefined") { data._withOverwrites = options.withOverwrites; }
 	return this.add(data, null, options.cache);
 }
 
@@ -422,7 +422,7 @@ Discord.GuildChannelManager.prototype.fetch = async function(id, cache) {
 		case "boolean": options.cache = id; break;
 		case "object": options = id; break;
 	}
-	if(options.cache === undefined) { options.cache = true; }
+	if(typeof options.cache === "undefined") { options.cache = true; }
 	if(options.id) {
 		let existing = this.cache.get(options.id);
 		if(existing && !existing.partial && (!options.withOverwrites || existing.permissionOverwrites.size)) { return existing; }
@@ -470,8 +470,8 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		case "boolean": options.cache = id; break;
 		case "object": options = id; break;
 	}
-	if(typeof options.user === "string" && options.rest === undefined) { options.rest = true; }
-	if(options.cache === undefined) { options.cache = true; }
+	if(typeof options.user === "string" && typeof options.rest === "undefined") { options.rest = true; }
+	if(typeof options.cache === "undefined") { options.cache = true; }
 	if(options.rest) {
 		if(typeof options.user === "string") {
 			let existing = this.cache.get(options.user);
@@ -495,7 +495,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 	}
 	return new Promise((r,j) => {
 		let { query, time = 60000, withPresences:presences = false } = options;
-		let user_ids = typeof options.user === "string" ? options.user : (Array.isArray(options.user) ? options.user : undefined);
+		let user_ids = typeof options.user === "string" ? options.user : (Array.isArray(options.user) ? options.user : void 0);
 		let limit = Number.isInteger(options.limit) ? options.limit : 0;
 		let nonce = Date.now().toString(16);
 		if(nonce.length > 32) {
@@ -598,7 +598,7 @@ Discord.GuildMemberManager.prototype.forge = function(id) {
 
 Discord.GuildEmojiManager.prototype.fetch = async function(id, cache) {
 	if(arguments.length < 2 && typeof id !== "string") { cache = id; }
-	if(cache === undefined) { cache = true; }
+	if(typeof cache === "undefined") { cache = true; }
 	if(id) {
 		let existing = this.cache.get(id);
 		if(existing) { return existing; }
@@ -625,7 +625,7 @@ Discord.GuildEmojiManager.prototype.forge = function(id) {
 
 Discord.RoleManager.prototype.fetch = async function(id, cache) {
 	if(arguments.length < 2 && typeof id !== "string") { cache = id; }
-	if(cache === undefined) { cache = true; }
+	if(typeof cache === "undefined") { cache = true; }
 	if(id) {
 		let existing = this.cache.get(id);
 		if(existing) { return existing; }
