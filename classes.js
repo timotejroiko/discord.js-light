@@ -149,6 +149,9 @@ Discord.Structures.extend("Guild", G => {
 		get joinedAt() {
 			return this.joinedTimestamp ? new Date(this.joinedTimestamp) : undefined;
 		}
+		get owner() {
+			return this.members.cache.get(this.ownerID) || this.members.add({ user: { id: this.ownerID } }, false);
+		}
 		fetchBan(user) {
 			let id = this.client.users.resolveID(user);
 			if(!id) throw new Error('FETCH_BAN_RESOLVE_ID');
