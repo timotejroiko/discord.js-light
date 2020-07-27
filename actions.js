@@ -1,5 +1,7 @@
+"use strict";
+
 const PacketHandlers = require("./handlers.js");
-const { Constants, Collection, Channel, DMChannel, Invite } = require('discord.js');
+const { Constants, Collection, Channel, DMChannel, Invite } = require("discord.js");
 
 module.exports = client => {
 	client.ws.handlePacket = function(packet, shard) {
@@ -62,10 +64,9 @@ module.exports = client => {
 				if(guild) { guild.channels.add(newChannel); }
 			}
 			return { old:oldChannel, updated:newChannel };
-		} else {
-			let channel = c.channels.add(data, guild, false);
-			return { old:null, updated:channel };
 		}
+		let channel = c.channels.add(data, guild, false);
+		return { old:null, updated:channel };
 	}
 	client.actions.GuildDelete.handle = function(data) {
 		let c = this.client;
@@ -139,12 +140,10 @@ module.exports = client => {
 		return { emoji: created };
 	}
 	client.actions.GuildEmojiUpdate.handle = function(current,data) {
-		let c = this.client;
 		let old = current._update(data);
 		return { old, emoji: current };
 	}
 	client.actions.GuildEmojiDelete.handle = function(emoji) {
-		let c = this.client;
 		emoji.guild.emojis.cache.delete(emoji.id);
 		emoji.deleted = true;
 		return { emoji };
@@ -193,21 +192,21 @@ module.exports = client => {
 	client.actions.InviteCreate.handle = function(data) {
 		let c = this.client;
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
+		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let invite = new Invite(c, Object.assign(data, { channel, guild }));
 		return { invite };
 	}
 	client.actions.InviteDelete.handle = function(data) {
 		let c = this.client;
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
+		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let invite = new Invite(c, Object.assign(data, { channel, guild }));
 		return { invite };
 	}
 	client.actions.MessageCreate.handle = function(data) {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
+		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let message = channel.messages.add(data, c.channels.cache.has(channel.id));
 		channel.lastMessageID = data.id;
 		if(message.author) {
@@ -223,7 +222,7 @@ module.exports = client => {
 	client.actions.MessageDelete.handle = function(data) {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
+		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let message = channel.messages.cache.get(data.id);
 		if(message) {
 			channel.messages.cache.delete(message.id);
@@ -239,7 +238,7 @@ module.exports = client => {
 	client.actions.MessageDeleteBulk.handle = function(data) {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
+		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let deleted = new Collection();
 		for(let i = 0; i < data.ids.length; i++) {
 			let message;
@@ -260,12 +259,12 @@ module.exports = client => {
 	client.actions.MessageUpdate.handle = function(data) {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
+		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let message = channel.messages.cache.get(data.id);
 		let old = null;
 		if(message) {
 			message.patch(data);
-			old = message._edits[0];
+			[old] = message._edits;
 			if(message._edits.length > 1) { message._edits.length = 1; }
 		} else {
 			message = channel.messages.add(data, false);
@@ -275,7 +274,7 @@ module.exports = client => {
 	client.actions.MessageReactionAdd.handle = function(data) {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
+		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let user = c.users.cache.get(data.user_id) || c.users.add((data.member || {}).user || {id:data.user_id}, false);
 		let message = channel.messages.cache.get(data.message_id) || channel.messages.add({id:data.message_id}, false);
 		let reaction = message.reactions.cache.get(data.emoji.id || data.emoji.name) || message.reactions.add({emoji:data.emoji,count:null,me:null}, channel.messages.cache.has(data.message_id));
@@ -289,7 +288,7 @@ module.exports = client => {
 	client.actions.MessageReactionRemove.handle = function(data) {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
+		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let user = c.users.cache.get(data.user_id) || c.users.add({id:data.user_id}, false);
 		let message = channel.messages.cache.get(data.message_id) || channel.messages.add({id:data.message_id}, false);
 		let reaction = message.reactions.cache.get(data.emoji.id || data.emoji.name) || message.reactions.add({emoji:data.emoji,count:null,me:null}, channel.messages.cache.has(data.message_id));
@@ -304,7 +303,7 @@ module.exports = client => {
 	client.actions.MessageReactionRemoveAll.handle = function(data) {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
+		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let message = channel.messages.cache.get(data.message_id) || channel.messages.add({id:data.message_id}, false);
 		message.reactions.cache.clear();
 		return { message };
@@ -312,7 +311,7 @@ module.exports = client => {
 	client.actions.MessageReactionRemoveEmoji.handle = function(data) {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : undefined;
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
+		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let message = channel.messages.cache.get(data.message_id) || channel.messages.add({id:data.message_id}, false);
 		let reaction = message.reactions.cache.get(data.emoji.id || data.emoji.name) || message.reactions.add({emoji:data.emoji,count:null,me:null}, channel.messages.cache.has(data.message_id));
 		message.reactions.cache.delete(data.emoji.id || data.emoji.name);
@@ -372,14 +371,14 @@ module.exports = client => {
 		if(c.users.cache.has(data.user_id) && data.member) { guild.members.add(data.member); }
 		if(oldState || newState) { c.emit(Constants.Events.VOICE_STATE_UPDATE, oldState, newState); }
 		if(data.user_id === c.user.id) {
-			c.emit('debug', `[VOICE] received voice state update: ${JSON.stringify(data)}`);
+			c.emit("debug", `[VOICE] received voice state update: ${JSON.stringify(data)}`);
 			c.voice.onVoiceStateUpdate(data);
 		}
 	}
 	client.actions.WebhooksUpdate.handle = function(data) {
 		let c = this.client;
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild?0:1}, guild, false);
+		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		c.emit(Constants.Events.WEBHOOKS_UPDATE, channel);
 	}
 }

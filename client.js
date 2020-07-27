@@ -1,6 +1,9 @@
+"use strict";
+
 require("./init.js");
 const Discord = require("./classes.js");
-const Handlers = require("./actions.js");
+const handlers = require("./actions.js");
+const pkg = require("./package.json");
 
 Discord.Client = class Client extends Discord.Client {
 	constructor(options = {}) {
@@ -16,7 +19,7 @@ Discord.Client = class Client extends Discord.Client {
 			options
 		);
 		super(options);
-		Handlers(this);
+		handlers(this);
 	}
 	sweepUsers(lifetime = 86400) {
 		lifetime *= 1000;
@@ -49,6 +52,6 @@ Discord.Client = class Client extends Discord.Client {
 	}
 }
 
-Discord.version = `${require("./package.json").version} (${Discord.version})`;
+Discord.version = `${pkg.version} (${Discord.version})`;
 
 module.exports = Discord;

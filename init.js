@@ -1,3 +1,5 @@
+"use strict";
+
 const { resolve } = require("path");
 
 const ALPath = resolve(require.resolve("discord.js").replace("index.js","/structures/GuildAuditLogs.js"));
@@ -7,10 +9,10 @@ AL.Entry = class GuildAuditLogsEntry extends AL.Entry {
 		super(logs,guild,data);
 		if(!this.executor) { this.executor = guild.client.users.add(logs._users.find(t => t.id === data.user_id), false); }
 		let c = logs.constructor;
-		let t = c.targetType(data.action_type);
-		if((t === c.Targets.USER || (t === c.Targets.MESSAGE && data.action_type !== c.Actions.MESSAGE_BULK_DELETE)) && data.target_id && !this.target) {
-			this.target = guild.client.users.add(logs._users.find(t => t.id === data.user_id), false);
-		} else if(t === c.Targets.GUILD && !this.target) {
+		let target = c.targetType(data.action_type);
+		if((target === c.Targets.USER || (target === c.Targets.MESSAGE && data.action_type !== c.Actions.MESSAGE_BULK_DELETE)) && data.target_id && !this.target) {
+			this.target = guild.client.users.add(logs._users.find(t => t.id === data.target_id), false);
+		} else if(target === c.Targets.GUILD && !this.target) {
 			this.target = guild.client.guilds.add({ id: data.target_id }, false);
 		}
 	}
@@ -40,7 +42,9 @@ const GC = require(GCPath);
 require.cache[GCPath].exports = class GuildChannel extends GC {
 	constructor(guild, data) {
 		super({client: guild.client}, data);
-		if(!this.client.options.cacheGuilds) {
+		if(this.client.options.cacheGuilds) {
+			this.guild = guild;
+		} else {
 			this._guildID = guild.id;
 			this._shardID = guild.shardID;
 			Object.defineProperty(this, "guild", {
@@ -49,8 +53,6 @@ require.cache[GCPath].exports = class GuildChannel extends GC {
 					return this.client.guilds.cache.get(this._guildID) || this.client.guilds.add({id:this._guildID,shardID:this._shardID}, false);
 				}
 			});
-		} else {
-			this.guild = guild;
 		}
 	}
 	get deletable() {
@@ -63,7 +65,11 @@ const RM = require(RMPath);
 require.cache[RMPath].exports = class ReactionManager extends RM {
 	forge(id) {
 		let emoji = {};
-		id.length > 16 ? emoji.id = id : emoji.name = id;
+		if(isNaN(id)) {
+			emoji.name = id;
+		} else {
+			emoji.id = id;
+		}
 		return this.add({emoji},false);
 	}
 }
