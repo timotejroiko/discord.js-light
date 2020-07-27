@@ -185,9 +185,10 @@ PacketHandlers.MESSAGE_DELETE = (client, packet, shard) => {
 }
 
 PacketHandlers.MESSAGE_DELETE_BULK = (client, packet, shard) => {
+	debugger
 	packet.d.shardID = shard.id;
 	let { messages } = client.actions.MessageDeleteBulk.handle(packet.d);
-	client.emit(Constants.Events.MESSAGE_DELETE_BULK, messages);
+	client.emit(Constants.Events.MESSAGE_BULK_DELETE, messages);
 }
 
 PacketHandlers.MESSAGE_UPDATE = (client, packet, shard) => {
