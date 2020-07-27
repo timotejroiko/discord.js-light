@@ -745,7 +745,7 @@ Object.defineProperty(Discord.MessageMentions.prototype, "members", {
 		let members = new Discord.Collection();
 		for(let member of this._members) {
 			let m = this.guild.members.cache.get(member.user.id) || this.guild.members.add(member,false);
-			members.set(member.id,m);
+			members.set(member.user.id,m);
 		}
 		return members
 	}
