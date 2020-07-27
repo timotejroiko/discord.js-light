@@ -5,11 +5,11 @@ const AL = require(ALPath);
 AL.Entry = class GuildAuditLogsEntry extends AL.Entry {
 	constructor(logs, guild, data) {
 		super(logs,guild,data);
-		if(!this.executor) { this.executor = guild.client.users.add({ id: data.user_id }, false); }
+		if(!this.executor) { this.executor = guild.client.users.add(logs._users.find(t => t.id === data.user_id), false); }
 		let c = logs.constructor;
 		let t = c.targetType(data.action_type);
 		if((t === c.Targets.USER || (t === c.Targets.MESSAGE && data.action_type !== c.Actions.MESSAGE_BULK_DELETE)) && data.target_id && !this.target) {
-			this.target = guild.client.users.add({ id: data.target_id }, false);
+			this.target = guild.client.users.add(logs._users.find(t => t.id === data.user_id), false);
 		} else if(t === c.Targets.GUILD && !this.target) {
 			this.target = guild.client.guilds.add({ id: data.target_id }, false);
 		}
@@ -19,13 +19,19 @@ require.cache[ALPath].exports = class GuildAuditLogs extends AL {
 	constructor(guild, data) {
 		let o = {}
 		for(let i in data) {
-			if(!["users","data.audit_log_entries"].includes(i)) { o[i] = data[i]; }
+			if(!["users","audit_log_entries"].includes(i)) { o[i] = data[i]; }
 		}
+		o.audit_log_entries = [];
 		super(guild,o);
+		this._users = data.users;
 		for(const item of data.audit_log_entries) {
 			const entry = new this.constructor.Entry(this, guild, item);
 			this.entries.set(entry.id, entry);
 		}
+	}
+	static build(...args) {
+		let logs = new this(...args);
+		return Promise.all(logs.entries.map(e => e.target)).then(() => logs);
 	}
 }
 
