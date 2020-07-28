@@ -202,11 +202,6 @@ Discord.Structures.extend("VoiceChannel", V => {
 		}
 		async join() {
 			if(Discord.Constants.browser) { return Promise.reject(new Error("VOICE_NO_BROWSER")); }
-			if(!this.client.channels.cache.has(this.id)) {
-				this.client.channels.cache.set(this.id,this);
-				this.partial = true;
-				await this.fetch();
-			}
 			return this.client.voice.joinChannel(this);
 		}
 		leave() {
@@ -214,7 +209,6 @@ Discord.Structures.extend("VoiceChannel", V => {
 			const connection = this.client.voice.connections.get(this.guild.id);
 			if(connection && connection.channel.id === this.id) {
 				connection.disconnect();
-				if(!this.client.options.cacheChannels) { this.client.channels.remove(this.id); }
 			}
 		}
 	}

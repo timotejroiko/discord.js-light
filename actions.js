@@ -5,7 +5,7 @@ const { Constants, Collection, Channel, DMChannel, Invite } = require("discord.j
 
 module.exports = client => {
 	if(client.voice) {
-		client.voice.onVoiceStateUpdate = async function({ guild_id, session_id, channel_id }) {
+		client.voice.onVoiceStateUpdate = function({ guild_id, session_id, channel_id, shardID }) {
 			let connection = this.connections.get(guild_id);
 			this.client.emit("debug", `[VOICE] connection? ${Boolean(connection)}, ${guild_id} ${session_id} ${channel_id}`);
 			if(!connection) { return; }
@@ -14,12 +14,9 @@ module.exports = client => {
 				this.connections.delete(guild_id);
 				return;
 			}
-			let old = connection.channel;
+			let guild = this.client.guilds.cache.get(guild_id) || this.client.guilds.add({id:guild_id,shardID}, false);
+			connection._channel = this.client.channels.cache.get(channel_id) || this.client.channels.add({id:channel_id,type:2}, guild, false);
 			connection.setSessionID(session_id);
-			connection.channel = await this.client.channels.fetch(channel_id);
-			if(old && !this.client.options.cacheChannels) {
-				this.client.channels.cache.remove(old.id);
-			}
 		}
 	}
 	client.ws.handlePacket = function(packet, shard) {
