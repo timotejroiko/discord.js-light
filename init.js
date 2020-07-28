@@ -11,7 +11,7 @@ require.cache[VCPath].exports = class VoiceConnection extends VC {
 		Object.defineProperty(this, "channel", {
 			enumerable: false,
 			get: function() {
-				return = this.client.channels.cache.get(this._channel.id) || this._channel;
+				return this.client.channels.cache.get(this._channel.id) || this._channel;
 			}
 		});
 	}

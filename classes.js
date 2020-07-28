@@ -200,17 +200,6 @@ Discord.Structures.extend("VoiceChannel", V => {
 			if(this.full && !this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MOVE_MEMBERS, false)) { return false; }
 			return true;
 		}
-		async join() {
-			if(Discord.Constants.browser) { return Promise.reject(new Error("VOICE_NO_BROWSER")); }
-			return this.client.voice.joinChannel(this);
-		}
-		leave() {
-			if(Discord.Constants.browser) { return; }
-			const connection = this.client.voice.connections.get(this.guild.id);
-			if(connection && connection.channel.id === this.id) {
-				connection.disconnect();
-			}
-		}
 	}
 });
 
