@@ -69,7 +69,13 @@ Discord.Structures.extend("GuildMember", G => {
 				if(i !== "user") { d[i] = data[i]; }
 			}
 			super(client, d, guild);
-			if(data.user) { this.user = client.users.add(data.user, data._cache || client.users.cache.has(data.user.id)); }
+			if(data.user) {
+				if(data.user.member) { delete data.user.member; }
+				this._user = client.users.add(data.user, data._cache || client.users.cache.has(data.user.id));
+			}
+		}
+		get user() {
+			return this.client.users.cache.get(this._user.id) || this._user;
 		}
 		_patch(data) {
 			let d = {};
@@ -77,10 +83,13 @@ Discord.Structures.extend("GuildMember", G => {
 				if(i !== "user") { d[i] = data[i]; }
 			}
 			super._patch(d);
-			if(data.user) { this.user = this.client.users.add(data.user, data._cache || this.client.users.cache.has(data.user.id)); }
+			if(data.user) {
+				if(data.user.member) { delete data.user.member; }
+				this._user = this.client.users.add(data.user, data._cache || this.client.users.cache.has(data.user.id));
+			}
 		}
 		equals(member) {
-			return member && this.deleted === member.deleted && this.nickname === member.nickname && this.roles.cache.size === member.roles.cache.size;
+			return member && this.deleted === member.deleted && this.nickname === member.nickname && this._roles.length === member._roles.length;
 		}
 	}
 });
