@@ -31,7 +31,7 @@ The following test is a \~3 hour run (each tick is 10 minutes), with \~3700 guil
 
 ![The Impact of Caching](bench.png)
 
-As you can see, excessive caching can be very costly in terms of memory requirments, especially at scale. By disabling all major caches we were able to reduce memory usage from \~500mb to less than 20mb. Unfortunately neither discord.js nor eris, the two most popular javascript libraries, provide a way to control or disable parts of their caching systems. The ability to selectively disable caches that your bot doesnt need can greatly reduce resource usage, so much that it becomes invaluable at scale.
+As you can see, excessive caching can be very costly in terms of memory requirements, especially at scale. By disabling all major caches we were able to reduce memory usage from \~500mb to less than 20mb. Unfortunately neither discord.js nor eris, the two most popular javascript libraries, provide a way to control or disable parts of their caching systems. The ability to selectively disable caches that your bot doesn't need can greatly reduce resource usage, so much that it becomes invaluable at scale.
 
 More and more projects are being developed with such flexibility in mind, such as `@klasa/core` and `detritus`, and this library brings this much needed caching flexibility to discord.js with as little side effects as possible.
 
@@ -120,7 +120,7 @@ This cache has a very low memory footprint and provides lots of useful informati
 
 ### Channels
 
-Channels have a pretty large impact on memory usage and most common bot features should work normally without them. You only need this cache if you track channel updates or if you want to find channels by anything other than an ID, and even then there might be be more efficient solutions.
+Channels have a pretty large impact on memory usage and most common bot features should work normally without them. You only need this cache if you track channel updates or if you want to find channels by anything other than an ID, and even then there might be more efficient solutions.
 
 ### Overwrites
 
@@ -238,7 +238,7 @@ Fetches a single channel from the `/channels/:id` endpoint. This method is ident
 
 **`returns`** - `Promise (Guild | Collection of Guilds)`
 
-Fetches a single guild from the `/guilds/:id` endpoint, or multiple guilds from the `/users/@me/guilds` endpoint. When fetching multiple guilds, only basic information about each guild is returned. Additionally fetching multiple guilds is extremely slow, taking roughly 20 seconds per 1000 guilds. If you need to fetch thousands of guilds, its much faster to create a new connection to the gateway. Fetching multiple guilds also bypasses the guild cache, whereas fetching a specific guild id will always check the cache first.
+Fetches a single guild from the `/guilds/:id` endpoint, or multiple guilds from the `/users/@me/guilds` endpoint. When fetching multiple guilds, only basic information about each guild is returned. Additionally fetching multiple guilds is extremely slow, taking roughly 20 seconds per 1000 guilds. If you need to fetch thousands of guilds, it's much faster to create a new connection to the gateway. Fetching multiple guilds also bypasses the guild cache, whereas fetching a specific guild id will always check the cache first.
 
 * **`id or options.id (string)`** - id of the guild to fetch. if not provided, fetches all guilds instead.
 * **`cache or options.cache (boolean)`** - whether to cache the results. defaults to true.
@@ -346,7 +346,7 @@ await client.broadcastEval(`
 await client.channels.forge(id).send("message");
 ```
 
-Forge methods avoid unnecessary round trips and give you access to all the api methods of each class, however there isnt any form of data validation, its up to you to provide valid IDs.
+Forge methods avoid unnecessary round trips and give you access to all the api methods of each class, however there isn't any form of data validation, it's up to you to provide valid IDs.
 
 The following forge methods are available:
 
@@ -380,7 +380,7 @@ Creates a Role instance from a role ID.
 
 ### guild.presences.forge(id)
 
-Creates a Presnece instance from a user ID.
+Creates a Presence instance from a user ID.
 
 ### channel.messages.forge(id)
 
@@ -402,7 +402,7 @@ This library includes two additional sweep methods to help with manual cache con
 
 Sweeps all cached Users and Members whose last message is older than the supplied time.
 
-* **`lifetime (number)`** - User's last message age in seconds. Defaults to 86400 (24 hours).
+* **`lifetime (number)`** - User's last message's age in seconds. Defaults to 86400 (24 hours).
 
 ### client.sweepChannels()
 
@@ -412,11 +412,11 @@ Sweeps all cached Users and Members whose last message is older than the supplie
 
 Sweeps all cached Channels whose last message is older than the supplied time.
 
-* **`lifetime (number)`** - Channel's last message age in seconds. Defaults to 86400 (24 hours).
+* **`lifetime (number)`** - Channel's last message's age in seconds. Defaults to 86400 (24 hours).
 
 ## Notes
 
-This project has come a long way and gone through a lot of testing, however it is still somewhat experimental. There might be silly bugs or broken features in untested scenarios. You are encouraged make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you may find.
+This project has come a long way and gone through a lot of testing, however it is still somewhat experimental. There might be silly bugs or broken features in untested scenarios. You are encouraged to make your own tests with your specific use cases and post any issues, questions, suggestions, feature requests or contributions you may find.
 
 You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
