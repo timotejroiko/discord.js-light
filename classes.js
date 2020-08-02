@@ -733,7 +733,7 @@ Object.defineProperty(Discord.MessageMentions.prototype, "channels", {
 Object.defineProperty(Discord.MessageMentions.prototype, "members", {
 	get: function() {
 		if(!this.guild) { return null; }
-		if(!this._members) { this._members = {}; }
+		if(!this._members) { this._members = []; }
 		let members = new Discord.Collection();
 		for(let member of this._members) {
 			let m = this.guild.members.cache.get(member.user.id) || this.guild.members.add(member,false);
