@@ -127,7 +127,7 @@ Discord.Structures.extend("Guild", G => {
 			}
 			if(data.members && Array.isArray(data.members)) {
 				for(let member of data.members) {
-					if(this.client.users.cache.has(member.user.id)) {
+					if(this.client.users.cache.has(member.user.id) || this.client.options.fetchAllMembers) {
 						this.members.add(member);
 					}
 				}
@@ -142,7 +142,7 @@ Discord.Structures.extend("Guild", G => {
 					}
 				}
 			}
-			if(data.voice_states && Array.isArray(data.voice_states) && (!this.client.options.ws.intents || (this.client.options.ws.intents & 128))) {
+			if(data.voice_states && Array.isArray(data.voice_states) && (!this.client.options.ws.intents || (this.client.options.ws.intents & Discord.Intents.FLAGS.GUILD_VOICE_STATES))) {
 				this.voiceStates.cache.clear();
 				for(let voiceState of data.voice_states) {
 					this.voiceStates.add(voiceState);
@@ -495,7 +495,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 			return;
 		}
 		if(!query && !user_ids) {
-			if(this.client.options.ws.intents && !(this.client.options.ws.intents & 2)) {
+			if(this.client.options.ws.intents && !(this.client.options.ws.intents & Discord.Intents.FLAGS.GUILD_MEMBERS)) {
 				j(new Discord.DiscordAPIError("GUILD_MEMBERS_CHUNK", {message:"fetching all members requires the GUILD_MEMBERS intent"}, "Gateway"));
 				return;
 			}

@@ -1,6 +1,47 @@
 "use strict";
 
 const { resolve } = require("path");
+const Permissions = require(resolve(require.resolve("discord.js").replace("index.js","/util/Permissions.js")));
+const Constants = require(resolve(require.resolve("discord.js").replace("index.js","/util/Constants.js")));
+const Intents = require(resolve(require.resolve("discord.js").replace("index.js","/util/Intents.js")));
+
+const SHPath = resolve(require.resolve("discord.js").replace("index.js","/client/websocket/WebSocketShard.js"));
+const SH = require(SHPath);
+require.cache[SHPath].exports = class WebSocketShard extends SH {
+	async emitReady() {
+		let c = this.manager.client;
+		if(c.options.fetchAllMembers && (!c.options.ws.intents || (c.options.ws.intents & Intents.FLAGS.GUILD_MEMBERS))) {
+			let guilds = c.guilds.cache.filter(g => g.shardID === this.id);
+			for(let guild of guilds.values()) {
+				if(!guild.available) {
+					this.manager.debug(`Failed to fetch all members for guild ${guild.id}! Guild not avalable`);
+					continue;
+				}
+				await guild.members.fetch().catch(err => {
+					this.manager.debug(`Failed to fetch all members for guild ${guild.id}! ${err}\n${err.stack}`);
+				});
+			}
+		}
+		this.status = Constants.Status.READY;
+		this.emit(Constants.ShardEvents.ALL_READY, this.expectedGuilds.size ? this.expectedGuilds : void 0);
+	}
+	checkReady() {
+		if(this.readyTimeout) {
+			this.manager.client.clearTimeout(this.readyTimeout);
+			this.readyTimeout = void 0;
+		}
+		if(!this.expectedGuilds.size) {
+			this.debug("Shard received all its guilds. Marking as fully ready.");
+			this.emitReady();
+			return;
+		}
+		this.readyTimeout = this.manager.client.setTimeout(() => {
+			this.debug(`Shard did not receive any more guild packets in 15 seconds. Unavailable guild count: ${this.expectedGuilds.size}`);
+			this.readyTimeout = void 0;
+			this.emitReady();
+		}, 15000);
+	}
+}
 
 const VCPath = resolve(require.resolve("discord.js").replace("index.js","/client/voice/VoiceConnection.js"));
 const VC = require(VCPath);
@@ -75,7 +116,7 @@ require.cache[GCPath].exports = class GuildChannel extends GC {
 		}
 	}
 	get deletable() {
-		return this.guild.roles.cache.size && this.permissionOverwrites.size ? this.permissionsFor(this.client.user).has(1 << 4, false) : false;
+		return this.guild.roles.cache.size && this.permissionOverwrites.size ? this.permissionsFor(this.client.user).has(Permissions.FLAGS.MANAGE_CHANNELS, false) : false;
 	}
 }
 

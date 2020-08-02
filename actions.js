@@ -32,22 +32,10 @@ module.exports = client => {
 		}
 		return true;
 	}
-	client.ws.checkShardsReady = async function() {
+	client.ws.checkShardsReady = function() {
 		if(this.status === Constants.Status.READY) { return; }
 		if(this.shards.size !== this.totalShards || this.shards.some(s => s.status !== Constants.Status.READY)) {
 			return;
-		}
-		this.status = Constants.Status.NEARLY;
-		if(this.client.options.fetchAllMembers && (!this.client.options.ws.intents || (this.client.options.ws.intents & 2))) {
-			try {
-				const promises = this.client.guilds.cache.map(guild => {
-					if(guild.available) { return guild.members.fetch(); }
-					return Promise.resolve();
-				});
-				await Promise.all(promises);
-			} catch (err) {
-				this.debug(`Failed to fetch all members before ready! ${err}\n${err.stack}`);
-			}
 		}
 		this.triggerClientReady();
 	}
