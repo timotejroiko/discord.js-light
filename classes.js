@@ -142,7 +142,7 @@ Discord.Structures.extend("Guild", G => {
 					}
 				}
 			}
-			if(data.voice_states && Array.isArray(data.voice_states) && (this.client.options.ws.intents & 128 || !this.client.options.ws.intents)) {
+			if(data.voice_states && Array.isArray(data.voice_states) && (!this.client.options.ws.intents || (this.client.options.ws.intents & 128))) {
 				this.voiceStates.cache.clear();
 				for(let voiceState of data.voice_states) {
 					this.voiceStates.add(voiceState);
@@ -489,7 +489,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		let { query, time = 60000, withPresences:presences = false } = options;
 		let user_ids = typeof options.user === "string" ? options.user : (Array.isArray(options.user) ? options.user : void 0);
 		let limit = Number.isInteger(options.limit) ? options.limit : 0;
-		let nonce = Date.now().toString(16);
+		let nonce = Date.now().toString(16) + Math.round(Math.random() * 1000000000).toString();
 		if(nonce.length > 32) {
 			j(new RangeError("MEMBER_FETCH_NONCE_LENGTH"));
 			return;

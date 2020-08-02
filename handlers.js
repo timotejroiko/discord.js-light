@@ -71,14 +71,14 @@ PacketHandlers.GUILD_CREATE = (client, { d: data }, shard) => {
 	if(guild) {
 		if(!guild.available && !data.unavailable) {
 			guild._patch(data);
-			if(client.ws.status === Constants.Status.READY && client.options.fetchAllMembers && client.options.ws.intents & 2) {
+			if(client.ws.status === Constants.Status.READY && client.options.fetchAllMembers && (!client.options.ws.intents || (client.options.ws.intents & 2))) {
 				guild.members.fetch().catch(err => client.emit(Constants.Events.DEBUG, `Failed to fetch all members: ${err}\n${err.stack}`));
 			}
 		}
 	} else {
 		guild = client.guilds.add(data,client.options.cacheGuilds);
 		if(client.ws.status === Constants.Status.READY || !client.options.cacheGuilds) {
-			if(client.options.fetchAllMembers && client.options.ws.intents & 2) {
+			if(client.options.fetchAllMembers && (!client.options.ws.intents || (client.options.ws.intents & 2))) {
 				guild.members.fetch().then(() => {
 					client.emit(Constants.Events.GUILD_CREATE, guild);
 				}).catch(err => client.emit(Constants.Events.DEBUG, `Failed to fetch all members: ${err}\n${err.stack}`));

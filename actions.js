@@ -22,21 +22,34 @@ module.exports = client => {
 	client.ws.handlePacket = function(packet, shard) {
 		if(packet && PacketHandlers[packet.t]) {
 			shard.lastPacket = Date.now();
-			if(packet.t === "READY") {
-				PacketHandlers[packet.t](this.client, packet, shard);
-			} else {
-				setImmediate(() => {
-					if(packet.d && packet.d.guild_id && client.options.cacheGuilds) {
-						let g = this.client.guilds.cache.get(packet.d.guild_id);
-						if(g && typeof g.shardID === "undefined") {
-							g.shardID = shard.id;
-						}
-					}
-					PacketHandlers[packet.t](this.client, packet, shard);
-				});
+			if(packet.d && packet.d.guild_id) {
+				let g = this.client.guilds.cache.get(packet.d.guild_id);
+				if(g && typeof g.shardID === "undefined") {
+					g.shardID = shard.id;
+				}
 			}
+			PacketHandlers[packet.t](this.client, packet, shard);
 		}
 		return true;
+	}
+	client.ws.checkShardsReady = async function() {
+		if(this.status === Constants.Status.READY) { return; }
+		if(this.shards.size !== this.totalShards || this.shards.some(s => s.status !== Constants.Status.READY)) {
+			return;
+		}
+		this.status = Constants.Status.NEARLY;
+		if(this.client.options.fetchAllMembers && (!this.client.options.ws.intents || (this.client.options.ws.intents & 2))) {
+			try {
+				const promises = this.client.guilds.cache.map(guild => {
+					if(guild.available) { return guild.members.fetch(); }
+					return Promise.resolve();
+				});
+				await Promise.all(promises);
+			} catch (err) {
+				this.debug(`Failed to fetch all members before ready! ${err}\n${err.stack}`);
+			}
+		}
+		this.triggerClientReady();
 	}
 	client.actions.ChannelCreate.handle = function(data) {
 		let c = this.client;
