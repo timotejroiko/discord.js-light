@@ -14,7 +14,7 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 			let guilds = c.guilds.cache.filter(g => g.shardID === this.id);
 			for(let guild of guilds.values()) {
 				if(!guild.available) {
-					this.manager.debug(`Failed to fetch all members for guild ${guild.id}! Guild not avalable`);
+					this.manager.debug(`Failed to fetch all members for guild ${guild.id}! Guild not available`);
 					continue;
 				}
 				await guild.members.fetch().catch(err => {
