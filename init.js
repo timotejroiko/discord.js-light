@@ -5,6 +5,18 @@ const Permissions = require(resolve(require.resolve("discord.js").replace("index
 const Constants = require(resolve(require.resolve("discord.js").replace("index.js","/util/Constants.js")));
 const Intents = require(resolve(require.resolve("discord.js").replace("index.js","/util/Intents.js")));
 
+const RHPath = resolve(require.resolve("discord.js").replace("index.js","/rest/APIRequest.js"));
+const RH = require(RHPath);
+require.cache[RHPath].exports = class APIRequest extends RH {
+	make() {
+		this.client.emit("rest",{
+			path:this.path,
+			method:this.method
+		});
+		return super.make();
+	}
+}
+
 const SHPath = resolve(require.resolve("discord.js").replace("index.js","/client/websocket/WebSocketShard.js"));
 const SH = require(SHPath);
 require.cache[SHPath].exports = class WebSocketShard extends SH {
