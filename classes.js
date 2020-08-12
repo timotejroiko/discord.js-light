@@ -7,6 +7,18 @@ const Discord = require("discord.js");
 
 Discord.Structures.extend("Message", M => {
 	return class Message extends M {
+		constructor(client, data, channel) {
+			super(client, data, channel);
+			if(!this.client.channels.cache.get(channel.id)) {
+				this._channel = channel;
+				Object.defineProperty(this, "channel", {
+					enumerable: false,
+					get: function() {
+						return this.client.channels.cache.get(this._channel.id) || this._channel;
+					}
+				});
+			}
+		}
 		_patch(data) {
 			let d = {};
 			for(let i in data) {
@@ -51,12 +63,17 @@ Discord.Structures.extend("Message", M => {
 			return this.guild.members.cache.get((this.author || {}).id || (this._member || {}).id) || this._member || null;
 		}
 		get pinnable() {
-			if(this.guild && (!this.guild.roles.cache.size || !this.channel.permissionOverwrites.size)) { return false; }
-			return this.type === Discord.Constants.MessageTypes[0] && (!this.guild || this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false));
+			if(this.type !== Discord.Constants.MessageTypes[0]) { return false; }
+			if(!this.guild) { return true; }
+			if((!this.client.options.cacheRoles && !this.guild.roles.cache.size) || (!this.client.options.cacheOverwrites && !this.channel.permissionOverwrites.size)) { return false; }
+			return this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false);
 		}
 		get deletable() {
-			if(!this.guild || !this.guild.roles.cache.size || !this.channel.permissionOverwrites.size) { return false; }
-			return !this.deleted && (this.author.id === this.client.user.id || (this.guild && this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false)));
+			if(this.deleted) { return false; }
+			if(this.author.id === this.client.user.id) { return true; }
+			if(!this.guild) { return false; }
+			if((!this.client.options.cacheRoles && !this.guild.roles.cache.size) || (!this.client.options.cacheOverwrites && !this.channel.permissionOverwrites.size)) { return false; }
+			return this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false);
 		}
 	}
 });
