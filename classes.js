@@ -642,7 +642,7 @@ Discord.RoleManager.prototype.fetch = async function(id, cache) {
 
 Discord.ReactionUserManager.prototype.fetch = async function({ limit = 100, after, before, cache = true } = {}) {
 	let { message } = this.reaction;
-	let data = await this.client.api.channels[message.channel.id].messages[message.id].reactions[this.reaction.emoji.identifier].get({ query: { limit, before, after } });
+	let data = await this.client.api.channels(message.channel.id).messages(message.id).reactions(this.reaction.emoji.identifier).get({ query: { limit, before, after } });
 	let users = new Discord.Collection();
 	for(let rawUser of data) {
 		let user = this.client.users.add(rawUser, cache || this.client.users.cache.has(rawUser.id));
@@ -735,9 +735,14 @@ Object.defineProperty(Discord.MessageMentions.prototype, "members", {
 		if(!this.guild) { return null; }
 		if(!this._members) { this._members = []; }
 		let members = new Discord.Collection();
-		for(let member of this._members) {
-			let m = this.guild.members.cache.get(member.user.id) || this.guild.members.add(member,false);
-			members.set(member.user.id,m);
+		for(let id of this.users.keys()) {
+			let m = this.guild.members.cache.get(id);
+			if(!m) {
+				let data = this._members.find(member => member.user.id === id);
+				if(!data) { continue; }
+				m = this.guild.members.add(data,false);
+			}
+			members.set(id,m);
 		}
 		return members;
 	}
