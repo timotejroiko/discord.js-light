@@ -9,9 +9,6 @@
 	"repository": {
 		"url": "https://github.com/timotejroiko/discord.js-light.git"
 	},
-	"publishConfig": {
-		"registry": "https://npm.pkg.github.com/"
-	},
 	"keywords": [
 		"discord",
 		"discord.js",
