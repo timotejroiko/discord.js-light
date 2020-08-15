@@ -140,6 +140,11 @@ PacketHandlers.GUILD_MEMBER_UPDATE = (client, { d: data }, shard) => {
 		member = guild.members.add(data, client.users.cache.has(data.user.id));
 		client.emit(Constants.Events.GUILD_MEMBER_UPDATE, null, member);
 	}
+	let user = client.users.cache.get(data.user.id);
+	if(user && data.user.username && !user.equals(data.user)) {
+		let { old, updated } = client.actions.UserUpdate.handle(data.user);
+		client.emit(Constants.Events.USER_UPDATE, old, updated);
+	}
 }
 
 PacketHandlers.GUILD_ROLE_CREATE = (client, packet, shard) => {

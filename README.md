@@ -116,31 +116,31 @@ Below is a quick summary and explanation on caches:
 
 ### Guilds
 
-This cache has a very low memory footprint and provides lots of useful information that most bots will want to use at some point. If disabled, the library will give up control of guilds and instead emit `guildCreate` events as per the Discord API, including the initial `GUILD_CREATE` packets as well as when guilds come back from being unavailable. This is so that you can implement your own guild tracking and/or caching if needed.
+This cache has a very low memory footprint and provides lots of useful information that most bots will want to use at some point. If disabled, the library will give up control of guilds and instead emit `guildCreate` events as per the Discord API, including the initial `GUILD_CREATE` packets as well as when guilds come back from being unavailable. This is so that you can implement your own guild tracking and/or caching. Guilds can also be fetched when needed but some properties may not be available this way.
 
 ### Channels
 
-Channels have a pretty large impact on memory usage and most common bot features should work normally without them. You only need this cache if you track channel updates or if you want to find channels by anything other than an ID, and even then there might be more efficient solutions.
+Channels have a pretty large impact on memory usage and most common bot features should work normally without them. You only need this cache if you track channel updates or if you want to find channels by anything other than an ID, and even then there might be more efficient solutions. Channels can always be fetched when needed.
 
 ### Overwrites
 
-PermissionOverwrites may have a moderate impact on memory usage when channels are cached, and is required for checking permissions on specific channels. Enabling this cache without enabling `cacheChannels` will eliminate its memory footprint but requires you to always fetch a channel before being able to check permissions on it.
+PermissionOverwrites may have a moderate impact on memory usage when channels are cached, and are required for checking permissions on specific channels. Enabling this cache without enabling `cacheChannels` will eliminate its memory footprint but requires you to cache or fetch the channel before being able to check permissions on it. PermissionOverwrites are included when fetching channels if the `withOverwrites` option is enabled.
 
 ### Roles
 
-Roles may have a moderate memory footprint but are required for general permission checking. You can still access Member roles without enabling this cache, but they will be partials instead.
+Roles may have a moderate memory footprint but are required for general permission checking. You can still access Member Roles without enabling this cache, but they will be partials instead, which only contain an ID and nothing else. Roles can also be fecthed when needed.
 
 ### Emojis
 
-Emojis usually have a low memory footprint but are only really needed if you want to loop over emojis, find emojis by name or keep track of emoji updates.
+Emojis usually have a low memory footprint but are only really needed if you want to list emojis often, find emojis by name or keep track of emoji updates, otherwise they can always be fetched when needed.
 
 ### Presences
 
-Presences have a large impact on memory usage and are not needed most of the time. Presences are cached if the User they belong to is cached. Enabling this cache will enable caching of all Presences, including those belonging to uncached Users and Members. You only need this if you want to track people's statuses and activities in real time.
+Presences have a large impact on memory usage and are not needed most of the time. Presences are only cached if the User they belong to is cached but enabling this cache will enable caching of all Presences, including those belonging to uncached Users and Members. You only need this if you want to track people's statuses and activities in real time. Presences are included when fetching members if the `withPresences` option is enabled. Presences require the `GUILD_PRESENCES` intent.
 
 ### Users and Members
 
-Besides the bot user, all other Users and Members are never automatically cached. Having an incomplete user cache is not very useful most of the time, so we prefer an all-or-nothing approach. The `fetchAllMembers` client option can be used to cache all Users and Members, otherwise they must be manually fetched if required. Events that include some User and/or Member data usually do not require fetching as the event itself already contains enough information to provide a complete User/Member object.
+Besides the bot user, all other Users and Members are never automatically cached. Having an incomplete user cache is not very useful most of the time, so we prefer an all-or-nothing approach. The `fetchAllMembers` client option can be used to cache all Users and Members, otherwise they must be manually fetched if required. Events that include some User and/or Member data usually do not require fetching as the event itself already contains enough information to provide a complete User and/or Member object.
 
 ### VoiceStates
 
@@ -148,13 +148,13 @@ Voice States will be cached if the `GUILD_VOICE_STATES` intent is enabled (requi
 
 ### Messages
 
-Messages are cached only if the Channel they belong to is cached. Message caching can be further controlled via discord.js's `messageCacheMaxSize`, `messageCacheLifetime` and `messageSweepInterval` client options as usual. Additionally, the MessageEdits cache only contains the most recent edit.
+Messages are cached only if the Channel they belong to is cached. Message caching can further be controlled via discord.js's `messageCacheMaxSize`, `messageCacheLifetime` and `messageSweepInterval` client options as usual. Additionally, the MessageEdits cache only contains the most recent edit and each new edit will replace the last.
 
 
 
 ## Events
 
-Most events should be identical to the originals aside from the caching behavior and they always emit regardless of caches. When required data is missing, a partial structure where only an id is guaranteed will be given (the `.partial` property is not guaranteed to exist on all partials).
+Most events should be identical to the originals aside from the caching behavior plus they always emit regardless of caching state. When required data is missing, a partial structure where only an id is guaranteed will be given (the `.partial` property is not guaranteed to exist on all partials).
 
 Events that emit past versions of a structure, such as update and delete events, will emit either `null` or partial if not cached instead of not being emitted at all.
 
@@ -197,7 +197,7 @@ Events that emit past versions of a structure, such as update and delete events,
 | voiceStateUpdate | VoiceState?,  VoiceState? | NULL when data does not include a Channel ID (indicates disconnection). Includes some User and Member data |
 | webhookUpdate | Channel | Partial Channel if not cached |
 | shardConnect | Number,  Collection | Non-standard event. Emitted when a shard connects to Discord. Provides a Shard ID and a Collection of Partial Guilds assigned to this shard |
-| rest | Object | Non-standard event. Emitted when the library makes an API request to Discord. Provides an object containing the request method and path. |
+| rest | Object | Non-standard event. Emitted when the library makes an API request to Discord. Provides an object containing the request method, request path and a promise that resolves to the api response including status, headers and content. |
 
 Events that include some User and/or Member data will contain User and/or Member objects even if not cached, for example `message.author` will always contain a full User object, including most of its properties, even if said user is not cached.
 
@@ -225,8 +225,9 @@ Some fetch methods are already included by default in discord.js, others were ad
 Fetches a single channel from the `/channels/:id` endpoint. This method is identical to the original except that it includes an additional `withOverwrites` option.
 
 * **`id or options.id (string)`** - id of the channel to fetch.
-* **`cache or options.cache (boolean)`** - whether to cache the result. defaults to true.
+* **`cache or options.cache (boolean)`** - whether to cache the result if not cached. defaults to true.
 * **`options.withOverwrites (boolean)`** - whether to include permissionOverwrites. always true if `cacheOverwrites` is enabled. defaults to false.
+* **`options.force (boolean)`** - whether to force fetch the channel from the api even if its already cached. defaults to false.
 
 ### client.guilds.fetch()
 
@@ -239,13 +240,14 @@ Fetches a single channel from the `/channels/:id` endpoint. This method is ident
 
 **`returns`** - `Promise (Guild | Collection of Guilds)`
 
-Fetches a single guild from the `/guilds/:id` endpoint, or multiple guilds from the `/users/@me/guilds` endpoint. When fetching multiple guilds, only basic information about each guild is returned. Additionally fetching multiple guilds is extremely slow, taking roughly 20 seconds per 1000 guilds. If you need to fetch thousands of guilds, it's much faster to create a new connection to the gateway. Fetching multiple guilds also bypasses the guild cache, whereas fetching a specific guild id will always check the cache first.
+Fetches a single guild from the `/guilds/:id` endpoint, or multiple guilds from the `/users/@me/guilds` endpoint. When fetching multiple guilds, some guild information may be stripped away by Discord. Additionally fetching multiple guilds is extremely slow, taking roughly 20 seconds per 1000 guilds. If you need to fetch thousands of guilds, it's much faster to create a new connection to the gateway. Fetching multiple guilds also bypasses the guild cache, whereas fetching a specific guild id will always check the cache first.
 
 * **`id or options.id (string)`** - id of the guild to fetch. if not provided, fetches all guilds instead.
 * **`cache or options.cache (boolean)`** - whether to cache the results. defaults to true.
 * **`options.limit (number)`** - max amount of results (0 for no limit). defaults to 0.
 * **`options.before (string)`** - a guild id to search only guilds with a smaller id (0 for any). defaults to 0.
 * **`options.after (string)`** - a guild id to search only guilds with a bigger id (0 for any). defaults to 0.
+* **`options.force (boolean)`** - whether to force fetch the guild from the api even if already cached. defaults to false.
 
 ### guild.channels.fetch()
 
@@ -263,6 +265,7 @@ Fetches channels from the `/guilds/:id/channels` endpoint. This endpoint bypasse
 * **`id or options.id (string)`** - id of the channel to fetch. if not provided, fetches all guild channels instead.
 * **`cache or options.cache (boolean)`** - whether to cache the results. defaults to true.
 * **`options.withOverwrites (boolean)`** - whether to include permissionOverwrites. always true if `cacheOverwrites` is enabled. defaults to false.
+* **`options.force (boolean)`** - whether to force fetch the channel from the api even if its already cached. defaults to false.
 
 ### guild.members.fetch()
 
@@ -286,6 +289,7 @@ Fetches guild members from the gateway or from the `/guilds/:id/members` endpoin
 * **`options.after (string)`** - a user id to search only users with a bigger id (rest only).
 * **`options.withPresences (boolean)`** - whether to include presence data (gateway only, requires the `GUILD_PRESENCES` intent). this option also requires the `cachePresences` client option to be enabled, or that the `cache` option is enabled, or that the relevant users are already cached.
 * **`options.time (number)`** - max amount of time to wait for a response in milliseconds (gateway only). defaults to 60000.
+* **`options.force (boolean)`** - whether to force fetch members even if already cached. defaults to false.
 
 ### guild.emojis.fetch()
 
@@ -293,13 +297,16 @@ Fetches guild members from the gateway or from the `/guilds/:id/members` endpoin
 `.fetch(cache)`  
 `.fetch(id)`  
 `.fetch(id,cache)`  
+`.fetch(id,options)`  
+`.fetch(options)`  
 
 **`returns`** - `Promise (Emoji | Collection of Emojis)`
 
 Fetches guild emojis from the `/guilds/:id/emojis` endpoint.
 
-* **`id (string)`** - the id of the emoji to fetch. if not provided, fetches all guild emojis instead.
-* **`cache (boolean)`** - whether to cache the results. defaults to true.
+* **`id or options.id (string)`** - the id of the emoji to fetch. if not provided, fetches all guild emojis instead.
+* **`cache or cache.id (boolean)`** - whether to cache the results. defaults to true.
+* **`options.force (boolean)`** - whether to force fetch the emoji even if already cached. defaults to false.
 
 ### guild.roles.fetch()
 
@@ -307,13 +314,16 @@ Fetches guild emojis from the `/guilds/:id/emojis` endpoint.
 `.fetch(cache)`  
 `.fetch(id)`  
 `.fetch(id,cache)`  
+`.fetch(id,options)`  
+`.fetch(options)`  
 
 **`returns`** - `Promise (Role | Collection of Roles)`
 
 Fetches guild roles from the `/guilds/:id/roles` endpoint.
 
-* **`id (string)`** - the id of the role to fetch. if not provided, fetches all guild roles instead.
-* **`cache (boolean)`** - whether to cache the results. defaults to true
+* **`id or options.id (string)`** - the id of the role to fetch. if not provided, fetches all guild roles instead.
+* **`cache or options.cache (boolean)`** - whether to cache the results. defaults to true
+* **`options.force (boolean)`** - whether to force fetch the role even if already cached. defaults to false.
 
 ### reaction.users.fetch()
 
@@ -393,7 +403,7 @@ Creates a MessageReaction instance from an emoji id or emoji unicode and the cur
 
 ## Sweep Methods
 
-This library includes two additional sweep methods to help with manual cache control:
+This library includes two additional utility methods to help with manual cache control. Furthermore all discord.js Collections include .sweep() and .clear() methods which can be used to manually clear caches.
 
 ### client.sweepUsers()
 

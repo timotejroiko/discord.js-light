@@ -38,18 +38,6 @@ Discord.Client = class Client extends Discord.Client {
 			guild.channels.cache.sweep(t => !this.channels.cache.has(t.id));
 		}
 	}
-	incrementMaxListeners() {
-		const maxListeners = this.getMaxListeners();
-		if(maxListeners !== 0) {
-			this.setMaxListeners(maxListeners + 1);
-		}
-	}
-	decrementMaxListeners() {
-		const maxListeners = this.getMaxListeners();
-		if(maxListeners !== 0) {
-			this.setMaxListeners(maxListeners - 1);
-		}
-	}
 }
 
 Discord.version = `${pkg.version} (${Discord.version})`;

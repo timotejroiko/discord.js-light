@@ -9,11 +9,13 @@ const RHPath = resolve(require.resolve("discord.js").replace("index.js","/rest/A
 const RH = require(RHPath);
 require.cache[RHPath].exports = class APIRequest extends RH {
 	make() {
+		let response = super.make();
 		this.client.emit("rest",{
 			path:this.path,
-			method:this.method
+			method:this.method,
+			response
 		});
-		return super.make();
+		return response;
 	}
 }
 
@@ -129,20 +131,6 @@ require.cache[GCPath].exports = class GuildChannel extends GC {
 	}
 	get deletable() {
 		return this.guild.roles.cache.size && this.permissionOverwrites.size ? this.permissionsFor(this.client.user).has(Permissions.FLAGS.MANAGE_CHANNELS, false) : false;
-	}
-}
-
-const RMPath = resolve(require.resolve("discord.js").replace("index.js","/managers/ReactionManager.js"));
-const RM = require(RMPath);
-require.cache[RMPath].exports = class ReactionManager extends RM {
-	forge(id) {
-		let emoji = {};
-		if(isNaN(id)) {
-			emoji.name = id;
-		} else {
-			emoji.id = id;
-		}
-		return this.add({emoji},false);
 	}
 }
 
