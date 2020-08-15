@@ -8,13 +8,15 @@ const Intents = require(resolve(require.resolve("discord.js").replace("index.js"
 const RHPath = resolve(require.resolve("discord.js").replace("index.js","/rest/APIRequest.js"));
 const RH = require(RHPath);
 require.cache[RHPath].exports = class APIRequest extends RH {
-	make() {
-		let response = super.make();
-		this.client.emit("rest",{
-			path:this.path,
-			method:this.method,
-			response
-		});
+	async make() {
+		let response = await super.make();
+		if(this.client.listenerCount("rest")) {
+			this.client.emit("rest",{
+				path:this.path,
+				method:this.method,
+				response:response.clone()
+			});
+		}
 		return response;
 	}
 }
