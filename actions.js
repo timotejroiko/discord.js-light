@@ -289,10 +289,13 @@ module.exports = client => {
 	}
 	client.actions.MessageReactionAdd.handle = function(data) {
 		let c = this.client;
-		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
-		let channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
-		let user = c.users.cache.get(data.user_id) || c.users.add((data.member || {}).user || {id:data.user_id}, false);
-		let message = channel.messages.cache.get(data.message_id) || channel.messages.add({id:data.message_id}, false);
+		let channel = data.channel;
+		if(!channel) {
+			let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
+			channel = c.channels.cache.get(data.channel_id) || c.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
+		}
+		let user = data.user || c.users.cache.get(data.user_id) || c.users.add((data.member || {}).user || {id:data.user_id}, false);
+		let message = data.message || channel.messages.cache.get(data.message_id) || channel.messages.add({id:data.message_id}, false);
 		let reaction = message.reactions.cache.get(data.emoji.id || data.emoji.name) || message.reactions.add({emoji:data.emoji,count:null,me:null}, channel.messages.cache.has(data.message_id));
 		reaction.me = data.user_id === c.user.id;
 		if(channel.messages.cache.has(message.id)) {
