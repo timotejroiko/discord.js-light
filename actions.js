@@ -129,7 +129,7 @@ module.exports = client => {
 				let cached = guild.emojis.cache.get(emoji.id);
 				if(cached) {
 					deletions.delete(emoji.id);
-					if(!cached.equal(emoji)) {
+					if(!cached.equals(emoji)) {
 						let result = c.actions.GuildEmojiUpdate.handle(cached,emoji);
 						c.emit(Constants.Events.GUILD_EMOJI_UPDATE, result.old, result.emoji);
 					}
