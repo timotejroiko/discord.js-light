@@ -445,4 +445,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Tamaki](https://top.gg/bot/716322665283059754)
 
+[Animal Bot](https://top.gg/bot/716061781172158464)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
