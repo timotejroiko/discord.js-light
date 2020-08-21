@@ -11,8 +11,6 @@ This library modifies discord.js's internal classes and functions in order to gi
 [![Discord](https://img.shields.io/discord/581072557512458241?label=support%20server)](https://discord.gg/BpeedKh)
 [![Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2Ftimotejroiko&label=support%20me%20on%20patreon)](https://www.patreon.com/timotejroiko)
 
-
-
 ## Why?
 
 Discord.js has been THE javascript discord library for a long time now, and successfully powers thousands of bots, but as your bot grows larger, you will notice a substantial increase in resource usage, especially in memory consumption.
@@ -20,8 +18,6 @@ Discord.js has been THE javascript discord library for a long time now, and succ
 This is because discord.js caches as much as it can in order to avoid hitting the Discord API as well as to better provide many of its features. This can however make your bots feel bloated because the library is caching and processing data that your bot will likely never use.
 
 This library solves the problem by giving developers full control over how and when discord.js should cache the data it receives from the API.
-
-
 
 ## The Impact of Caching
 
@@ -35,8 +31,6 @@ As you can see, excessive caching can be very costly in terms of memory requirem
 
 More and more projects are being developed with such flexibility in mind, such as `@klasa/core` and `detritus`, and this library brings this much needed caching flexibility to discord.js with as little side effects as possible.
 
-
-
 ## Features
 
 * Provides all of discord.js's events without any kind of automated caching
@@ -46,8 +40,6 @@ More and more projects are being developed with such flexibility in mind, such a
 * Most things can be manually fetched and/or cached when needed
 * Drastically lower resource usage at scale
 
-
-
 ## Usage
 
 ### Installation:
@@ -56,7 +48,7 @@ More and more projects are being developed with such flexibility in mind, such a
 
 Optional packages (recommended to reduce bandwidth usage and improve websocket performance). These packages are plug and play, just install and they will be picked up automatically.
 
-```
+```bash
 npm install zlib-sync
 npm install bufferutil
 npm install discordapp/erlpack
@@ -92,8 +84,6 @@ client.login("TOKEN").catch(console.error);
 ```
 
 Generally, usage should be identical to discord.js and you can safely refer to its documentation as long as you respect the caching differences explained below.
-
-
 
 ## Client Options
 
@@ -150,8 +140,6 @@ Voice States will be cached if the `GUILD_VOICE_STATES` intent is enabled (requi
 
 Messages are cached only if the Channel they belong to is cached. Message caching can further be controlled via discord.js's `messageCacheMaxSize`, `messageCacheLifetime` and `messageSweepInterval` client options as usual. Additionally, the MessageEdits cache only contains the most recent edit and each new edit will replace the last.
 
-
-
 ## Events
 
 Most events should be identical to the originals aside from the caching behavior plus they always emit regardless of caching state. When required data is missing, a partial structure where only an id is guaranteed will be given (the `.partial` property is not guaranteed to exist on all partials).
@@ -204,8 +192,6 @@ Events that include some User and/or Member data will contain User and/or Member
 Structures not marked as partial only guarantee the contents of its top-level properties. Linked structures such as message`.channel` or reaction`.message` may still be partials if not previously cached or fetched. This is especially true for Guild objects, which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
 
 Events not listed above should work normally as per the discord.js documentation.
-
-
 
 ## Fetch Methods
 

@@ -83,7 +83,7 @@ const AL = require(ALPath);
 AL.Entry = class GuildAuditLogsEntry extends AL.Entry {
 	constructor(logs, guild, data) {
 		super(logs,guild,data);
-		if(!this.executor) { this.executor = guild.client.users.add(logs._users.find(t => t.id === data.user_id), false); }
+		if(!this.executor) { this.executor = guild.client.users.add(logs._users.find(t => t.id === data.user_id) || {id:data.user_id}, false); }
 		let c = logs.constructor;
 		let target = c.targetType(data.action_type);
 		if((target === c.Targets.USER || (target === c.Targets.MESSAGE && data.action_type !== c.Actions.MESSAGE_BULK_DELETE)) && data.target_id && !this.target) {
