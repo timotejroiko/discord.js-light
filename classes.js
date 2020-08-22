@@ -104,8 +104,8 @@ Discord.Structures.extend("Guild", G => {
 	return class Guild extends G {
 		_patch(data) {
 			if(typeof this.shardID === "undefined" && typeof data.shardID !== "undefined") { this.shardID = data.shardID; }
-			if(!this.emojis) { this.emojis = new Discord.GuildEmojiManager(this); }
 			let d = {};
+			let emojis = Boolean(this.emojis);
 			for(let key in data) {
 				if(!["channels","roles","members","presences","voice_states","emojis"].includes(key)) {
 					d[key] = data[key];
@@ -149,11 +149,17 @@ Discord.Structures.extend("Guild", G => {
 					this.voiceStates.add(voiceState);
 				}
 			}
-			if(data.emojis && Array.isArray(data.emojis) && (this.emojis.cache.size || this.client.options.cacheEmojis)) {
-				this.client.actions.GuildEmojisUpdate.handle({
-					guild_id: this.id,
-					emojis: data.emojis
-				});
+			if(data.emojis && Array.isArray(data.emojis)) {
+				if(emojis) {
+					this.client.actions.GuildEmojisUpdate.handle({
+						guild_id: this.id,
+						emojis: data.emojis
+					});
+				} else if(this.client.options.cacheEmojis) {
+					for(let emoji of data.emojis) {
+						this.emojis.add(emoji);
+					}
+				}
 			}
 		}
 		get nameAcronym() {
