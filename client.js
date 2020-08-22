@@ -32,7 +32,7 @@ Discord.Client = class Client extends Discord.Client {
 	sweepChannels(lifetime = 86400) {
 		lifetime *= 1000;
 		if(this.options.cacheChannels) { return; }
-		let connections = this.voice.connections.map(t => t.channel.id);
+		let connections = this.voice ? this.voice.connections.map(t => t.channel.id) : [];
 		this.channels.cache.sweep(t => !connections.includes(t.id) && (!t.lastMessageID || Date.now() - Discord.SnowflakeUtil.deconstruct(t.lastMessageID).timestamp > lifetime));
 		for(let guild of this.guilds.cache.values()) {
 			guild.channels.cache.sweep(t => !this.channels.cache.has(t.id));
