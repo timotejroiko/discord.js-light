@@ -87,7 +87,7 @@ AL.Entry = class GuildAuditLogsEntry extends AL.Entry {
 		let c = logs.constructor;
 		let target = c.targetType(data.action_type);
 		if((target === c.Targets.USER || (target === c.Targets.MESSAGE && data.action_type !== c.Actions.MESSAGE_BULK_DELETE)) && data.target_id && !this.target) {
-			this.target = guild.client.users.add(logs._users.find(t => t.id === data.target_id), false);
+			this.target = guild.client.users.add(logs._users.find(t => t.id === data.target_id) || { id: data.target_id }, false);
 		} else if(target === c.Targets.GUILD && !this.target) {
 			this.target = guild.client.guilds.add({ id: data.target_id }, false);
 		}
