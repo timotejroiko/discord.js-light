@@ -123,7 +123,7 @@ module.exports = client => {
 	client.actions.GuildEmojisUpdate.handle = function(data) {
 		let c = this.client;
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
-		if(guild.emojis.cache.size) {
+		if(guild.emojis.cache.size || client.options.cacheEmojis) {
 			let deletions = new Map(guild.emojis.cache);
 			for(let emoji of data.emojis) {
 				let cached = guild.emojis.cache.get(emoji.id);
