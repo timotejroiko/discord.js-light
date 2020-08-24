@@ -163,10 +163,10 @@ Discord.Structures.extend("Guild", G => {
 			}
 		}
 		get nameAcronym() {
-			return this.name ? super.nameAcronym() : void 0;
+			return this.name ? super.nameAcronym : void 0;
 		}
 		get joinedAt() {
-			return this.joinedTimestamp ? super.joinedAt() : void 0;
+			return this.joinedTimestamp ? super.joinedAt : void 0;
 		}
 		get owner() {
 			return this.members.cache.get(this.ownerID) || this.members.add({ user: { id: this.ownerID } }, false);
