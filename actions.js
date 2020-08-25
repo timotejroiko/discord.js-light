@@ -42,7 +42,7 @@ module.exports = client => {
 	client.actions.ChannelCreate.handle = function(data) {
 		let c = this.client;
 		let guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
-		let channel = c.channels.add(data, guild, c.channels.cache.has(data.id));
+		let channel = c.channels.add(data, guild, c.options.cacheChannels || c.channels.cache.has(data.id));
 		return { channel };
 	}
 	client.actions.ChannelDelete.handle = function(data) {
@@ -81,7 +81,7 @@ module.exports = client => {
 			}
 			return { old:oldChannel, updated:newChannel };
 		}
-		let channel = c.channels.add(data, guild, false);
+		let channel = c.channels.add(data, guild, c.options.cacheChannels);
 		return { old:null, updated:channel };
 	}
 	client.actions.GuildDelete.handle = function(data) {
@@ -116,7 +116,7 @@ module.exports = client => {
 		if(guild) {
 			old = guild._update(data);
 		} else {
-			guild = c.guilds.add(data, false);
+			guild = c.guilds.add(data, c.options.cacheGuilds);
 		}
 		return { old, updated:guild };
 	}
@@ -182,7 +182,7 @@ module.exports = client => {
 	client.actions.GuildRoleCreate.handle = function(data) {
 		let c = this.client;
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
-		let role = guild.roles.add(data.role, guild.roles.cache.size);
+		let role = guild.roles.add(data.role, c.options.cacheRoles || guild.roles.cache.size);
 		return { role };
 	}
 	client.actions.GuildRoleDelete.handle = function(data) {
@@ -201,7 +201,7 @@ module.exports = client => {
 		if(role) {
 			old = role._update(data.role);
 		} else {
-			role = guild.roles.add(data.role, guild.roles.cache.size);
+			role = guild.roles.add(data.role, c.options.cacheRoles || guild.roles.cache.size);
 		}
 		return { old, updated: role };
 	}
