@@ -280,6 +280,28 @@ Discord.Structures.extend("DMChannel", D => {
 	}
 });
 
+Discord.Structures.extend("TextChannel", T => class TextChannel extends T {
+	async send(content, options) {
+		if (this instanceof Discord.User || this instanceof Discord.GuildMember) {
+			return this.createDM().then(dm => dm.send(content, options));
+		}
+		let apiMessage;
+		if (content instanceof Discord.APIMessage) {
+			apiMessage = content.resolveData();
+		} else {
+			apiMessage = Discord.APIMessage.create(this, content, options).resolveData();
+			if (Array.isArray(apiMessage.data.content)) {
+				return Promise.all(apiMessage.split().map(this.send.bind(this)));
+			}
+		}
+		const { data, files } = await apiMessage.resolveFiles();
+		return this.client.api.channels[this.id].messages.post({ data, files }).then(d => {
+			if(this.guild) { d.guild_id = this.guild.id; }
+			return this.client.actions.MessageCreate.handle(d).message;
+		});
+	}
+});
+
 Discord.Structures.extend("Presence", P => {
 	return class Presence extends P {
 		patch(data) {
