@@ -1,7 +1,13 @@
 import * as Discord from "discord.js"
+export * from "discord.js"
+
+export class Client extends Discord.Client {
+    public sweepUsers(lifetime: number): void;
+    public sweepChannels(lifetime: number): void;
+}
 
 declare module "discord.js-light" {
-    interface ClientOptions extends Discord.ClientOptions {
+    interface ClientOptions {
         cacheChannels?:boolean,
         cacheGuilds?:boolean,
         cachePresences?:boolean,
@@ -9,14 +15,9 @@ declare module "discord.js-light" {
         cacheOverwrites?:boolean,
         cacheEmojis?:boolean
     }
-    interface ClientEvents extends Discord.ClientEvents {
+    interface ClientEvents {
         rest:[{path:string,method:string,response:Promise<Buffer>}],
         shardConnect:[number,Discord.Collection<Discord.Snowflake,Discord.Guild>],
         guildEmojisUpdate:[Discord.Collection<Discord.Snowflake,Discord.GuildEmoji>]
-    }
-    class Client extends Discord.Client {
-        constructor(options?: ClientOptions);
-        public sweepUsers(lifetime: number): void;
-        public sweepChannels(lifetime: number): void;
     }
 }
