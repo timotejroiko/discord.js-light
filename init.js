@@ -4,6 +4,7 @@ const { resolve } = require("path");
 const Permissions = require(resolve(require.resolve("discord.js").replace("index.js","/util/Permissions.js")));
 const Constants = require(resolve(require.resolve("discord.js").replace("index.js","/util/Constants.js")));
 const Intents = require(resolve(require.resolve("discord.js").replace("index.js","/util/Intents.js")));
+const APIMessage = require(resolve(require.resolve("discord.js").replace("index.js","/structures/APIMessage.js")));
 
 const RHPath = resolve(require.resolve("discord.js").replace("index.js","/rest/APIRequest.js"));
 const RH = require(RHPath);
@@ -110,6 +111,30 @@ require.cache[ALPath].exports = class GuildAuditLogs extends AL {
 	static build(...args) {
 		let logs = new this(...args);
 		return Promise.all(logs.entries.map(e => e.target)).then(() => logs);
+	}
+}
+
+const TXPath = resolve(require.resolve("discord.js").replace("index.js","/structures/interfaces/TextBasedChannel.js"));
+const TX = require(TXPath);
+require.cache[TXPath].exports = class TextBasedChannel extends TX {
+	async send(content, options) {
+		if (this.constructor.name === "User" || this.constructor.name === "GuildMember") {
+			return this.createDM().then(dm => dm.send(content, options));
+		}
+		let apiMessage;
+		if (content instanceof APIMessage) {
+			apiMessage = content.resolveData();
+		} else {
+			apiMessage = APIMessage.create(this, content, options).resolveData();
+			if (Array.isArray(apiMessage.data.content)) {
+				return Promise.all(apiMessage.split().map(this.send.bind(this)));
+			}
+		}
+		const { data, files } = await apiMessage.resolveFiles();
+		return this.client.api.channels[this.id].messages.post({ data, files }).then(d => {
+			if(this.guild) { d.guild_id = this.guild.id; }
+			return this.client.actions.MessageCreate.handle(d).message;
+		});
 	}
 }
 
