@@ -700,7 +700,7 @@ Discord.RoleManager.prototype.fetch = async function(id, cache) {
 	}
 	if(typeof options.cache === "undefined") { options.cache = true; }
 	if(options.id) {
-		let existing = this.cache.get(id);
+		let existing = this.cache.get(options.id);
 		if(!options.force && existing) { return existing; }
 	}
 	let roles = await this.client.api.guilds(this.guild.id).roles.get();
