@@ -4,6 +4,9 @@ const PacketHandlers = require("./handlers.js");
 const { Constants, Collection, Channel, DMChannel, Invite } = require("discord.js");
 
 module.exports = client => {
+
+	for (let event of client.options.disabledEvents) delete PacketHandlers[event];
+
 	if(client.voice) {
 		client.voice.onVoiceStateUpdate = function({ guild_id, session_id, channel_id, shardID }) {
 			let connection = this.connections.get(guild_id);
@@ -19,6 +22,7 @@ module.exports = client => {
 			connection.setSessionID(session_id);
 		}
 	}
+
 	client.ws.handlePacket = function(packet, shard) {
 		if(packet && PacketHandlers[packet.t]) {
 			shard.lastPacket = Date.now();
