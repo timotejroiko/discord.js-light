@@ -6,6 +6,8 @@ export class Client extends Discord.Client {
 	public sweepChannels(lifetime: number): void;
 }
 
+type ChannelFetchOptions = { id?: Discord.Snowflake, cache?: boolean, withOverwrites?: boolean, force?: boolean }
+
 declare module "discord.js-light" {
 	interface ClientOptions {
 		cacheChannels?:boolean,
@@ -34,6 +36,7 @@ declare module "discord.js-light" {
 		forge(id: Discord.Snowflake, type: "category"): Discord.CategoryChannel
 		forge(id: Discord.Snowflake, type: "news"): Discord.NewsChannel
 		forge(id: Discord.Snowflake, type: "store"): Discord.StoreChannel
+		fetch(idOrOptions: Discord.Snowflake | boolean | ChannelFetchOptions, cacheOrOptions?: boolean | ChannelFetchOptions) : Promise<Discord.Channel>
 	}
 	interface GuildChannelManager {
 		forge(id: Discord.Snowflake, type?: "text"): Discord.TextChannel
@@ -41,6 +44,7 @@ declare module "discord.js-light" {
 		forge(id: Discord.Snowflake, type: "category"): Discord.CategoryChannel
 		forge(id: Discord.Snowflake, type: "news"): Discord.NewsChannel
 		forge(id: Discord.Snowflake, type: "store"): Discord.StoreChannel
+		fetch(idOrCacheOrOptions?: Discord.Snowflake | boolean | ChannelFetchOptions, cacheOrOptions?: boolean | ChannelFetchOptions) : Promise<Discord.GuildChannel | Discord.Collection<Discord.Snowflake, Discord.GuildChannel>>
 	}
 	interface GuildMemberManager {
 		forge(id: Discord.Snowflake): Discord.GuildMemberManager
@@ -61,6 +65,6 @@ declare module "discord.js-light" {
 		forge(id: Discord.Snowflake | string): Discord.MessageReaction
 	}
 	interface ReactionUserManager {
-		
+
 	}
 }

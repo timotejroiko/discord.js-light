@@ -1,7 +1,7 @@
 {
 	"name": "discord.js-light",
 	"version": "3.2.6",
-	"description": "A discord.js 'anti-caching' framework focused on combating its aggressive caching behavior to prevent excessive resource usage",
+	"description": "All the power of discord.js, zero caching. Say goodbye to exorbitant memory usage!",
 	"main": "client.js",
 	"typings": "./client.d.ts",
 	"scripts": {
