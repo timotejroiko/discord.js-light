@@ -112,7 +112,7 @@ Discord.Structures.extend("Guild", G => {
 				}
 			}
 			super._patch(d);
-			if(data.channels && Array.isArray(data.channels)) {
+			if(Array.isArray(data.channels)) {
 				if(this.client.options.cacheChannels) { this.channels.cache.clear(); }
 				for(let channel of data.channels) {
 					if(this.client.options.cacheChannels || this.client.channels.cache.has(channel.id)) {
@@ -120,13 +120,13 @@ Discord.Structures.extend("Guild", G => {
 					}
 				}
 			}
-			if(data.roles && Array.isArray(data.roles) && (this.roles.cache.size || this.client.options.cacheRoles)) {
+			if(Array.isArray(data.roles) && (this.roles.cache.size || this.client.options.cacheRoles)) {
 				this.roles.cache.clear();
 				for(let role of data.roles) {
 					this.roles.add(role);
 				}
 			}
-			if(data.members && Array.isArray(data.members)) {
+			if(Array.isArray(data.members)) {
 				for(let member of data.members) {
 					if(this.client.users.cache.has(member.user.id) || this.client.options.fetchAllMembers) {
 						this.members.add(member);
@@ -136,20 +136,20 @@ Discord.Structures.extend("Guild", G => {
 					this.members.fetch(this.client.user.id).catch(() => {});
 				}
 			}
-			if(data.presences && Array.isArray(data.presences)) {
+			if(Array.isArray(data.presences)) {
 				for(let presence of data.presences) {
 					if(this.client.users.cache.has(presence.user.id) || this.client.options.cachePresences) {
 						this.presences.add(Object.assign(presence, { guild: this }));
 					}
 				}
 			}
-			if(data.voice_states && Array.isArray(data.voice_states) && (!this.client.options.ws.intents || (this.client.options.ws.intents & Discord.Intents.FLAGS.GUILD_VOICE_STATES))) {
+			if(Array.isArray(data.voice_states) && (!this.client.options.ws.intents || (this.client.options.ws.intents & Discord.Intents.FLAGS.GUILD_VOICE_STATES))) {
 				this.voiceStates.cache.clear();
 				for(let voiceState of data.voice_states) {
 					this.voiceStates.add(voiceState);
 				}
 			}
-			if(data.emojis && Array.isArray(data.emojis)) {
+			if(Array.isArray(data.emojis)) {
 				if(emojis) {
 					this.client.actions.GuildEmojisUpdate.handle({
 						guild_id: this.id,
@@ -432,8 +432,8 @@ Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
 	if(cache) {
 		this.cache.set(channel.id, channel);
 		let g = channel.guild;
-		if(g && this.client.guilds.cache.has(g.id)) {
-			this.client.guilds.cache.get(g.id).channels.add(channel);
+		if(g && (this.client.options.cacheGuilds || this.client.guilds.cache.has(g.id))) {
+			g.channels.add(channel);
 		}
 	}
 	return channel;
