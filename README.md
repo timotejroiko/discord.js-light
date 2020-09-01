@@ -2,7 +2,7 @@
 
 All the power of [discord.js](https://discord.js.org), zero caching.
 
-This library modifies discord.js's internal classes and functions in order to give you full control over its caching behavior. Say goodbye to exorbitant memory usage!
+This library modifies discord.js's internal classes and functions in order to give you full control over its caching behaviour. Say goodbye to exorbitant memory usage!
 
 [![npm](https://img.shields.io/npm/v/discord.js-light?label=current%20version)](https://www.npmjs.com/package/discord.js-light)
 [![GitHub Release Date](https://img.shields.io/github/release-date/timotejroiko/discord.js-light?label=last%20updated)](https://github.com/timotejroiko/discord.js-light/releases)
@@ -97,6 +97,7 @@ The following client options are available to control caching behavior:
 | cacheRoles | boolean | false | Enables caching of all Roles at login |
 | cacheEmojis | boolean | false | Enables caching of all Emojis at login |
 | cachePresences | boolean | false | Enables caching of all Presences. If not enabled, Presences will be cached only for cached Users |
+| disabledEvents | array | [] | An array of Discord events to ignore. Use this in combination with intents for fine tuning of which events your bot should process |
 
 This library implements its own partials system, therefore the `partials` client option is not available. All other discord.js client options continue to be available and should work normally.
 
@@ -187,11 +188,11 @@ Events that emit past versions of a structure, such as update and delete events,
 | shardConnect | Number,  Collection | Non-standard event. Emitted when a shard connects to Discord. Provides a Shard ID and a Collection of Partial Guilds assigned to this shard |
 | rest | Object | Non-standard event. Emitted when the library makes an API request to Discord. Provides an object containing the request method, path and a response buffer |
 
-Events that include some User and/or Member data will contain User and/or Member objects even if not cached, for example `message.author` will always contain a full User object, including most of its properties, even if said user is not cached.
+Events that include some User and/or Member data will contain full or mostly full User and/or Member objects even if not cached, for example `message.author` will always contain a full User object, including most of its properties, even if said user is not cached.
 
 Structures not marked as partial only guarantee the contents of its top-level properties. Linked structures such as message`.channel` or reaction`.message` may still be partials if not previously cached or fetched. This is especially true for Guild objects, which do not include Roles, Emojis, Channels, Members, Presences or VoiceStates unless previously cached, fetched, enabled or other conditions met.
 
-Events not listed above should work normally as per the discord.js documentation.
+Events not listed above should continue to work normally as per the discord.js documentation.
 
 ## Fetch Methods
 
