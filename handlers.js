@@ -55,13 +55,13 @@ PacketHandlers.CHANNEL_PINS_UPDATE = (client, { d: data }, shard) => {
 
 PacketHandlers.GUILD_BAN_ADD = (client, { d: data }, shard) => {
 	let guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.id}, false);
-	let user = client.users.add(data.user, client.users.cache.has(data.user.id));
+	let user = client.users.add(data.user, client.options.fetchAllMembers || client.users.cache.has(data.user.id));
 	client.emit(Constants.Events.GUILD_BAN_ADD, guild, user);
 }
 
 PacketHandlers.GUILD_BAN_REMOVE = (client, { d: data }, shard) => {
 	let guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.id}, false);
-	let user = client.users.add(data.user, client.users.cache.has(data.user.id));
+	let user = client.users.add(data.user, client.options.fetchAllMembers || client.users.cache.has(data.user.id));
 	client.emit(Constants.Events.GUILD_BAN_REMOVE, guild, user);
 }
 
@@ -118,7 +118,7 @@ PacketHandlers.GUILD_MEMBERS_CHUNK = (client, { d: data }, shard) => {
 
 PacketHandlers.GUILD_MEMBER_ADD = (client, { d: data }, shard) => {
 	let guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.id}, false);
-	let member = guild.members.add(data, client.users.cache.has(data.user.id));
+	let member = guild.members.add(data, client.options.fetchAllMembers || client.users.cache.has(data.user.id));
 	if(guild.memberCount) { guild.memberCount++; }
 	client.emit(Constants.Events.GUILD_MEMBER_ADD, member);
 }
@@ -137,7 +137,7 @@ PacketHandlers.GUILD_MEMBER_UPDATE = (client, { d: data }, shard) => {
 			client.emit(Constants.Events.GUILD_MEMBER_UPDATE, old, member);
 		}
 	} else {
-		member = guild.members.add(data, client.users.cache.has(data.user.id));
+		member = guild.members.add(data, client.options.fetchAllMembers || client.users.cache.has(data.user.id));
 		client.emit(Constants.Events.GUILD_MEMBER_UPDATE, null, member);
 	}
 	let user = client.users.cache.get(data.user.id);
@@ -245,7 +245,11 @@ PacketHandlers.TYPING_START = (client, { d: data }, shard) => {
 			guild.members.add(data.member);
 		}
 	} else if(!user) {
-		user = client.users.add((data.member || {}).user || {id:data.user_id}, false);
+		if(data.member && data.user) {
+			user = client.users.add(data.member.user, client.options.fetchAllMembers);
+		} else {
+			user = client.users.add({id:data.user_id}, false);
+		}
 	}
 	let timestamp = new Date(data.timestamp * 1000);
 	if(channel._typing.has(user.id)) {
