@@ -340,15 +340,18 @@ module.exports = client => {
 	client.actions.PresenceUpdate.handle = function(data) {
 		let c = this.client;
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
-		let member = guild.members.cache.get(data.user.id);
-		if(member) {
-			member._update(data);
-		} else if(c.options.fetchAllMembers || c.users.cache.has(data.user.id)) {
-			guild.members.add({user: data.user,	roles: data.roles, nick: data.nick, premium_since: data.premium_since, deaf: false, mute: false});
-		}
 		let presence = guild.presences.cache.get(data.user.id);
 		let old = null;
-		if(presence || c.users.cache.has(data.user.id) || c.options.cachePresences) {
+		if(data.user.username && (c.options.fetchAllMembers || c.users.cache.has(data.user.id))) {
+			let user = c.users.cache.get(data.user.id);
+			if(!user || !user.equals(data.user)) {
+				c.actions.UserUpdate.handle(data.user);
+			}
+		}
+		if(c.users.cache.has(data.user.id)) {
+			guild.members.add(data);
+		}
+		if(presence || c.options.cachePresences || c.users.cache.has(data.user.id)) {
 			if(presence) { old = presence._clone(); }
 			presence = guild.presences.add(Object.assign(data,{guild}));
 		}

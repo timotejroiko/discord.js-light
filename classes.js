@@ -87,7 +87,7 @@ Discord.Structures.extend("GuildMember", G => {
 				if(i !== "user") { d[i] = data[i]; }
 			}
 			super._patch(d);
-			if(data.user) {
+			if(data.user && data.user.username) {
 				if(data.user.member) { delete data.user.member; }
 				let user = this.client.users.add(data.user, data._cache || this.client.options.fetchAllMembers || this.client.users.cache.has(data.user.id));
 				this._userID = user.id;
@@ -182,14 +182,14 @@ Discord.Structures.extend("Guild", G => {
 			if(!id) { throw new Error("FETCH_BAN_RESOLVE_ID"); }
 			return this.client.api.guilds(this.id).bans(id).get().then(ban => ({
 				reason: ban.reason,
-				user: this.client.users.add(ban.user, this.client.users.cache.has(ban.user.id))
+				user: this.client.users.add(ban.user, this.client.options.fetchAllMembers || this.client.users.cache.has(ban.user.id))
 			}));
 		}
 		fetchBans() {
 			return this.client.api.guilds(this.id).bans.get().then(bans => bans.reduce((collection, ban) => {
 				collection.set(ban.user.id, {
 					reason: ban.reason,
-					user: this.client.users.add(ban.user, this.client.users.cache.has(ban.user.id))
+					user: this.client.users.add(ban.user, this.client.options.fetchAllMembers || this.client.users.cache.has(ban.user.id))
 				});
 				return collection;
 			}, new Discord.Collection()));
