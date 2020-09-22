@@ -87,12 +87,13 @@ Discord.Structures.extend("GuildMember", G => {
 				if(i !== "user") { d[i] = data[i]; }
 			}
 			super._patch(d);
-			if(data.user && data.user.username) {
-				if(data.user.member) { delete data.user.member; }
-				let user = this.client.users.add(data.user, data._cache || this.client.options.fetchAllMembers || this.client.users.cache.has(data.user.id));
-				this._userID = user.id;
-				if(!this.client.users.cache.has(user.id)) {
-					this._user = user;
+			if(data.user) {
+				this._userID = data.user.id;
+				if(data.user.username) {
+					let user = this.client.users.add(data.user, data._cache || this.client.options.fetchAllMembers || this.client.users.cache.has(data.user.id));
+					if(!this.client.users.cache.has(user.id)) {
+						this._user = user;
+					}
 				}
 			}
 		}
@@ -119,7 +120,7 @@ Discord.Structures.extend("Guild", G => {
 			}
 			super._patch(d);
 			if(Array.isArray(data.channels)) {
-				if(this.client.options.cacheChannels) { this.channels.cache.clear(); }
+				if(this.client.options.cacheChannels && data.channels.length) { this.channels.cache.clear(); }
 				for(let channel of data.channels) {
 					if(this.client.options.cacheChannels || this.client.channels.cache.has(channel.id)) {
 						this.client.channels.add(channel, this);
