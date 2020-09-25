@@ -438,4 +438,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Game Tracker](https://game-tracker.js.org/)
 
+[Aeon](https://aeon.js.org/)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
