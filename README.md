@@ -1,6 +1,6 @@
 # discord.js-light v3
 
-All the power of [discord.js](https://discord.js.org), zero caching.
+Less power of [discord.js](https://discord.js.org), zero caching.
 
 This library modifies discord.js's internal classes and functions in order to give you full control over its caching behaviour. Say goodbye to exorbitant memory usage!
 
