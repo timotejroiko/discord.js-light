@@ -440,4 +440,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Aeon](https://aeon.js.org/)
 
+[Filo](https://filobot.xyz)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
