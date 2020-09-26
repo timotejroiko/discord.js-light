@@ -442,4 +442,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Filo](https://filobot.xyz)
 
+[T_Moderator_Bot](https://top.gg/bot/412003088732389396)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
