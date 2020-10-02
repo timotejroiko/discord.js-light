@@ -446,4 +446,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [T_Music_Bot](https://top.gg/bot/421978090823090186)
 
+[CalcBot](https://top.gg/bot/674457690646249472)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
