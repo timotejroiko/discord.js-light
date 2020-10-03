@@ -448,4 +448,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [CalcBot](https://top.gg/bot/674457690646249472)
 
+[Infinity](https://top.gg/bot/545926934886875139)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
