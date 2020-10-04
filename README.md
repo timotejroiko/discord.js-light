@@ -51,7 +51,7 @@ Optional packages (recommended to reduce bandwidth usage and improve websocket p
 ```bash
 npm install zlib-sync
 npm install bufferutil
-npm install discordapp/erlpack
+npm install discord/erlpack
 npm install utf-8-validate
 ```
 
