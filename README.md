@@ -452,4 +452,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Skyndalex](https://top.gg/bot/707650198305767434)
 
+[Scathach](https://discord.bots.gg/bots/724047481561809007)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
