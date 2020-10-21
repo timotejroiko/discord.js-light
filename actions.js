@@ -280,9 +280,7 @@ module.exports = client => {
 		let message = channel.messages.cache.get(data.id);
 		let old = null;
 		if(message) {
-			message.patch(data);
-			[old] = message._edits;
-			if(message._edits.length > 1) { message._edits.length = 1; }
+			old = message.patch(data);
 		} else {
 			message = channel.messages.add(data, false);
 		}
@@ -359,6 +357,43 @@ module.exports = client => {
 			if(!presence) { presence = guild.presences.add(Object.assign(data,{guild}), false); }
 			c.emit(Constants.Events.PRESENCE_UPDATE, old, presence);
 		}
+	}
+	client.actions.TypingStart.handle = function(data) {
+		let guild = data.guild_id ? client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.is}, false) : void 0;
+		let channel = client.channels.cache.get(data.channel_id) || client.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
+		let user = client.users.cache.get(data.user_id);
+		if(user) {
+			if(data.member) {
+				if(data.member.user && data.member.user.username && !user.equals(data.member.user)) {
+					client.actions.UserUpdate.handle(data.member.user);
+				}
+				let member = guild.members.cache.get(data.user_id);
+				if(member) {
+					member._update(data.member);
+				} else {
+					guild.members.add(data.member);
+				}
+			}
+		} else {
+			user = data.member && data.member.user ? client.users.add(data.member.user, client.options.fetchAllMembers) : client.users.add({id:data.user_id}, false);
+		}
+		let timestamp = new Date(data.timestamp * 1000);
+		if(channel._typing.has(user.id)) {
+			let typing = channel._typing.get(user.id);
+			typing.lastTimestamp = timestamp;
+			typing.elapsedTime = Date.now() - typing.since;
+			client.clearTimeout(typing.timeout);
+			typing.timeout = this.tooLate(channel,user);
+		} else {
+			channel._typing.set(user.id, {
+				user,
+				since: new Date(),
+				lastTimestamp: new Date(),
+				elapsedTime: 0,
+				timeout: this.tooLate(channel,user)
+			});
+		}
+		client.emit(Constants.Events.TYPING_START, channel, user);
 	}
 	client.actions.UserUpdate.handle = function(data) {
 		let c = this.client;

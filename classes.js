@@ -560,7 +560,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		let { query, time = 60000, withPresences:presences = false } = options;
 		let user_ids = typeof options.user === "string" ? options.user : (Array.isArray(options.user) ? options.user : void 0);
 		let limit = Number.isInteger(options.limit) ? options.limit : 0;
-		let nonce = Date.now().toString(16) + Math.round(Math.random() * 1000000000).toString();
+		let nonce = Discord.Snowflake.generate();
 		if(nonce.length > 32) {
 			j(new RangeError("MEMBER_FETCH_NONCE_LENGTH"));
 			return;

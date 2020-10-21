@@ -15,7 +15,8 @@ Discord.Client = class Client extends Discord.Client {
 				cacheRoles:false,
 				cacheOverwrites:false,
 				cacheEmojis:false,
-				disabledEvents: []
+				disabledEvents: [],
+				messageEditHistoryMaxSize: 1
 			},
 			options
 		);

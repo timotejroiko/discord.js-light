@@ -230,44 +230,9 @@ PacketHandlers.PRESENCE_UPDATE = (client, packet, shard) => {
 	client.actions.PresenceUpdate.handle(packet.d);
 }
 
-PacketHandlers.TYPING_START = (client, { d: data }, shard) => {
-	let guild = data.guild_id ? client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.is}, false) : void 0;
-	let channel = client.channels.cache.get(data.channel_id) || client.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
-	let user = client.users.cache.get(data.user_id);
-	if(user && data.member) {
-		if(data.member.user && data.member.user.username && !user.equals(data.member.user)) {
-			client.actions.UserUpdate.handle(data.member.user);
-		}
-		let member = guild.members.cache.get(data.user_id);
-		if(member) {
-			member._update(data.member);
-		} else {
-			guild.members.add(data.member);
-		}
-	} else if(!user) {
-		if(data.member && data.user) {
-			user = client.users.add(data.member.user, client.options.fetchAllMembers);
-		} else {
-			user = client.users.add({id:data.user_id}, false);
-		}
-	}
-	let timestamp = new Date(data.timestamp * 1000);
-	if(channel._typing.has(user.id)) {
-		let typing = channel._typing.get(user.id);
-		typing.lastTimestamp = timestamp;
-		typing.elapsedTime = Date.now() - typing.since;
-		client.clearTimeout(typing.timeout);
-		typing.timeout = client.setTimeout(() => { channel._typing.delete(user.id); }, 10000);
-	} else {
-		channel._typing.set(user.id, {
-			user,
-			since: new Date(),
-			lastTimestamp: new Date(),
-			elapsedTime: 0,
-			timeout: client.setTimeout(() => { channel._typing.delete(user.id); }, 10000)
-		});
-	}
-	client.emit(Constants.Events.TYPING_START, channel, user);
+PacketHandlers.TYPING_START = (client, packet, shard) => {
+	packet.d.shardID = shard.id;
+	client.actions.TypingStart.handle(packet.d);
 }
 
 PacketHandlers.USER_UPDATE = (client, packet) => {
