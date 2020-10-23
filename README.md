@@ -454,4 +454,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Scathach](https://discord.bots.gg/bots/724047481561809007)
 
+[Guess the Music](https://top.gg/bot/723472531788660757)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
