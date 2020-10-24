@@ -119,7 +119,7 @@ PermissionOverwrites may have a moderate impact on memory usage when channels ar
 
 ### Roles
 
-Roles may have a moderate memory footprint but are required for general permission checking. You can still access Member Roles without enabling this cache, but they will be partials instead, which only contain an ID and nothing else. Roles can also be fecthed when needed.
+Roles may have a moderate memory footprint but are required for general permission checking. You can still access Member Roles without enabling this cache, but they will be partials instead, which only contain an ID and nothing else. Roles can also be fetched when needed.
 
 ### Emojis
 
