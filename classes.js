@@ -291,6 +291,7 @@ Discord.Structures.extend("Presence", P => {
 	return class Presence extends P {
 		patch(data) {
 			super.patch(data);
+			if(!this.guild) { return; }
 			if(!this.guild.members.cache.has(data.user.id)) {
 				this._member = {
 					user: data.user,
@@ -299,6 +300,7 @@ Discord.Structures.extend("Presence", P => {
 					premium_since: data.premium_since
 				}
 			}
+			return this;
 		}
 		get user() {
 			return this.client.users.cache.get(this.userID) || this.client.users.add((this._member || {}).user || {id:this.userID}, false);
