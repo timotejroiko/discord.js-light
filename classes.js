@@ -291,8 +291,7 @@ Discord.Structures.extend("Presence", P => {
 	return class Presence extends P {
 		patch(data) {
 			super.patch(data);
-			if(!this.guild) { return; }
-			if(!this.guild.members.cache.has(data.user.id)) {
+			if(this.guild && !this.guild.members.cache.has(data.user.id)) {
 				this._member = {
 					user: data.user,
 					roles: data.roles,
