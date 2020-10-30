@@ -359,7 +359,7 @@ module.exports = client => {
 		}
 	}
 	client.actions.TypingStart.handle = function(data) {
-		let guild = data.guild_id ? client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.is}, false) : void 0;
+		let guild = data.guild_id ? client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:data.shardID}, false) : void 0;
 		let channel = client.channels.cache.get(data.channel_id) || client.channels.add({id:data.channel_id,type:guild ? 0 : 1}, guild, false);
 		let user = client.users.cache.get(data.user_id);
 		if(user) {
