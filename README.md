@@ -9,7 +9,6 @@ This library modifies discord.js's internal classes and functions in order to gi
 [![npm (prod) dependency version](https://img.shields.io/npm/dependency-version/discord.js-light/discord.js)](https://discord.js.org)
 [![node](https://img.shields.io/node/v/discord.js-light)](https://nodejs.org)
 [![Discord](https://img.shields.io/discord/581072557512458241?label=support%20server)](https://discord.gg/BpeedKh)
-[![Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2Ftimotejroiko&label=support%20me%20on%20patreon)](https://www.patreon.com/timotejroiko)
 
 ## Why?
 
