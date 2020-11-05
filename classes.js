@@ -61,7 +61,7 @@ Discord.Structures.extend("Message", M => {
 			if(!this.guild) { return null; }
 			let id = (this.author || {}).id || (this._member || {}).id;
 			if(!id) { return null; }
-			return this.guild.members.cache.get(id) || this._member || this.guild.members.add({user:{id}},false);
+			return this.guild.members.cache.get(id) || this._member || null;
 		}
 		get pinnable() {
 			if(this.type !== Discord.Constants.MessageTypes[0]) { return false; }
