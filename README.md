@@ -138,7 +138,7 @@ Voice States will be cached if the `GUILD_VOICE_STATES` intent is enabled (requi
 
 ### Messages
 
-Messages are cached only if the Channel they belong to is cached. Message caching can further be controlled via discord.js's `messageCacheMaxSize`, `messageCacheLifetime` and `messageSweepInterval` client options as usual. Additionally, the MessageEdits cache only contains the most recent edit and each new edit will replace the last.
+Messages are cached only if the Channel they belong to is cached. Message caching can further be controlled via discord.js's `messageCacheMaxSize`, `messageCacheLifetime` and `messageSweepInterval` client options as usual. Additionally, the `messageEditHistoryMaxSize` client option is set to `1` by default (instead of infinity).
 
 ## Events
 
