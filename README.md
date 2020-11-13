@@ -326,7 +326,7 @@ Fetches users from the `/channels/:id/messages/:id/reactions/:emoji`. This endpo
 
 ## Forge Methods
 
-Forge methods a set of non-standard methods used to interact with the Discord API without requiring a cache. They provide a way to create Partial instances on demand, which is especially useful when sharding. For example, sending a message to a specific channel ID:
+Forge methods are a set of non-standard methods used to interact with the Discord API without requiring a cache. They provide a way to create Partial instances on demand, which is especially useful when sharding. For example, sending a message to a specific channel ID:
 
 ```js
 // fetch method, requires an API round trip if channel is not available
