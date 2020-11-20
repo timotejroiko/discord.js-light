@@ -514,7 +514,7 @@ Discord.GuildChannelManager.prototype.fetch = async function(id, cache) {
 	return collection;
 }
 
-Discord.GuildChannelManager.prototype.forge = function(id,type) {
+Discord.GuildChannelManager.prototype.forge = function(id,type = "text") {
 	return this.client.channels.add({id,type:Discord.Constants.ChannelTypes[type.toUpperCase()]},this.guild,false);
 }
 
