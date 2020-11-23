@@ -76,6 +76,11 @@ Discord.Structures.extend("Message", M => {
 			if((!this.client.options.cacheRoles && !this.guild.roles.cache.size) || (!this.client.options.cacheOverwrites && !this.channel.permissionOverwrites.size)) { return false; }
 			return this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false);
 		}
+		get crosspostable() {
+			if(this.channel.type !== 'news' || this.type !== 'DEFAULT' || this.flags.has(MessageFlags.FLAGS.CROSSPOSTED)) { return false; }
+			if((!this.client.options.cacheRoles && !this.guild.roles.cache.size) || (!this.client.options.cacheOverwrites && !this.channel.permissionOverwrites.size)) { return false; }
+			return this.channel.viewable &&	this.channel.permissionsFor(this.client.user).has(Permissions.FLAGS.SEND_MESSAGES) && (this.author.id === this.client.user.id || this.channel.permissionsFor(this.client.user).has(Permissions.FLAGS.MANAGE_MESSAGES));
+		  }
 	}
 });
 
@@ -382,6 +387,21 @@ Discord.Invite.prototype._patch = function(data) {
 	this.targetUser = data.target_user ? this.client.users.add(data.target_user,this.client.users.cache.has(data.target_user.id)) : null;
 	this.guild = data.guild instanceof Discord.Guild ? data.guild : this.client.guilds.add(data.guild, this.client.guilds.cache.has(data.guild.id));
 	this.channel = data.channel instanceof Discord.Channel ? data.channel : this.client.channels.add(data.channel, this.guild, this.client.channels.cache.has(data.channel.id));
+}
+
+Discord.GuildTemplate.prototype._patch = function(data) {
+	this.code = data.code;
+	this.name = data.name;
+	this.description = data.description;
+	this.usageCount = data.usage_count;
+	this.creatorID = data.creator_id;
+	this.creator = this.client.users.add(data.creator, this.client.users.has(data.creator.id));
+	this.createdAt = new Date(data.created_at);
+	this.updatedAt = new Date(data.updated_at);
+	this.guildID = data.source_guild_id;
+	this.serializedGuild = data.serialized_source_guild;
+	this.unSynced = 'is_dirty' in data ? Boolean(data.is_dirty) : null;
+	return this;
 }
 
 Discord.UserManager.prototype.forge = function(id) {

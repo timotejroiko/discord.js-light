@@ -128,23 +128,8 @@ PacketHandlers.GUILD_MEMBER_REMOVE = (client, packet, shard) => {
 	client.emit(Constants.Events.GUILD_MEMBER_REMOVE, member);
 }
 
-PacketHandlers.GUILD_MEMBER_UPDATE = (client, { d: data }, shard) => {
-	let guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({id:data.guild_id,shardID:shard.id}, false);
-	let member = guild.members.cache.get(data.user.id);
-	if(member) {
-		let old = member._update(data);
-		if(!member.equals(old)) {
-			client.emit(Constants.Events.GUILD_MEMBER_UPDATE, old, member);
-		}
-	} else {
-		member = guild.members.add(data, client.options.fetchAllMembers || client.users.cache.has(data.user.id));
-		client.emit(Constants.Events.GUILD_MEMBER_UPDATE, null, member);
-	}
-	let user = client.users.cache.get(data.user.id);
-	if(user && data.user.username && !user.equals(data.user)) {
-		let { old, updated } = client.actions.UserUpdate.handle(data.user);
-		client.emit(Constants.Events.USER_UPDATE, old, updated);
-	}
+PacketHandlers.GUILD_MEMBER_UPDATE = (client, packet, shard) => {
+	client.actions.GuildMemberUpdate.handle(packet.d, shard);
 }
 
 PacketHandlers.GUILD_ROLE_CREATE = (client, packet, shard) => {

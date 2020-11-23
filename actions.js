@@ -180,6 +180,31 @@ module.exports = client => {
 		if(guild.memberCount) { guild.memberCount--; }
 		return { guild, member };
 	}
+	client.actions.GuildMemberUpdate.handle = function(data,shard) {
+		let c = this.client;
+		if(data.user.username) {
+			let user = c.users.cache.get(data.user.id);
+			if(!user) {
+				if(c.options.fetchAllMembers) {
+					c.users.add(data.user);
+				}
+			} else if(!user.equals(data.user)) {
+				let { old, updated } = c.actions.UserUpdate.handle(data.user);
+				c.emit(Constants.Events.USER_UPDATE, old, updated);
+			}
+		}
+		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:shard.id}, false);
+		let member = guild.members.cache.get(data.user.id);
+		if(member) {
+			let old = member._update(data);
+			if(!member.equals(old)) {
+				c.emit(Constants.Events.GUILD_MEMBER_UPDATE, old, member);
+			}
+		} else {
+			member = guild.members.add(data, c.users.cache.has(data.user.id));
+			c.emit(Constants.Events.GUILD_MEMBER_UPDATE, null, member);
+		}
+	}
 	client.actions.GuildRoleCreate.handle = function(data) {
 		let c = this.client;
 		let guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({id:data.guild_id,shardID:data.shardID}, false);
