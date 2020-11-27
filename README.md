@@ -453,8 +453,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Scathach](https://discord.bots.gg/bots/724047481561809007)
 
-[Guess the Music](https://top.gg/bot/723472531788660757)
-
 [Music Boat](https://topcord.xyz/bot/735963752259911752)
 
 [Melody](https://melodybot.tk/)
