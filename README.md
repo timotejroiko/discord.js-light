@@ -437,6 +437,8 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Game Tracker](https://game-tracker.js.org/)
 
+[D-Safe](https://discordsafe.com/)
+
 [Aeon](https://aeon.js.org/)
 
 [Filo](https://filobot.xyz)
