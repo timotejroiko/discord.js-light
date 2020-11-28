@@ -451,8 +451,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Infinity](https://top.gg/bot/545926934886875139)
 
-[Skyndalex](https://top.gg/bot/707650198305767434)
-
 [Scathach](https://discord.bots.gg/bots/724047481561809007)
 
 [Music Boat](https://topcord.xyz/bot/735963752259911752)
