@@ -1,6 +1,6 @@
 {
 	"name": "discord.js-light",
-	"version": "3.4.1",
+	"version": "3.4.2",
 	"description": "All the power of discord.js, zero caching. This library modifies discord.js's internal classes and functions in order to give you full control over its caching behaviour.",
 	"main": "client.js",
 	"typings": "./client.d.ts",
