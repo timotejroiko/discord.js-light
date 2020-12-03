@@ -33,9 +33,9 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 			let cancel = false;
 			let timer = c.setTimeout(() => {
 				cancel = true;
-				this.debug(`Shard did not receive any more members in 15 seconds, marking as fully ready`);
+				this.debug(`Shard did not receive any more members in 30 seconds, marking as fully ready`);
 				this.debug(`Failed to fetch members for ${guilds.filter(g => g.members.cache.size < 2).size} guilds`);
-			}, 15000);
+			}, 30000);
 			let progress = c.setInterval(() => {
 				this.debug(`Fetched ${guilds.reduce((a,t) => a + t.members.cache.size, 0)} members`);
 			}, 5000);
@@ -50,7 +50,7 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 					this.debug(`Skipped guild ${guild.id}! Guild not available`);
 					continue;
 				}
-				await guild.members.fetch({time: 5000}).catch(err => {
+				await guild.members.fetch({time: 10000}).catch(err => {
 					this.debug(`Failed to fetch all members for guild ${guild.id}! ${err}`);
 				});
 			}
