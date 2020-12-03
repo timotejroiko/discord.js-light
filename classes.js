@@ -385,8 +385,8 @@ Discord.Invite.prototype._patch = function(data) {
 	this.createdTimestamp = "created_at" in data ? new Date(data.created_at).getTime() : null;
 	this.inviter = data.inviter ? this.client.users.add(data.inviter,this.client.users.cache.has(data.inviter.id)) : null;
 	this.targetUser = data.target_user ? this.client.users.add(data.target_user,this.client.users.cache.has(data.target_user.id)) : null;
-	this.guild = data.guild instanceof Discord.Guild ? data.guild : this.client.guilds.add(data.guild, this.client.guilds.cache.has(data.guild.id));
-	this.channel = data.channel instanceof Discord.Channel ? data.channel : this.client.channels.add(data.channel, this.guild, this.client.channels.cache.has(data.channel.id));
+	this.guild = data.guild instanceof Discord.Guild ? data.guild : this.client.guilds.add(data.guild, false);
+	this.channel = data.channel instanceof Discord.Channel ? data.channel : this.client.channels.add(data.channel, this.guild, false);
 }
 
 Discord.GuildTemplate.prototype._patch = function(data) {
