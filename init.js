@@ -28,17 +28,37 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 	async emitReady() {
 		let c = this.manager.client;
 		if(c.options.fetchAllMembers && (!c.options.ws.intents || (c.options.ws.intents & Intents.FLAGS.GUILD_MEMBERS))) {
+			this.debug(`Attempting to fetch all members`);
 			let guilds = c.guilds.cache.filter(g => g.shardID === this.id);
+			let cancel = false;
+			let timer = c.setTimeout(() => {
+				cancel = true;
+				this.debug(`Shard did not receive any more members in 15 seconds, marking as fully ready`);
+				this.debug(`Failed to fetch members for ${guilds.filter(g => g.members.cache.size < 2).size} guilds`);
+			}, 15000);
+			let progress = c.setInterval(() => {
+				this.debug(`Fetched ${guilds.reduce((a,t) => a + t.members.cache.size, 0)} members`);
+			}, 5000);
+			c.on(Constants.Events.GUILD_MEMBERS_CHUNK, g => {
+				if(guilds.has(g.id)) {
+					timer.refresh();
+				}
+			});
 			for(let guild of guilds.values()) {
+				if(cancel) { break; }
 				if(!guild.available) {
-					this.manager.debug(`Failed to fetch all members for guild ${guild.id}! Guild not available`);
+					this.debug(`Skipped guild ${guild.id}! Guild not available`);
 					continue;
 				}
-				await guild.members.fetch().catch(err => {
-					this.manager.debug(`Failed to fetch all members for guild ${guild.id}! ${err}\n${err.stack}`);
+				await guild.members.fetch({time: 5000}).catch(err => {
+					this.debug(`Failed to fetch all members for guild ${guild.id}! ${err}`);
 				});
 			}
+			c.clearTimeout(timer);
+			c.clearInterval(progress);
+			this.debug(`Fetched ${guilds.reduce((a,t) => a + t.members.cache.size, 0)} members`);
 		}
+		this.debug(`Ready`);
 		this.status = Constants.Status.READY;
 		this.emit(Constants.ShardEvents.ALL_READY, this.expectedGuilds.size ? this.expectedGuilds : void 0);
 	}
@@ -48,12 +68,12 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 			this.readyTimeout = void 0;
 		}
 		if(!this.expectedGuilds.size) {
-			this.debug("Shard received all its guilds. Marking as fully ready.");
+			this.debug("Shard received all its guilds, marking as ready.");
 			this.emitReady();
 			return;
 		}
 		this.readyTimeout = this.manager.client.setTimeout(() => {
-			this.debug(`Shard did not receive any more guild packets in 15 seconds. Unavailable guild count: ${this.expectedGuilds.size}`);
+			this.debug(`Shard did not receive any more guilds in 15 seconds, marking as ready. ${this.expectedGuilds.size} guilds are unavailable`);
 			this.readyTimeout = void 0;
 			this.emitReady();
 		}, 15000);
