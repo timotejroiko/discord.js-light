@@ -457,4 +457,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Melody](https://melodybot.tk/)
 
+[Hydra bot](https://hydrabot.xyz/)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
