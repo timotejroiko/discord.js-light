@@ -633,7 +633,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 			this.client.decrementMaxListeners();
 			j(new Error("GUILD_MEMBERS_TIMEOUT"));
 		}, time);
-		let handler = (guild, data) => {
+		let handler = (_, data) => {
 			if(data.nonce !== nonce) { return; }
 			timeout.refresh();
 			i++;
@@ -667,7 +667,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 					}
 				} else {
 					if(!options.limit && !this.guild.memberCount) { this.guild.memberCount = fetched.size; }
-					r(options.cache && fetched.size >= this.guild.memberCount ? this.cache : fetched);
+					r(fetched);
 				}
 			}
 		}

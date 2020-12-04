@@ -30,30 +30,32 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 		if(c.options.fetchAllMembers && (!c.options.ws.intents || (c.options.ws.intents & Intents.FLAGS.GUILD_MEMBERS))) {
 			this.debug(`Attempting to fetch all members`);
 			let guilds = c.guilds.cache.filter(g => g.shardID === this.id);
-			let timeout = c.options.fetchAllMembersTimeout || 15000;
-			let cancel = false;
-			let timer = c.setTimeout(() => { cancel = true; }, timeout);
-			let progress = c.setInterval(() => { this.debug(`Fetching progress: ${guilds.reduce((a,t) => a + t.members.cache.size, 0)} members`); }, 5000);
-			c.on(Constants.Events.GUILD_MEMBERS_CHUNK, g => {
-				if(guilds.has(g.id)) {
-					timer.refresh();
-				}
-			});
+			let n = 0;
+			let g = 0;
+			let limited = false;
+			let progress = c.setInterval(() => {
+				if(!limited) { this.debug(`Fetching progress: ${g} guilds / ${n} members`); }
+			}, 5000);
 			for(let guild of guilds.values()) {
-				if(cancel) {
-					this.debug(`Shard did not receive any more members in ${timeout} seconds, marking as fully ready`);
-					this.debug(`Failed to fetch members for ${guilds.filter(g => g.members.cache.size < 2).size} guilds`);
-					break;
-				}
 				if(!guild.available) {
 					this.debug(`Skipped guild ${guild.id}! Guild not available`);
 					continue;
 				}
-				await guild.members.fetch({time: c.options.fetchAllMembersGuildTimeout || 5000}).catch(err => {
+				if(this.ratelimit.remaining < 3) {
+					let left = Math.ceil((this.ratelimit.timer._idleStart + this.ratelimit.timer._idleTimeout) - process.uptime() * 1000);
+					this.debug(`Gateway ratelimit reached, continuing in ${left}ms`);
+					limited = true;
+					await new Promise(r => setTimeout(r, left));
+					limited = false;
+				}
+				try {
+					let m = await guild.members.fetch({time: 15000});
+					n += m.size;
+					g++;
+				} catch(err) {
 					this.debug(`Failed to fetch all members for guild ${guild.id}! ${err}`);
-				});
+				}
 			}
-			c.clearTimeout(timer);
 			c.clearInterval(progress);
 			this.debug(`Fetched ${guilds.reduce((a,t) => a + t.members.cache.size, 0)} members`);
 		}
