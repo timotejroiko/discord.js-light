@@ -32,21 +32,16 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 			let guilds = c.guilds.cache.filter(g => g.shardID === this.id);
 			let n = 0;
 			let g = 0;
-			let limited = false;
-			let progress = c.setInterval(() => {
-				if(!limited) { this.debug(`Fetching progress: ${g} guilds / ${n} members`); }
-			}, 5000);
 			for(let guild of guilds.values()) {
 				if(!guild.available) {
 					this.debug(`Skipped guild ${guild.id}! Guild not available`);
 					continue;
 				}
-				if(this.ratelimit.remaining < 3) {
-					let left = Math.ceil((this.ratelimit.timer._idleStart + this.ratelimit.timer._idleTimeout) - process.uptime() * 1000);
+				if(this.ratelimit.remaining < 5) {
+					let left = Math.ceil((this.ratelimit.timer._idleStart + this.ratelimit.timer._idleTimeout) - process.uptime() * 1000) + 1000;
 					this.debug(`Gateway ratelimit reached, continuing in ${left}ms`);
-					limited = true;
+					this.debug(`Fetching progress: ${g} guilds / ${n} members`);
 					await new Promise(r => setTimeout(r, left));
-					limited = false;
 				}
 				try {
 					let m = await guild.members.fetch({time: 15000});
@@ -56,7 +51,6 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 					this.debug(`Failed to fetch all members for guild ${guild.id}! ${err}`);
 				}
 			}
-			c.clearInterval(progress);
 			this.debug(`Fetched ${guilds.reduce((a,t) => a + t.members.cache.size, 0)} members`);
 		}
 		this.debug(`Ready`);
