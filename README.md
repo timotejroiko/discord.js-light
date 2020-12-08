@@ -459,4 +459,8 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Hydra bot](https://hydrabot.xyz/)
 
+[Multipurpose+](https://music.udit.gq/)
+
+[CleverChat](https://top.gg/bot/781834206325243954)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
