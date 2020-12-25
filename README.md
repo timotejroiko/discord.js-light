@@ -41,7 +41,7 @@ More and more projects are being developed with such flexibility in mind, such a
 
 ## Usage
 
-### Installation:
+### Installation
 
 ```npm install discord.js-light```
 
@@ -56,27 +56,27 @@ npm install utf-8-validate
 
 Additionally, using an alternative memory allocator such as [jemalloc](http://jemalloc.net/) can further reduce memory usage by avoiding fragmentation in exchange for slightly higher cpu usage.
 
-### Usage example:
+### Usage example
 
 ```js
 const Discord = require("discord.js-light");
 const client = new Discord.Client({
-	cacheGuilds: true,
-	cacheChannels: false,
-	cacheOverwrites: false,
-	cacheRoles: false,
-	cacheEmojis: false,
-	cachePresences: false
+    cacheGuilds: true,
+    cacheChannels: false,
+    cacheOverwrites: false,
+    cacheRoles: false,
+    cacheEmojis: false,
+    cachePresences: false
 });
 
 client.on("ready", () => {
-	console.log("client ready");
+    console.log("client ready");
 });
 
 client.on("message", message => {
-	if(message.content === "?!ping") {
-		message.reply("pong");
-	}
+    if(message.content === "?!ping") {
+        message.reply("pong");
+    }
 });
 
 client.login("TOKEN").catch(console.error);
@@ -335,8 +335,8 @@ await channel.send("message");
 
 // using broadcastEval if channel is available in another shard
 await client.broadcastEval(`
-	let channel = client.channels.cache.get("${id}");
-	if(channel) { channel.send("message"); }
+    let channel = client.channels.cache.get("${id}");
+    if(channel) { channel.send("message"); }
 `);
 
 // forge method, works from any shard and regardless of caching

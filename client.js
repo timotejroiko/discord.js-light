@@ -6,41 +6,39 @@ const handlers = require("./actions.js");
 const pkg = require("./package.json");
 
 Discord.Client = class Client extends Discord.Client {
-	constructor(options = {}) {
-		options = Object.assign(
-			{
-				cacheChannels:false,
-				cacheGuilds:true,
-				cachePresences:false,
-				cacheRoles:false,
-				cacheOverwrites:false,
-				cacheEmojis:false,
-				disabledEvents: [],
-				messageEditHistoryMaxSize: 1
-			},
-			options
-		);
+	constructor(_options = {}) {
+		const options = {
+			cacheChannels: false,
+			cacheGuilds: true,
+			cachePresences: false,
+			cacheRoles: false,
+			cacheOverwrites: false,
+			cacheEmojis: false,
+			disabledEvents: [],
+			messageEditHistoryMaxSize: 1,
+			..._options
+		};
 		super(options);
 		handlers(this);
 	}
-	sweepUsers(lifetime = 86400) {
-		lifetime *= 1000;
+	sweepUsers(_lifetime = 86400) {
+		const lifetime = _lifetime * 1000;
 		this.users.cache.sweep(t => t.id !== this.user.id && (!t.lastMessageID || Date.now() - Discord.SnowflakeUtil.deconstruct(t.lastMessageID).timestamp > lifetime));
-		for(let guild of this.guilds.cache.values()) {
+		for(const guild of this.guilds.cache.values()) {
 			guild.members.cache.sweep(t => !this.users.cache.has(t.id));
 			guild.presences.cache.sweep(t => !this.users.cache.has(t.id) && !this.options.cachePresences);
 		}
 	}
-	sweepChannels(lifetime = 86400) {
-		lifetime *= 1000;
+	sweepChannels(_lifetime = 86400) {
+		const lifetime = _lifetime * 1000;
 		if(this.options.cacheChannels) { return; }
-		let connections = this.voice ? this.voice.connections.map(t => t.channel.id) : [];
+		const connections = this.voice ? this.voice.connections.map(t => t.channel.id) : [];
 		this.channels.cache.sweep(t => !connections.includes(t.id) && (!t.lastMessageID || Date.now() - Discord.SnowflakeUtil.deconstruct(t.lastMessageID).timestamp > lifetime));
-		for(let guild of this.guilds.cache.values()) {
+		for(const guild of this.guilds.cache.values()) {
 			guild.channels.cache.sweep(t => !this.channels.cache.has(t.id));
 		}
 	}
-}
+};
 
 Discord.version = `${pkg.version} (${Discord.version})`;
 
