@@ -15,7 +15,7 @@ require.cache[RHPath].exports = class APIRequest extends RH {
 			this.client.emit("rest", {
 				path: this.path,
 				method: this.method,
-				response: this.client.restEventIncludeBuffer ? response.clone().buffer() : null
+				response: this.client.options.restEventIncludeBuffer ? response.clone().buffer() : null
 			});
 		}
 		return response;
