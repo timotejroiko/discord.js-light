@@ -1,6 +1,4 @@
-node_modules
-package-lock.json
 bench.png
-.eslintrc.json
+.github
 .gitattributes
-.gitignore
+.eslintrc.json
