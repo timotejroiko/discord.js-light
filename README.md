@@ -185,7 +185,7 @@ Events that emit past versions of a structure, such as update and delete events,
 | voiceStateUpdate | VoiceState?,  VoiceState? | NULL when data does not include a Channel ID (indicates disconnection). Includes some User and Member data |
 | webhookUpdate | Channel | Partial Channel if not cached |
 | shardConnect | Number,  Collection | Non-standard event. Emitted when a shard connects to Discord. Provides a Shard ID and a Collection of Partial Guilds assigned to this shard |
-| rest | Object | Non-standard event. Emitted when the library makes an API request to Discord. Provides an object containing the request method, path and a response buffer |
+| rest | Object | Non-standard event. Emitted when the library makes an API request to Discord. Provides an object containing the request method, path and optionally a response buffer (buffer is only included if the client option restEventIncludeBuffer is set to true) |
 
 Events that include some User and/or Member data will contain full or mostly full User and/or Member objects even if not cached, for example `message.author` will always contain a full User object, including most of its properties, even if said user is not cached.
 
