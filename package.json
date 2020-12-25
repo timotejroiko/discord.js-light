@@ -20,6 +20,10 @@
 		"djs"
 	],
 	"author": "Timotej Valentin Rojko",
+	"funding": {
+		"type": "patreon",
+		"url": "https://patreon.com/timotejroiko"
+	},
 	"license": "Apache-2.0",
 	"dependencies": {
 		"discord.js": "12.5.1"
