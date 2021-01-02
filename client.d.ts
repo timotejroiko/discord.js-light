@@ -2,8 +2,8 @@ import * as Discord from "discord.js"
 export * from "discord.js"
 
 export class Client extends Discord.Client {
-	public sweepUsers(lifetime: number): void;
-	public sweepChannels(lifetime: number): void;
+	public sweepUsers(lifetime?: number): void;
+	public sweepChannels(lifetime?: number): void;
 }
 
 type ChannelFetchOptions = {
