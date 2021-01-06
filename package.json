@@ -26,10 +26,10 @@
 	},
 	"license": "Apache-2.0",
 	"dependencies": {
-		"discord.js": "12.5.1"
+		"discord.js": "github:discordjs/discord.js#c4c817116f868cedb4ec20bcbf90b9b3d382621e"
 	},
 	"engines": {
-		"node": ">=12.0.0"
+		"node": ">=14.0.0"
 	},
 	"devDependencies": {
 		"eslint": "^7.16.0"
