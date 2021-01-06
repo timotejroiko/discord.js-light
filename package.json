@@ -1,8 +1,9 @@
 {
 	"name": "discord.js-light",
-	"version": "2.8.2",
-	"description": "A discord.js 'anti-caching' framework focused on combating its aggressive caching behavior to prevent excessive resource usage",
+	"version": "3.5.0",
+	"description": "All the power of discord.js, zero caching. This library modifies discord.js's internal classes and functions in order to give you full control over its caching behaviour.",
 	"main": "client.js",
+	"typings": "./client.d.ts",
 	"scripts": {
 		"test": "echo \"No test specified\" && exit 0"
 	},
@@ -19,11 +20,18 @@
 		"djs"
 	],
 	"author": "Timotej Valentin Rojko",
+	"funding": {
+		"type": "patreon",
+		"url": "https://patreon.com/timotejroiko"
+	},
 	"license": "Apache-2.0",
 	"dependencies": {
-		"discord.js": "12.2.0"
+		"discord.js": "12.5.1"
 	},
 	"engines": {
 		"node": ">=12.0.0"
+	},
+	"devDependencies": {
+		"eslint": "^7.16.0"
 	}
 }
