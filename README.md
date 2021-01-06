@@ -12,8 +12,10 @@ This library modifies discord.js's internal classes and functions in order to gi
 
 ## Branches
 
-* *master* - latest updates, based on discord.js master branch
-* *v3* - current npm version, based on the discord.js stable branch
+* **master** - latest updates, based on discord.js master branch
+* **v3** - current npm version, based on the discord.js stable branch
+* **v2** - deprecated
+* **v1** - deprecated
 
 ## Why?
 
