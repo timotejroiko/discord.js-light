@@ -59,7 +59,7 @@ declare module "discord.js-light" {
 		disabledEvents?: Array<string>
 	}
 	interface ClientEvents {
-		rest:[{path:string,method:string,response:Promise<Buffer>}]
+		rest:[{path:string,method:string,response?:Promise<Buffer>}]
 		shardConnect:[number,Discord.Collection<Discord.Snowflake,Discord.Guild>]
 		guildEmojisUpdate:[Discord.Collection<Discord.Snowflake,Discord.GuildEmoji>]
 	}
@@ -93,7 +93,7 @@ declare module "discord.js-light" {
 	}
 	interface GuildChannelManager {
 		forge(id: Discord.Snowflake): Discord.TextChannel
-		forge(id: Discord.Snowflake, type: "text"): Discord.TextChannel
+		forge(id: Discord.Snowflake, type?: "text"): Discord.TextChannel
 		forge(id: Discord.Snowflake, type: "voice"): Discord.VoiceChannel
 		forge(id: Discord.Snowflake, type: "category"): Discord.CategoryChannel
 		forge(id: Discord.Snowflake, type: "news"): Discord.NewsChannel
