@@ -1,4 +1,4 @@
-# discord.js-light v3
+# discord.js-light
 
 All the power of [discord.js](https://discord.js.org), zero caching.
 
@@ -9,6 +9,11 @@ This library modifies discord.js's internal classes and functions in order to gi
 [![npm (prod) dependency version](https://img.shields.io/npm/dependency-version/discord.js-light/discord.js)](https://discord.js.org)
 [![node](https://img.shields.io/node/v/discord.js-light)](https://nodejs.org)
 [![Discord](https://img.shields.io/discord/581072557512458241?label=support%20server)](https://discord.gg/BpeedKh)
+
+## Branches
+
+* *master* - latest updates, based on discord.js master branch
+* *v3* - current npm version, based on the discord.js stable branch
 
 ## Why?
 
