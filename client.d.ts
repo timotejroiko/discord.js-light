@@ -78,7 +78,6 @@ declare module "discord.js-light" {
 		fetch(options: GuildFetchOptions): Promise<Discord.Collection<Discord.Snowflake, Discord.Guild>>
 	}
 	interface ChannelManager {
-		forge(id: Discord.Snowflake): Discord.DMChannel
 		forge(id: Discord.Snowflake, type?: "dm"): Discord.DMChannel
 		forge(id: Discord.Snowflake, type: "text"): Discord.TextChannel
 		forge(id: Discord.Snowflake, type: "voice"): Discord.VoiceChannel
@@ -92,7 +91,6 @@ declare module "discord.js-light" {
 		fetch(options: { id: Discord.Snowflake } & ChannelFetchOptions): Promise<Discord.Channel>
 	}
 	interface GuildChannelManager {
-		forge(id: Discord.Snowflake): Discord.TextChannel
 		forge(id: Discord.Snowflake, type?: "text"): Discord.TextChannel
 		forge(id: Discord.Snowflake, type: "voice"): Discord.VoiceChannel
 		forge(id: Discord.Snowflake, type: "category"): Discord.CategoryChannel
