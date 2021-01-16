@@ -125,7 +125,7 @@ module.exports = client => {
 		for(const channel of guild.channels.cache.values()) {
 			c.channels.remove(channel.id);
 		}
-		guild.voiceStates.cache.get(c.user.id)?.connection?.disconnect()
+		guild.voiceStates.cache.get(c.user.id)?.connection?.disconnect();
 		c.guilds.cache.delete(guild.id);
 		guild.deleted = true;
 		this.deleted.set(guild.id, guild);

@@ -472,4 +472,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 [Dio](https://top.gg/bot/565050363313389588)
 
+[Bump Reminder](https://top.gg/bot/735147814878969968)
+
 (using discord.js-light? let me know if you're interested in having your bot listed here)
