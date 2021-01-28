@@ -103,7 +103,8 @@ The following client options are available to control caching behavior:
 | cacheRoles | boolean | false | Enables caching of all Roles at login |
 | cacheEmojis | boolean | false | Enables caching of all Emojis at login |
 | cachePresences | boolean | false | Enables caching of all Presences. If not enabled, Presences will be cached only for cached Users |
-| disabledEvents | array | [] | An array of Discord events to ignore. Use this in combination with intents for fine tuning of which events your bot should process |
+| cacheMembers | boolean | false | Enables caching of Users and Members when possible |
+| disabledEvents | array | [] | An array of Discord events to ignore. Use this in combination with intents for fine tuning which events your bot should process |
 
 This library implements its own partials system, therefore the `partials` client option is not available. All other discord.js client options continue to be available and should work normally.
 
@@ -137,7 +138,7 @@ Presences have a large impact on memory usage and are not needed most of the tim
 
 ### Users and Members
 
-Besides the bot user, all other Users and Members are never automatically cached. Having an incomplete user cache is not very useful most of the time, so we prefer an all-or-nothing approach. The `fetchAllMembers` client option can be used to cache all Users and Members, otherwise they must be manually fetched if required. Events that include some User and/or Member data usually do not require fetching as the event itself already contains enough information to provide a complete User and/or Member object.
+The bot itself is always cached in `client.user` and `guild.me`. All other Users and Members must be manually fetched if this cache is disabled. If enabled, fetching is still recommended because the cache may be incomplete unless you manually fetch all members in all guilds. Events that include some User and/or Member data usually do not require fetching as the event itself already contains enough information to provide a complete User and/or Member object.
 
 ### VoiceStates
 

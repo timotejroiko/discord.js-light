@@ -26,33 +26,6 @@ const SHPath = resolve(require.resolve("discord.js").replace("index.js", "/clien
 const SH = require(SHPath);
 require.cache[SHPath].exports = class WebSocketShard extends SH {
 	async emitReady() {
-		const c = this.manager.client;
-		if(c.options.fetchAllMembers && (!c.options.ws.intents || c.options.ws.intents & Intents.FLAGS.GUILD_MEMBERS)) {
-			this.debug("Attempting to fetch all members");
-			const guilds = c.guilds.cache.filter(g => g.shardID === this.id);
-			let n = 0;
-			let g = 0;
-			for(const guild of guilds.values()) {
-				if(!guild.available) {
-					this.debug(`Skipped guild ${guild.id}! Guild not available`);
-					continue;
-				}
-				if(this.ratelimit.remaining < 5) {
-					const left = Math.ceil(this.ratelimit.timer._idleStart + this.ratelimit.timer._idleTimeout - (process.uptime() * 1000)) + 1000;
-					this.debug(`Gateway ratelimit reached, continuing in ${left}ms`);
-					this.debug(`Fetching progress: ${g} guilds / ${n} members`);
-					await new Promise(r => { setTimeout(r, left); });
-				}
-				try {
-					const m = await guild.members.fetch({ time: 15000 });
-					n += m.size;
-					g++;
-				} catch(err) {
-					this.debug(`Failed to fetch all members for guild ${guild.id}! ${err}`);
-				}
-			}
-			this.debug(`Fetched ${guilds.reduce((a, t) => a + t.members.cache.size, 0)} members`);
-		}
 		this.debug("Ready");
 		this.status = Constants.Status.READY;
 		this.emit(Constants.ShardEvents.ALL_READY, this.expectedGuilds.size ? this.expectedGuilds : void 0);

@@ -64,7 +64,7 @@ PacketHandlers.GUILD_BAN_ADD = (client, { d: data }, shard) => {
 		id: data.guild_id,
 		shardID: shard.id
 	}, false);
-	const user = client.users.add(data.user, client.options.fetchAllMembers || client.users.cache.has(data.user.id));
+	const user = client.users.add(data.user, client.options.cacheMembers || client.users.cache.has(data.user.id));
 	client.emit(Constants.Events.GUILD_BAN_ADD, guild, user);
 };
 
@@ -73,7 +73,7 @@ PacketHandlers.GUILD_BAN_REMOVE = (client, { d: data }, shard) => {
 		id: data.guild_id,
 		shardID: shard.id
 	}, false);
-	const user = client.users.add(data.user, client.options.fetchAllMembers || client.users.cache.has(data.user.id));
+	const user = client.users.add(data.user, client.options.cacheMembers || client.users.cache.has(data.user.id));
 	client.emit(Constants.Events.GUILD_BAN_REMOVE, guild, user);
 };
 
@@ -83,20 +83,14 @@ PacketHandlers.GUILD_CREATE = (client, { d: data }, shard) => {
 	if(guild) {
 		if(!guild.available && !data.unavailable) {
 			guild._patch(data);
-			if(client.ws.status === Constants.Status.READY && client.options.fetchAllMembers && (!client.options.ws.intents || (client.options.ws.intents & Intents.FLAGS.GUILD_MEMBERS))) {
+			if(client.ws.status === Constants.Status.READY && client.options.cacheMembers && (!client.options.ws.intents || (client.options.ws.intents & Intents.FLAGS.GUILD_MEMBERS))) {
 				guild.members.fetch().catch(err => client.emit(Constants.Events.DEBUG, `Failed to fetch all members: ${err}\n${err.stack}`));
 			}
 		}
 	} else {
 		guild = client.guilds.add(data, client.options.cacheGuilds);
 		if(client.ws.status === Constants.Status.READY || !client.options.cacheGuilds) {
-			if(client.options.fetchAllMembers && (!client.options.ws.intents || (client.options.ws.intents & Intents.FLAGS.GUILD_MEMBERS))) {
-				guild.members.fetch().then(() => {
-					client.emit(Constants.Events.GUILD_CREATE, guild);
-				}).catch(err => client.emit(Constants.Events.DEBUG, `Failed to fetch all members: ${err}\n${err.stack}`));
-			} else {
-				client.emit(Constants.Events.GUILD_CREATE, guild);
-			}
+			client.emit(Constants.Events.GUILD_CREATE, guild);
 		}
 	}
 };
@@ -136,7 +130,7 @@ PacketHandlers.GUILD_MEMBER_ADD = (client, { d: data }, shard) => {
 		id: data.guild_id,
 		shardID: shard.id
 	}, false);
-	const member = guild.members.add(data, client.options.fetchAllMembers || client.users.cache.has(data.user.id));
+	const member = guild.members.add(data, client.options.cacheMembers || client.users.cache.has(data.user.id));
 	if(guild.memberCount) { guild.memberCount++; }
 	client.emit(Constants.Events.GUILD_MEMBER_ADD, member);
 };

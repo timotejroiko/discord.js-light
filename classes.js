@@ -25,9 +25,9 @@ Discord.Structures.extend("Message", M => {
 				if(!["author", "member", "mentions", "mention_roles"].includes(i)) { d[i] = data[i]; }
 			}
 			super._patch(d);
-			this.author = data.author ? this.client.users.add(data.author, this.client.options.fetchAllMembers || this.client.users.cache.has(data.author.id)) : null;
+			this.author = data.author ? this.client.users.add(data.author, this.client.options.cacheMembers || this.client.users.cache.has(data.author.id)) : null;
 			if(data.member && this.guild && this.author) {
-				const member = this.guild.members.add(Object.assign(data.member, { user: this.author }), this.client.options.fetchAllMembers || this.client.users.cache.has(data.author.id));
+				const member = this.guild.members.add(Object.assign(data.member, { user: this.author }), this.client.options.cacheMembers || this.client.users.cache.has(data.author.id));
 				if(!this.guild.members.cache.has(this.author.id)) {
 					this._member = member;
 				}
@@ -95,7 +95,7 @@ Discord.Structures.extend("GuildMember", G => {
 			if(data.user) {
 				this._userID = data.user.id;
 				if(data.user.username) {
-					const user = this.client.users.add(data.user, data._cache || this.client.options.fetchAllMembers || this.client.users.cache.has(data.user.id));
+					const user = this.client.users.add(data.user, data._cache || this.client.options.cacheMembers || this.client.users.cache.has(data.user.id));
 					if(!this.client.users.cache.has(user.id)) {
 						this._user = user;
 					}
@@ -140,7 +140,7 @@ Discord.Structures.extend("Guild", G => {
 			}
 			if(Array.isArray(data.members)) {
 				for(const member of data.members) {
-					if(this.client.users.cache.has(member.user.id) || this.client.options.fetchAllMembers) {
+					if(this.client.users.cache.has(member.user.id) || this.client.options.cacheMembers) {
 						this.members.add(member);
 					}
 				}
@@ -188,14 +188,14 @@ Discord.Structures.extend("Guild", G => {
 			if(!id) { throw new Error("FETCH_BAN_RESOLVE_ID"); }
 			return this.client.api.guilds(this.id).bans(id).get().then(ban => ({
 				reason: ban.reason,
-				user: this.client.users.add(ban.user, this.client.options.fetchAllMembers || this.client.users.cache.has(ban.user.id))
+				user: this.client.users.add(ban.user, this.client.options.cacheMembers || this.client.users.cache.has(ban.user.id))
 			}));
 		}
 		fetchBans() {
 			return this.client.api.guilds(this.id).bans.get().then(bans => bans.reduce((collection, ban) => {
 				collection.set(ban.user.id, {
 					reason: ban.reason,
-					user: this.client.users.add(ban.user, this.client.options.fetchAllMembers || this.client.users.cache.has(ban.user.id))
+					user: this.client.users.add(ban.user, this.client.options.cacheMembers || this.client.users.cache.has(ban.user.id))
 				});
 				return collection;
 			}, new Discord.Collection()));
