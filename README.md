@@ -104,7 +104,7 @@ The following client options are available to control caching behavior:
 | cacheEmojis | boolean | false | Enables caching of all Emojis at login |
 | cachePresences | boolean | false | Enables caching of all Presences. If not enabled, Presences will be cached only for cached Users |
 | cacheMembers | boolean | false | Enables caching of Users and Members when possible |
-| disabledEvents | array | [] | An array of Discord events to ignore. Use this in combination with intents for fine tuning which events your bot should process |
+| disabledEvents | array | [] | An array of events to ignore ([Discord events](https://github.com/discordjs/discord.js/blob/master/src/util/Constants.js#L339), not Discord.JS events). Use this in combination with intents for fine tuning which events your bot should process |
 
 This library implements its own partials system, therefore the `partials` client option is not available. All other discord.js client options continue to be available and should work normally.
 
