@@ -432,6 +432,7 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [Dio](https://top.gg/bot/565050363313389588) | ![](https://top.gg/api/widget/servers/565050363313389588.svg) |
 | [D-Safe](https://discordsafe.com/) | ![](https://top.gg/api/widget/servers/461171501715161108.svg) |
 | [Filo](https://filobot.xyz) | ![](https://top.gg/api/widget/servers/568083171455795200.svg) |
+| [QOTD Bot](https://top.gg/bot/713586207119900693) | ![](https://top.gg/api/widget/servers/713586207119900693.svg) |
 | [Astrobot](https://top.gg/bot/astrobot) | ![](https://top.gg/api/widget/servers/344272098488877057.svg) |
 | [Art Prompts](https://eledris.com/art-prompts/discord-bot/) | ![](https://top.gg/api/widget/servers/676880644076339228.svg) |
 | [Bump Reminder](https://top.gg/bot/735147814878969968) | ![](https://top.gg/api/widget/servers/735147814878969968.svg) |
