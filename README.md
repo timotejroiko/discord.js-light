@@ -445,6 +445,7 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [Animal Bot](https://top.gg/bot/716061781172158464) | ![](https://top.gg/api/widget/servers/716061781172158464.svg) |
 | [Denky](https://denkybot.ga/) | ![](https://top.gg/api/widget/servers/704517722100465746.svg) |
 | [T_Moderator_Bot](https://top.gg/bot/412003088732389396) | ![](https://top.gg/api/widget/servers/412003088732389396.svg) |
+| [Anti NSFW](https://top.gg/bot/706054368318980138) | ![](https://top.gg/api/widget/servers/706054368318980138.svg) |
 | [Aeon](https://aeon.js.org/) | ![](https://top.gg/api/widget/servers/635833307510079490.svg) |
 | [FlaviBot](https://flavibot.xyz/) | ![](https://top.gg/api/widget/servers/684773505157431347.svg) |
 | [Tamaki](https://top.gg/bot/716322665283059754) | ![](https://top.gg/api/widget/servers/716322665283059754.svg) |
