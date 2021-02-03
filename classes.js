@@ -109,6 +109,12 @@ Discord.Structures.extend("GuildMember", G => {
 			if(!this._userID) { return null; }
 			return this.client.users.cache.get(this._userID) || this._user || this.client.users.add({ id: this._userID }, false);
 		}
+		get presence() {
+			if(!this.guild.presences.cache.has(this.id) && this._presence) {
+				return this._presence;
+			}
+			return super.presence;
+		}
 	};
 });
 
@@ -585,7 +591,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		case "boolean": options.cache = id; break;
 		case "object": options = id || {}; break;
 	}
-	if(typeof options.user === "string" && typeof options.rest === "undefined") { options.rest = true; }
+	if(typeof options.user === "string" && typeof options.rest === "undefined" && !options.withPresences) { options.rest = true; }
 	if(typeof options.cache === "undefined") { options.cache = true; }
 	if(options.rest) {
 		if(typeof options.user === "string") {
@@ -644,13 +650,13 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 				j(new Discord.DiscordAPIError("GUILD_MEMBERS_CHUNK", { message: "Unknown User" }, "Gateway"));
 				return;
 			}
-			if(this.cache.has(user_ids)) {
+			if(this.cache.has(user_ids) && (!presences || this.client.options.cachePresences) && !options.force) {
 				r(this.cache.get(user_ids));
 				return;
 			}
 		}
 		if(Array.isArray(user_ids)) {
-			if(user_ids.every(t => this.cache.has(t))) {
+			if(user_ids.every(t => this.cache.has(t)) && (!presences || this.client.options.cachePresences) && !options.force) {
 				r(user_ids.map(t => this.cache.get(t)));
 				return;
 			}
@@ -685,8 +691,11 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 			}
 			if(presences && data.presences) {
 				for(const presence of data.presences) {
-					if(this.client.options.cachePresences || this.client.users.cache.has(presence.user.id)) {
-						this.guild.presences.add(Object.assign(presence, { guild: this.guild }));
+					const d = Object.assign(presence, { guild: this.guild });
+					if(options.cache || this.client.options.cachePresences || this.guild.presences.cache.has(presence.user.id) || this.client.users.cache.has(presence.user.id)) {
+						this.guild.presences.add(d);
+					} else {
+						fetched.get(presence.user.id)._presence = this.guild.presences.add(d, false);
 					}
 				}
 			}
