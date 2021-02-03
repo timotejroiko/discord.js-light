@@ -644,13 +644,13 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 				j(new Discord.DiscordAPIError("GUILD_MEMBERS_CHUNK", { message: "Unknown User" }, "Gateway"));
 				return;
 			}
-			if(this.cache.has(user_ids)) {
+			if(this.cache.has(user_ids) && (!presences || this.client.options.cachePresences) && !options.force) {
 				r(this.cache.get(user_ids));
 				return;
 			}
 		}
 		if(Array.isArray(user_ids)) {
-			if(user_ids.every(t => this.cache.has(t))) {
+			if(user_ids.every(t => this.cache.has(t)) && (!presences || this.client.options.cachePresences) && !options.force) {
 				r(user_ids.map(t => this.cache.get(t)));
 				return;
 			}
