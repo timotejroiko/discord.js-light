@@ -10,6 +10,13 @@ This library modifies discord.js's internal classes and functions in order to gi
 [![node](https://img.shields.io/node/v/discord.js-light)](https://nodejs.org)
 [![Discord](https://img.shields.io/discord/581072557512458241?label=support%20server)](https://discord.gg/BpeedKh)
 
+## Branches
+
+* **master** - latest updates, based on the discord.js master branch
+* **v3** - current npm version, based on the discord.js stable branch
+* **v2** - deprecated
+* **v1** - deprecated
+
 ## Why?
 
 Discord.js has been THE javascript discord library for a long time now, and successfully powers thousands of bots, but as your bot grows larger, you will notice a substantial increase in resource usage, especially in memory consumption.
@@ -96,7 +103,7 @@ The following client options are available to control caching behavior:
 | cacheRoles | boolean | false | Enables caching of all Roles at login |
 | cacheEmojis | boolean | false | Enables caching of all Emojis at login |
 | cachePresences | boolean | false | Enables caching of all Presences. If not enabled, Presences will be cached only for cached Users |
-| disabledEvents | array | [] | An array of Discord events to ignore. Use this in combination with intents for fine tuning of which events your bot should process |
+| disabledEvents | array | [] | An array of events to ignore ([Discord events](https://github.com/discordjs/discord.js/blob/master/src/util/Constants.js#L339), not Discord.JS events). Use this in combination with intents for fine tuning which events your bot should process |
 
 This library implements its own partials system, therefore the `partials` client option is not available. All other discord.js client options continue to be available and should work normally.
 
@@ -419,50 +426,34 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 
 ## Bots using discord.js-light
 
-[Astrobot](https://top.gg/bot/astrobot)
-
-[Message Viewer](https://top.gg/bot/642052166982303754)
-
-[Helper](https://top.gg/bot/409538753997307915)
-
-[Art Prompts](https://eledris.com/art-prompts/discord-bot/)
-
-[Xeno](https://github.com/NathanPenwill/Xeno/)
-
-[Tamaki](https://top.gg/bot/716322665283059754)
-
-[Animal Bot](https://top.gg/bot/716061781172158464)
-
-[Denky](https://denkybot.ga/)
-
-[Game Tracker](https://game-tracker.js.org/)
-
-[D-Safe](https://discordsafe.com/)
-
-[Aeon](https://aeon.js.org/)
-
-[Filo](https://filobot.xyz)
-
-[T_Moderator_Bot](https://top.gg/bot/412003088732389396)
-
-[T_Music_Bot](https://top.gg/bot/421978090823090186)
-
-[CalcBot](https://top.gg/bot/674457690646249472)
-
-[Infinity](https://top.gg/bot/545926934886875139)
-
-[Scathach](https://discord.bots.gg/bots/724047481561809007)
-
-[Music Boat](https://topcord.xyz/bot/735963752259911752)
-
-[Melody](https://melodybot.tk/)
-
-[Hydra bot](https://hydrabot.xyz/)
-
-[Multipurpose+](https://music.udit.gq/)
-
-[CleverChat](https://top.gg/bot/781834206325243954)
-
-[Dio](https://top.gg/bot/565050363313389588)
+| Bot | Servers |
+|-|-|
+| [Dio](https://top.gg/bot/565050363313389588) | ![](https://top.gg/api/widget/servers/565050363313389588.svg) |
+| [D-Safe](https://discordsafe.com/) | ![](https://top.gg/api/widget/servers/461171501715161108.svg) |
+| [Filo](https://filobot.xyz) | ![](https://top.gg/api/widget/servers/568083171455795200.svg) |
+| [QOTD Bot](https://top.gg/bot/713586207119900693) | ![](https://top.gg/api/widget/servers/713586207119900693.svg) |
+| [Astrobot](https://top.gg/bot/astrobot) | ![](https://top.gg/api/widget/servers/344272098488877057.svg) |
+| [Art Prompts](https://eledris.com/art-prompts/discord-bot/) | ![](https://top.gg/api/widget/servers/676880644076339228.svg) |
+| [Bump Reminder](https://top.gg/bot/735147814878969968) | ![](https://top.gg/api/widget/servers/735147814878969968.svg) |
+| [Helper](https://top.gg/bot/409538753997307915) | ![](https://top.gg/api/widget/servers/409538753997307915.svg) |
+| [CalcBot](https://top.gg/bot/674457690646249472) | ![](https://top.gg/api/widget/servers/674457690646249472.svg) |
+| [Scathach](https://discord.bots.gg/bots/724047481561809007) | ![](https://top.gg/api/widget/servers/724047481561809007.svg) |
+| [Hydra bot](https://hydrabot.xyz/) | ![](https://top.gg/api/widget/servers/716708153143590952.svg) |
+| [Game Tracker](https://game-tracker.js.org/) | ![](https://top.gg/api/widget/servers/475421235950518292.svg) |
+| [Melody](https://melodybot.tk/) | ![](https://top.gg/api/widget/servers/739725994344316968.svg) |
+| [Animal Bot](https://top.gg/bot/716061781172158464) | ![](https://top.gg/api/widget/servers/716061781172158464.svg) |
+| [Denky](https://denkybot.ga/) | ![](https://top.gg/api/widget/servers/704517722100465746.svg) |
+| [T_Moderator_Bot](https://top.gg/bot/412003088732389396) | ![](https://top.gg/api/widget/servers/412003088732389396.svg) |
+| [Anti NSFW](https://top.gg/bot/706054368318980138) | ![](https://top.gg/api/widget/servers/706054368318980138.svg) |
+| [Aeon](https://aeon.js.org/) | ![](https://top.gg/api/widget/servers/635833307510079490.svg) |
+| [FlaviBot](https://flavibot.xyz/) | ![](https://top.gg/api/widget/servers/684773505157431347.svg) |
+| [Tamaki](https://top.gg/bot/716322665283059754) | ![](https://top.gg/api/widget/servers/716322665283059754.svg) |
+| [CleverChat](https://top.gg/bot/781834206325243954) | ![](https://top.gg/api/widget/servers/781834206325243954.svg) |
+| [T_Music_Bot](https://top.gg/bot/421978090823090186) | ![](https://top.gg/api/widget/servers/421978090823090186.svg) |
+| [Music Boat](https://topcord.xyz/bot/735963752259911752) | ![](https://top.gg/api/widget/servers/735963752259911752.svg) |
+| [Message Viewer](https://top.gg/bot/642052166982303754) | ![](https://top.gg/api/widget/servers/642052166982303754.svg) |
+| [Infinity](https://top.gg/bot/545926934886875139) |  |
+| [Multipurpose+](https://music.udit.gq/) |  |
+| [Xeno](https://github.com/NathanPenwill/Xeno/) |  |
 
 (using discord.js-light? let me know if you're interested in having your bot listed here)
