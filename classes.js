@@ -585,7 +585,7 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		case "boolean": options.cache = id; break;
 		case "object": options = id || {}; break;
 	}
-	if(typeof options.user === "string" && typeof options.rest === "undefined") { options.rest = true; }
+	if(typeof options.user === "string" && typeof options.rest === "undefined" && !options.withPresences) { options.rest = true; }
 	if(typeof options.cache === "undefined") { options.cache = true; }
 	if(options.rest) {
 		if(typeof options.user === "string") {
