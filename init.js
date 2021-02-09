@@ -3,7 +3,6 @@
 const { resolve } = require("path");
 const Permissions = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Permissions.js")));
 const Constants = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Constants.js")));
-const Intents = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Intents.js")));
 const APIMessage = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/APIMessage.js")));
 
 const RHPath = resolve(require.resolve("discord.js").replace("index.js", "/rest/APIRequest.js"));
@@ -25,7 +24,7 @@ require.cache[RHPath].exports = class APIRequest extends RH {
 const SHPath = resolve(require.resolve("discord.js").replace("index.js", "/client/websocket/WebSocketShard.js"));
 const SH = require(SHPath);
 require.cache[SHPath].exports = class WebSocketShard extends SH {
-	async emitReady() {
+	emitReady() {
 		this.debug("Ready");
 		this.status = Constants.Status.READY;
 		this.emit(Constants.ShardEvents.ALL_READY, this.expectedGuilds.size ? this.expectedGuilds : void 0);
