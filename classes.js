@@ -490,6 +490,12 @@ Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
 	return channel;
 };
 
+Discord.ChannelManager.prototype.remove = function(id) {
+	const channel = this.cache.get(id);
+	if(channel && channel.guild) {channel.guild.channels.cache.delete(id);}
+	this.cache.delete(id);
+};
+
 Discord.ChannelManager.prototype.fetch = async function(id, cache, force) {
 	let options = {};
 	switch(typeof cache) {
