@@ -53,7 +53,10 @@ Discord.Structures.extend("Message", M => {
 			}
 			if(data.mention_roles && data.mention_roles.length && this.guild) {
 				for(const role of data.mention_roles) {
-					this.mentions.roles.set(role, this.guild.roles.cache.get(role) || this.guild.roles.add({ id: role }, false));
+					this.mentions.roles.set(role, this.guild.roles.cache.get(role) || this.guild.roles.add({
+						id: role,
+						permissions: 0
+					}, false));
 				}
 			}
 		}
@@ -843,7 +846,10 @@ Discord.MessageManager.prototype.forge = function(id) {
 
 Object.defineProperty(Discord.RoleManager.prototype, "everyone", {
 	get: function() {
-		return this.cache.get(this.guild.id) || this.guild.roles.add({ id: this.guild.id }, false);
+		return this.cache.get(this.guild.id) || this.guild.roles.add({
+			id: this.guild.id,
+			permissions: 0
+		}, false);
 	}
 });
 
@@ -853,7 +859,10 @@ Object.defineProperty(Discord.GuildMemberRoleManager.prototype, "_roles", {
 		const roles = new Discord.Collection();
 		roles.set(everyone.id, everyone);
 		for(const role of this.member._roles) {
-			roles.set(role, this.guild.roles.cache.get(role) || this.guild.roles.add({ id: role }, false));
+			roles.set(role, this.guild.roles.cache.get(role) || this.guild.roles.add({
+				id: role,
+				permissions: 0
+			}, false));
 		}
 		return roles;
 	}
@@ -863,7 +872,10 @@ Object.defineProperty(Discord.GuildEmojiRoleManager.prototype, "_roles", {
 	get: function() {
 		const roles = new Discord.Collection();
 		for(const role of this.emoji._roles) {
-			roles.set(role, this.guild.roles.cache.get(role) || this.guild.roles.add({ id: role }, false));
+			roles.set(role, this.guild.roles.cache.get(role) || this.guild.roles.add({
+				id: role,
+				permissions: 0
+			}, false));
 		}
 		return roles;
 	}

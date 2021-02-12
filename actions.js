@@ -263,7 +263,10 @@ module.exports = client => {
 			id: data.guild_id,
 			shardID: data.shardID
 		}, false);
-		const role = guild.roles.cache.get(data.role_id) || guild.roles.add({ id: data.role_id }, false);
+		const role = guild.roles.cache.get(data.role_id) || guild.roles.add({
+			id: data.role_id,
+			permissions: 0
+		}, false);
 		guild.roles.cache.delete(data.role_id);
 		role.deleted = true;
 		return { role };
