@@ -455,6 +455,7 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [T_Music_Bot](https://top.gg/bot/421978090823090186) | ![](https://top.gg/api/widget/servers/421978090823090186.svg) |
 | [Music Boat](https://top.gg/bot/735963752259911752) | ![](https://top.gg/api/widget/servers/735963752259911752.svg) |
 | [Message Viewer](https://top.gg/bot/642052166982303754) | ![](https://top.gg/api/widget/servers/642052166982303754.svg) |
+| [Denky](https://top.gg/bot/704517722100465746) | ![](https://top.gg/api/widget/servers/704517722100465746.svg |
 | [Multipurpose+](https://music.udit.gq/) |  |
 | [Stereo](https://github.com/NathanPenwill/Stereo/) |  |
 
