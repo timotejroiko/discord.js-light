@@ -1,2 +1,9 @@
 node_modules
 package-lock.json
+.vscode
+.yarn
+.eslintrc.json
+.gitattributes
+.pnp.js
+.yarnrc.yml
+yarn.lock
