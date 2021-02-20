@@ -19,6 +19,39 @@ Discord.Structures.extend("Message", M => {
 				});
 			}
 		}
+		patch(data) {
+			const d = {};
+			for(const i in data) {
+				if(!["mentions", "mention_roles"].includes(i)) { d[i] = data[i]; }
+			}
+			const clone = super.patch(d);
+			if(data.mentions && data.mentions.length) {
+				this.mentions.users.clear();
+				this.mentions._members = [];
+				for(const mention of data.mentions) {
+					this.mentions.users.set(mention.id, this.client.users.add(mention, this.client.users.cache.has(mention.id)));
+					if(mention.member && this.guild) {
+						mention.member = Object.assign(mention.member, { user: mention });
+						if(this.client.users.cache.has(mention.id)) {
+							if(this.guild.members.cache.has(mention.id)) {
+								this.guild.members.cache.get(mention.id)._patch(mention.member);
+							} else {
+								this.guild.members.add(mention.member);
+							}
+						} else {
+							this.mentions._members.push(mention.member);
+						}
+					}
+				}
+			}
+			if(data.mention_roles && data.mention_roles.length && this.guild) {
+				this.mentions.roles.clear();
+				for(const role of data.mention_roles) {
+					this.mentions.roles.set(role, this.guild.roles.cache.get(role) || this.guild.roles.add({ id: role }, false));
+				}
+			}
+			return clone;
+		}
 		_patch(data) {
 			const d = {};
 			for(const i in data) {
