@@ -457,5 +457,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [Message Viewer](https://top.gg/bot/642052166982303754) | ![](https://top.gg/api/widget/servers/642052166982303754.svg) |
 | [Multipurpose+](https://music.udit.gq/) |  |
 | [Stereo](https://github.com/NathanPenwill/Stereo/) |  |
+| [Suggestions](https://top.gg/bot/474051954998509571) | ![](https://top.gg/api/widget/servers/474051954998509571.svg) |
 
 (using discord.js-light? let me know if you're interested in having your bot listed here)
