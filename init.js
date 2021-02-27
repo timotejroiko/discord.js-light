@@ -45,6 +45,17 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 			this.emitReady();
 		}, 15000);
 	}
+	identify() {
+		if(this.manager.client.options.hotreload && this.manager._hotreload) {
+			const data = this.manager._hotreload[this.id];
+			if(data && !this.sessionID) {
+				this.sessionID = data.id;
+				this.closeSequence = this.sequence = data.seq;
+				delete this.manager._hotreload[this.id];
+			}
+		}
+		return super.identify();
+	}
 };
 
 const VCPath = resolve(require.resolve("discord.js").replace("index.js", "/client/voice/VoiceConnection.js"));

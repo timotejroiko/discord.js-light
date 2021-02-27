@@ -2,8 +2,9 @@
 
 require("./init.js");
 const Discord = require("./classes.js");
-const handlers = require("./actions.js");
+const actions = require("./actions.js");
 const pkg = require("./package.json");
+const fs = require("fs");
 
 Discord.Client = class Client extends Discord.Client {
 	constructor(_options = {}) {
@@ -19,7 +20,36 @@ Discord.Client = class Client extends Discord.Client {
 			..._options
 		};
 		super(options);
-		handlers(this);
+		actions(this);
+		if(options.hotreload) {
+			try {
+				this.ws._hotreload = JSON.parse(fs.readFileSync(`${process.cwd()}/.sessions.json`, "utf8"));
+			} catch(e) {
+				this.ws._hotreload = {};
+			}
+			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
+				process.on(eventType, () => {
+					try {
+						this.ws._hotreload = JSON.parse(fs.readFileSync(`${process.cwd()}/.sessions.json`, "utf8"));
+					} catch(e) {
+						this.ws._hotreload = {};
+					}
+					Object.assign(this.ws._hotreload, ...this.ws.shards.map(s => {
+						s.connection.close();
+						return {
+							[s.id]: {
+								id: s.sessionID,
+								seq: s.sequence
+							}
+						};
+					}));
+					fs.writeFileSync(`${process.cwd()}/.sessions.json`, JSON.stringify(this.ws._hotreload));
+					if(eventType !== "exit") {
+						process.exit();
+					}
+				});
+			}
+		}
 	}
 	sweepUsers(_lifetime = 86400) {
 		const lifetime = _lifetime * 1000;
