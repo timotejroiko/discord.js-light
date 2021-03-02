@@ -433,11 +433,13 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [D-Safe](https://discordsafe.com/) | ![](https://top.gg/api/widget/servers/461171501715161108.svg) |
 | [Filo](https://filobot.xyz) | ![](https://top.gg/api/widget/servers/568083171455795200.svg) |
 | [Alita](https://top.gg/bot/590047618479030272) | ![](https://top.gg/api/widget/servers/590047618479030272.svg) |
+| [Suggestions](https://top.gg/bot/474051954998509571) | ![](https://top.gg/api/widget/servers/474051954998509571.svg) |
 | [QOTD Bot](https://top.gg/bot/713586207119900693) | ![](https://top.gg/api/widget/servers/713586207119900693.svg) |
 | [Astrobot](https://top.gg/bot/astrobot) | ![](https://top.gg/api/widget/servers/344272098488877057.svg) |
 | [Art Prompts](https://eledris.com/art-prompts/discord-bot/) | ![](https://top.gg/api/widget/servers/676880644076339228.svg) |
 | [Bump Reminder](https://top.gg/bot/735147814878969968) | ![](https://top.gg/api/widget/servers/735147814878969968.svg) |
 | [Monika](https://top.gg/bot/340476335279570945) | ![](https://top.gg/api/widget/servers/340476335279570945.svg) |
+| [Kable](https://kable.bot) | ![](https://top.gg/api/widget/servers/699844962057060393.svg) |
 | [Helper](https://top.gg/bot/409538753997307915) | ![](https://top.gg/api/widget/servers/409538753997307915.svg) |
 | [CalcBot](https://top.gg/bot/674457690646249472) | ![](https://top.gg/api/widget/servers/674457690646249472.svg) |
 | [Scathach](https://discord.bots.gg/bots/724047481561809007) | ![](https://top.gg/api/widget/servers/724047481561809007.svg) |
@@ -457,6 +459,5 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [Message Viewer](https://top.gg/bot/642052166982303754) | ![](https://top.gg/api/widget/servers/642052166982303754.svg) |
 | [Multipurpose+](https://music.udit.gq/) |  |
 | [Stereo](https://github.com/NathanPenwill/Stereo/) |  |
-| [Suggestions](https://top.gg/bot/474051954998509571) | ![](https://top.gg/api/widget/servers/474051954998509571.svg) |
 
 (using discord.js-light? let me know if you're interested in having your bot listed here)
