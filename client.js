@@ -22,10 +22,25 @@ Discord.Client = class Client extends Discord.Client {
 		super(options);
 		actions(this);
 		if(options.hotreload) {
-			try {
-				this.ws._hotreload = JSON.parse(fs.readFileSync(`${process.cwd()}/.sessions.json`, "utf8"));
-			} catch(e) {
-				this.ws._hotreload = {};
+			this.ws._hotreload = {};
+			if (options.sessionID && options.sequence) {
+				if (!Array.isArray(options.sessionID) && !Array.isArray(options.sequence)) {
+					options.sessionID = [options.sessionID];
+					options.sequence = [options.sequence];
+				}
+				for (let shard = 0; shard < options.sessionID.length; shard++) {
+					this.ws._hotreload[shard] = {
+						id: options.sessionID[shard],
+						seq: options.sequence[shard]
+					};
+				}
+			}
+			else {
+				try {
+					this.ws._hotreload = JSON.parse(fs.readFileSync(`${process.cwd()}/.sessions.json`, "utf8"));
+				} catch(e) {
+					this.ws._hotreload = {};
+				}
 			}
 			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, () => {
