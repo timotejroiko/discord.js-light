@@ -1,6 +1,7 @@
 "use strict";
 
 require("./init.js");
+const { Constants } = require("discord.js");
 const Discord = require("./classes.js");
 const actions = require("./actions.js");
 const pkg = require("./package.json");
@@ -42,6 +43,14 @@ Discord.Client = class Client extends Discord.Client {
 					this.ws._hotreload = {};
 				}
 			}
+			this.on("shardResume", () => {
+				const allReadyCondition = options.shards ?
+					(options.shards.length === this.ws.shards.size) && !this.readyAt && !this.ws.shards.reduce((acc, cur) => acc + cur.status, 0) :
+					!this.readyAt && !this.ws.shards.first().status;
+				if (allReadyCondition) {
+					this.emit(Constants.ShardEvents.READY);
+				}
+			});
 			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, () => {
 					try {
