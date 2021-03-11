@@ -1,6 +1,7 @@
 "use strict";
 
 require("./init.js");
+const { Constants } = require("discord.js");
 const Discord = require("./classes.js");
 const actions = require("./actions.js");
 const pkg = require("./package.json");
