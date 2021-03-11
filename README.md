@@ -459,6 +459,7 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [Message Viewer](https://top.gg/bot/642052166982303754) | ![](https://top.gg/api/widget/servers/642052166982303754.svg) |
 | [Art Prompts](https://eledris.com/art-prompts/discord-bot) | ![](https://top.gg/api/widget/servers/676880644076339228.svg) |
 | [T_Music_Bot](https://top.gg/bot/421978090823090186) | ![](https://top.gg/api/widget/servers/421978090823090186.svg) |
+| [Stalk.live](https://stalk.live) |  |
 | [Multipurpose+](https://music.udit.gq) |  |
 | [Stereo](https://github.com/NathanPenwill/Stereo) |  |
 | [Coconut Mall'd](https://github.com/Million900o/coconut-malld) |  |
