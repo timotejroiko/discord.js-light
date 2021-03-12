@@ -43,7 +43,7 @@ Discord.Client = class Client extends Discord.Client {
 				}
 			}
 			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
-				if(!this.readyAt) { this.ws.checkShardReady(); }
+				if(!this.readyAt) { this.ws.checkShardsReady(); }
 			});
 			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, () => {
