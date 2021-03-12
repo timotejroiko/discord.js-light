@@ -32,7 +32,6 @@
 		"node": ">=14.0.0"
 	},
 	"devDependencies": {
-		"@yarnpkg/pnpify": "^2.4.0",
-		"eslint": "^7.20.0"
+		"eslint": "^7.21.0"
 	}
 }
