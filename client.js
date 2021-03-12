@@ -1,7 +1,6 @@
 "use strict";
 
 require("./init.js");
-const { Constants } = require("discord.js");
 const Discord = require("./classes.js");
 const actions = require("./actions.js");
 const pkg = require("./package.json");
@@ -18,6 +17,7 @@ Discord.Client = class Client extends Discord.Client {
 			cacheEmojis: false,
 			cacheMembers: false,
 			disabledEvents: [],
+			restoreCache: ["guilds"],
 			..._options
 		};
 		super(options);
@@ -39,10 +39,28 @@ Discord.Client = class Client extends Discord.Client {
 			}
 			else {
 				try {
-					this.ws._hotreload = JSON.parse(fs.readFileSync(`${process.cwd()}/.sessions/sessions.json`, "utf8"));
+					this.ws._hotreload = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/sessions.json`, "utf8"));
 				} catch(e) {
 					this.ws._hotreload = {};
 				}
+			}
+			try {
+				for (const toCache of options.restoreCache) {
+					const data = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/${toCache}.json`, "utf8"));
+					switch (toCache) {
+						case "guilds": {
+							console.log("Created");
+							data.cache.forEach(i => {
+								console.log(i);
+								this.guilds.cache.set(i.id, new Discord.Guild(this, i));
+								console.log(i.id);
+							});
+							break;
+						}
+					}
+				}
+			} catch(e) {
+				// Do nothing
 			}
 			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
 				if(!this.readyAt) { this.ws.checkShardsReady(); }
@@ -65,6 +83,11 @@ Discord.Client = class Client extends Discord.Client {
 						};
 					}));
 					fs.writeFileSync(`${this.cacheFilePath}/sessions.json`, JSON.stringify(this.ws._hotreload));
+					if (options.restoreCache) {
+						for (const toCache of options.restoreCache) {
+							fs.writeFileSync(`${this.cacheFilePath}/${toCache}.json`, JSON.stringify(this[toCache]));
+						}
+					}
 					if(eventType !== "exit") {
 						process.exit();
 					}
