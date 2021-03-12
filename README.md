@@ -91,6 +91,17 @@ client.login("TOKEN").catch(console.error);
 
 Generally, usage should be identical to discord.js and you can safely refer to its documentation as long as you respect the caching differences explained below.
 
+### Hot reloading
+
+**THIS FEATURE IS CURRENTLY EXPERIMENTAL USE AT YOUR OWN RISK!**
+
+When developing bots you will often want to prototype through trial and error. This often requires turning your bot on and off lots of times potentially using [nodemon](https://nodemon.io/)
+by doing this you are connecting to the Discord websocket gateway each time which can often take a few seconds as well as cuts into your 1000 daily identifies.
+
+To solve this problem you can use hot reloading which is a client option allowing you to simply resume the previous session rather than create a new one.
+
+You can also use Hot reloading in your production bot by supplying a sequence and session ID or by just letting us take care of it with cache files found in the `.sessions` folder
+
 ## Client Options
 
 The following client options are available to control caching behavior:
