@@ -3,3 +3,7 @@ package-lock.json
 .vscode
 .eslintrc.json
 .gitattributes
+.pnp.js
+.yarnrc.yml
+yarn.lock
+.sessions

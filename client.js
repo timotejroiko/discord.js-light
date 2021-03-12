@@ -23,6 +23,7 @@ Discord.Client = class Client extends Discord.Client {
 		super(options);
 		actions(this);
 		if(options.hotreload) {
+			this.cacheFilePath = `${process.cwd()}/.sessions`;
 			this.ws._hotreload = {};
 			if (options.sessionID && options.sequence) {
 				if (!Array.isArray(options.sessionID) && !Array.isArray(options.sequence)) {
@@ -38,7 +39,7 @@ Discord.Client = class Client extends Discord.Client {
 			}
 			else {
 				try {
-					this.ws._hotreload = JSON.parse(fs.readFileSync(`${process.cwd()}/.sessions.json`, "utf8"));
+					this.ws._hotreload = JSON.parse(fs.readFileSync(`${process.cwd()}/.sessions/sessions.json`, "utf8"));
 				} catch(e) {
 					this.ws._hotreload = {};
 				}
@@ -49,7 +50,7 @@ Discord.Client = class Client extends Discord.Client {
 			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, () => {
 					try {
-						this.ws._hotreload = JSON.parse(fs.readFileSync(`${process.cwd()}/.sessions.json`, "utf8"));
+						this.ws._hotreload = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/sessions.json`, "utf8"));
 					} catch(e) {
 						this.ws._hotreload = {};
 					}
@@ -62,7 +63,7 @@ Discord.Client = class Client extends Discord.Client {
 							}
 						};
 					}));
-					fs.writeFileSync(`${process.cwd()}/.sessions.json`, JSON.stringify(this.ws._hotreload));
+					fs.writeFileSync(`${this.cacheFilePath}/sessions.json`, JSON.stringify(this.ws._hotreload));
 					if(eventType !== "exit") {
 						process.exit();
 					}
