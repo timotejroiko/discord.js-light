@@ -43,12 +43,7 @@ Discord.Client = class Client extends Discord.Client {
 				}
 			}
 			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
-				const allReadyCondition = options.shards ?
-					(options.shards.length === this.ws.shards.size) && !this.readyAt && !this.ws.shards.reduce((acc, cur) => acc + cur.status, 0) :
-					!this.readyAt && !this.ws.shards.first().status;
-				if (allReadyCondition) {
-					this.emit(Discord.Constants.Events.CLIENT_READY);
-				}
+				if(!this.readyAt) { this.ws.checkShardReady(); }
 			});
 			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, () => {
