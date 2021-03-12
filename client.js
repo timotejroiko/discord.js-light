@@ -49,6 +49,7 @@ Discord.Client = class Client extends Discord.Client {
 			});
 			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, () => {
+					if (!fs.existsSync(this.cacheFilePath)) { fs.mkdirSync(this.cacheFilePath); }
 					try {
 						this.ws._hotreload = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/sessions.json`, "utf8"));
 					} catch(e) {
