@@ -432,6 +432,7 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [Dio](https://top.gg/bot/565050363313389588) | ![](https://top.gg/api/widget/servers/565050363313389588.svg) |
 | [Truth or Dare](https://top.gg/bot/692045914436796436) | ![](https://top.gg/api/widget/servers/692045914436796436.svg) |
 | [Friend Time](https://top.gg/bot/471091072546766849) | ![](https://top.gg/api/widget/servers/471091072546766849.svg) |
+| [Nagito 2](https://top.gg/bot/741061042343510147) | ![](https://top.gg/api/widget/servers/741061042343510147.svg) |
 | [Suggestions](https://top.gg/bot/474051954998509571) | ![](https://top.gg/api/widget/servers/474051954998509571.svg) |
 | [D-Safe](https://discordsafe.com) | ![](https://top.gg/api/widget/servers/461171501715161108.svg) |
 | [QOTD Bot](https://top.gg/bot/713586207119900693) | ![](https://top.gg/api/widget/servers/713586207119900693.svg) |
