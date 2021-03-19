@@ -429,6 +429,7 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 <!-- markdownlint-disable MD045 -->
 | Bot | Servers |
 |-|-|
+| [Birthday Bot](https://top.gg/bot/656621136808902656) | ![](https://top.gg/api/widget/servers/656621136808902656.svg) |
 | [Dio](https://top.gg/bot/565050363313389588) | ![](https://top.gg/api/widget/servers/565050363313389588.svg) |
 | [Truth or Dare](https://top.gg/bot/692045914436796436) | ![](https://top.gg/api/widget/servers/692045914436796436.svg) |
 | [Friend Time](https://top.gg/bot/471091072546766849) | ![](https://top.gg/api/widget/servers/471091072546766849.svg) |
