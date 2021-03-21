@@ -68,6 +68,19 @@ Discord.Client = class Client extends Discord.Client {
 					if (eventType === "uncaughtException") {
 						this._uncaughtExceptionOnExit = true;
 					}
+					if (!this._uncaughtExceptionOnExit) {
+						Object.assign(this.ws._hotreload, ...this.ws.shards.map(s => {
+							s.connection.close();
+							return {
+								[s.id]: {
+									id: s.sessionID,
+									seq: s.sequence
+								}
+							};
+						}));
+						if (eventType !== "exit") {
+							await this.dumpCache(this.ws._hotreload, this);
+							process.exit();
 						}
 					}
 					else {
