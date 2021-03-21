@@ -60,7 +60,23 @@ Discord.Client = class Client extends Discord.Client {
 				if(!this.readyAt) { this.ws.checkShardsReady(); }
 			});
 			this.dumpCache = (sessions, client) => {
-					}
+				if (!fs.existsSync(client.cacheFilePath)) { fs.mkdirSync(client.cacheFilePath); }
+				try {
+					client.ws._hotreload = JSON.parse(fs.readFileSync(`${client.cacheFilePath}/sessions.json`, "utf8"));
+				} catch(e) {
+					client.ws._hotreload = {};
+				}
+				client.ws._hotreload = {
+					...client.ws._hotreload,
+					...sessions
+				};
+				fs.writeFileSync(`${client.cacheFilePath}/sessions.json`, JSON.stringify(client.ws._hotreload));
+				if (options.restoreCache.guilds) {
+					const discordGuilds = client.guilds.cache.map(g => g._unpatch());
+					fs.writeFileSync(`${client.cacheFilePath}/guilds.json`, JSON.stringify(discordGuilds));
+					const discordMe = client.user._unpatch();
+					fs.writeFileSync(`${client.cacheFilePath}/me.json`, JSON.stringify(discordMe));
+				}
 			};
 			this._uncaughtExceptionOnExit = false;
 			for (const eventType of options.exitEvents) {
