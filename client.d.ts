@@ -48,6 +48,19 @@ type ReactionUserFetchOptions = {
 	after?: Discord.Snowflake
 }
 
+type SessionData = {
+	[shardID: string]: {
+		id: string
+		sequence: number
+	}
+}
+
+type HotReloadOptions = {
+	sessionData: SessionData
+	unpatchOnExit: boolean
+	patchSource: string | Object
+}
+
 declare module "discord.js-light" {
 	interface ClientOptions {
 		cacheChannels?:boolean
@@ -58,15 +71,7 @@ declare module "discord.js-light" {
 		cacheEmojis?:boolean
 		cacheMembers?:boolean
 		disabledEvents?: Array<string>
-		restoreCache: {
-			channels: boolean
-			guilds: boolean
-			presences: boolean
-			roles: boolean
-			overwrites: boolean
-			emojis: boolean
-			members: boolean
-		}
+		hotReload?: boolean | HotReloadOptions
 	}
 	interface ClientEvents {
 		rest:[{path:string,method:string,response?:Promise<Buffer>}]
