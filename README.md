@@ -100,7 +100,10 @@ by doing this you are connecting to the Discord websocket gateway each time whic
 
 To solve this problem you can use hot reloading which is a client option allowing you to simply resume the previous session rather than create a new one.
 
-You can also use Hot reloading in your production bot by supplying a sequence and session ID or by just letting us take care of it with cache files found in the `.sessions` folder
+You can also use Hot reloading in your production bot by supplying a session object along with preferences for caching restoration or by just letting us take care of it with cache files found in the `.sessions` folder
+
+By setting the client.dumpCache method you can run a custom async function to store your caches and session IDs in your database of choice. The dumpCache method is 
+called with the (session, client) params where session is your up to date sessoins
 
 ## Client Options
 
