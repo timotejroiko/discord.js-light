@@ -22,6 +22,7 @@ Discord.Client = class Client extends Discord.Client {
 		};
 		super(options);
 		actions(this);
+		this._validateOptionsLight();
 		if (options.hotReload) {
 			this.cacheFilePath = `${process.cwd()}/.sessions`;
 			if (options.sessions && Object.keys(options.sessions).length) {
@@ -109,6 +110,48 @@ Discord.Client = class Client extends Discord.Client {
 		this.channels.cache.sweep(t => !connections.includes(t.id) && (!t.lastMessageID || Date.now() - Discord.SnowflakeUtil.deconstruct(t.lastMessageID).timestamp > lifetime));
 		for(const guild of this.guilds.cache.values()) {
 			guild.channels.cache.sweep(t => !this.channels.cache.has(t.id));
+		}
+	}
+	/**
+ 	 * Validates the client options.
+ 	 * @param {object} options Options to validate
+ 	 * @private
+ 	 */
+	_validateOptionsLight(options) {
+		if (typeof options.cacheChannels !== "boolean") {
+			throw new TypeError("CLIENT_INVALID_OPTION", "cacheChannels", "a boolean");
+		}
+		if (typeof options.cacheGuilds !== "boolean") {
+			throw new TypeError("CLIENT_INVALID_OPTION", "cacheGuilds", "a boolean");
+		}
+		if (typeof options.cachePresences !== "boolean") {
+			throw new TypeError("CLIENT_INVALID_OPTION", "cachePresences", "a boolean");
+		}
+		if (typeof options.cacheRoles !== "boolean") {
+			throw new TypeError("CLIENT_INVALID_OPTION", "cacheRoles", "a boolean");
+		}
+		if (typeof options.cacheOverwrites !== "boolean") {
+			throw new TypeError("CLIENT_INVALID_OPTION", "cacheOverwrites", "a boolean");
+		}
+		if (typeof options.cacheEmojis !== "boolean") {
+			throw new TypeError("CLIENT_INVALID_OPTION", "cacheEmojis", "a boolean");
+		}
+		if (typeof options.cacheMembers !== "boolean") {
+			throw new TypeError("CLIENT_INVALID_OPTION", "cacheMembers", "a boolean");
+		}
+		if (!Array.isArray(options.disabledEvents)) {
+			throw new TypeError("CLIENT_INVALID_OPTION", "disabledEvents", "an array");
+		}
+		if (options.hotReload) {
+			if (typeof options.hotReload.sessionData !== "object") {
+				throw new TypeError("CLIENT_INVALID_OPTION", "sessionData", "an object");
+			}
+			if (typeof options.hotReload.cacheData !== "object") {
+				throw new TypeError("CLIENT_INVALID_OPTION", "cacheData", "a object");
+			}
+			if (options.hotReload.onUnload && typeof options.hotReload.onUnload !== "function") {
+				throw new TypeError("CLIENT_INVALID_OPTION", "onUnload", "a function");
+			}
 		}
 	}
 };
