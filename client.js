@@ -17,6 +17,10 @@ Discord.Client = class Client extends Discord.Client {
 			cacheEmojis: false,
 			cacheMembers: false,
 			disabledEvents: [],
+			channelCacheLifetime: 86400,
+			channelSweepInterval: 0,
+			userCacheLifetime: 86400,
+			userSweepInterval: 0,
 			..._options
 		};
 		super(options);
