@@ -58,6 +58,15 @@ declare module "discord.js-light" {
 		cacheEmojis?:boolean
 		cacheMembers?:boolean
 		disabledEvents?: Array<string>
+		restoreCache: {
+			channels: boolean
+			guilds: boolean
+			presences: boolean
+			roles: boolean
+			overwrites: boolean
+			emojis: boolean
+			members: boolean
+		}
 	}
 	interface ClientEvents {
 		rest:[{path:string,method:string,response?:Promise<Buffer>}]
