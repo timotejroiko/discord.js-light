@@ -22,6 +22,7 @@ Discord.Client = class Client extends Discord.Client {
 			restoreCache: {
 				guilds: true,
 			}
+			exitEvents: ["exit", "uncaughtException", "SIGINT", "SIGTERM", ..._options.exitEvents]
 		};
 		super(options);
 		actions(this);
@@ -58,7 +59,6 @@ Discord.Client = class Client extends Discord.Client {
 			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
 				if(!this.readyAt) { this.ws.checkShardsReady(); }
 			});
-			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, () => {
 					if (!fs.existsSync(this.cacheFilePath)) { fs.mkdirSync(this.cacheFilePath); }
 					try {
@@ -79,6 +79,7 @@ Discord.Client = class Client extends Discord.Client {
 					if (options.restoreCache) {
 						for (const toCache of options.restoreCache) {
 							fs.writeFileSync(`${this.cacheFilePath}/${toCache}.json`, JSON.stringify(this[toCache]));
+			for (const eventType of options.exitEvents) {
 						}
 					}
 					if(eventType !== "exit") {
