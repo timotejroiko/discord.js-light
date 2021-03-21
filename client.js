@@ -25,8 +25,8 @@ Discord.Client = class Client extends Discord.Client {
 		this._validateOptionsLight();
 		if (options.hotReload) {
 			this.cacheFilePath = `${process.cwd()}/.sessions`;
-			if (options.sessions && Object.keys(options.sessions).length) {
-				this.ws._hotreload = options.sessions;
+			if (options.hotReload.sessionData && Object.keys(options.hotReload.sessionData).length) {
+				this.ws._hotreload = options.hotReload.sessionData;
 			}
 			else {
 				try {
@@ -66,7 +66,6 @@ Discord.Client = class Client extends Discord.Client {
 				}
 			};
 			this._uncaughtExceptionOnExit = false;
-			for (const eventType of options.exitEvents) {
 				process.on(eventType, async () => {
 					if (eventType === "uncaughtException") {
 						this._uncaughtExceptionOnExit = true;
