@@ -105,6 +105,10 @@ The following client options are available to control caching behavior:
 | cachePresences | boolean | false | Enables caching of all Presences. If not enabled, Presences will be cached only for cached Users |
 | cacheMembers | boolean | false | Enables caching of Users and Members when possible |
 | disabledEvents | array | [] | An array of events to ignore ([Discord events](https://github.com/discordjs/discord.js/blob/master/src/util/Constants.js#L339), not Discord.JS events). Use this in combination with intents for fine tuning which events your bot should process |
+| channelSweepInterval | number | 0 | How frequently to remove channels from the cache that are older than the channel cache lifetime (in seconds, 0 for never) |
+| userSweepInterval | number | 0 | How frequently to remove users from the cache that are older than the user cache lifetime (in seconds, 0 for never) |
+| channelCacheLifetime | number | 86400 | How long a channel should stay in the cache until it is considered sweepable (in seconds, 0 for forever) |
+| userCacheLifetime | number | 86400 | How long a user should stay in the cache until it is considered sweepable (in seconds, 0 for forever) |
 
 This library implements its own partials system, therefore the `partials` client option is not available. All other discord.js client options continue to be available and should work normally.
 
