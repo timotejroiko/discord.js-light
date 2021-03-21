@@ -59,26 +59,9 @@ Discord.Client = class Client extends Discord.Client {
 			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
 				if(!this.readyAt) { this.ws.checkShardsReady(); }
 			});
-				process.on(eventType, () => {
-					if (!fs.existsSync(this.cacheFilePath)) { fs.mkdirSync(this.cacheFilePath); }
-					try {
-						this.ws._hotreload = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/sessions.json`, "utf8"));
-					} catch(e) {
-						this.ws._hotreload = {};
+			this.dumpCache = (sessions, client) => {
 					}
-					Object.assign(this.ws._hotreload, ...this.ws.shards.map(s => {
-						s.connection.close();
-						return {
-							[s.id]: {
-								id: s.sessionID,
-								seq: s.sequence
-							}
-						};
-					}));
-					fs.writeFileSync(`${this.cacheFilePath}/sessions.json`, JSON.stringify(this.ws._hotreload));
-					if (options.restoreCache) {
-						for (const toCache of options.restoreCache) {
-							fs.writeFileSync(`${this.cacheFilePath}/${toCache}.json`, JSON.stringify(this[toCache]));
+			};
 			this._uncaughtExceptionOnExit = false;
 			for (const eventType of options.exitEvents) {
 				process.on(eventType, async () => {
