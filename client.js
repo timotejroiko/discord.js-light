@@ -35,6 +35,7 @@ Discord.Client = class Client extends Discord.Client {
 			else {
 				this._loadSessions();
 			}
+			this._patchCache(options.hotReload.cacheData || this._loadCache());
 			this.onUnload = (sessions, cache) => {
 				this._makeDir(this.cacheFilePath);
 				this._makeDir(`${this.cacheFilePath}/sessions`);
@@ -71,7 +72,7 @@ Discord.Client = class Client extends Discord.Client {
 							};
 						}));
 						if (eventType !== "exit") {
-							await this.dumpCache(this.ws._hotreload, this);
+							await this.onUnload(this.ws._hotreload, this.dumpCache());
 							process.exit();
 						}
 					}
@@ -83,6 +84,13 @@ Discord.Client = class Client extends Discord.Client {
 				});
 			}
 		}
+	}
+	/**
+ 	 * Generates a complete dump of the current stored cache
+ 	 * @param {object} options Options to validate
+ 	 * @returns {object} All of the cache
+ 	 */
+	dumpCache() {
 	}
 	/**
  	 * Loads all of the stored caches on disk into memory
@@ -106,6 +114,12 @@ Discord.Client = class Client extends Discord.Client {
 			}
 		}
 		return allCache;
+	}
+	/**
+ 	 * Patches raw discord api objects into the discord.js cache
+ 	 * @private
+ 	 */
+	_patchCache({ guilds, channels, users }) {
 	}
 	/**
  	 * Loads all of the stored sessions on disk into memory
