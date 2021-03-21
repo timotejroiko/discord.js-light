@@ -17,8 +17,11 @@ Discord.Client = class Client extends Discord.Client {
 			cacheEmojis: false,
 			cacheMembers: false,
 			disabledEvents: [],
-			restoreCache: ["guilds"],
-			..._options
+			sessions: {},
+			..._options,
+			restoreCache: {
+				guilds: true,
+			}
 		};
 		super(options);
 		actions(this);
