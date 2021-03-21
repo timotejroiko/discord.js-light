@@ -55,10 +55,16 @@ type SessionData = {
 	}
 }
 
+type CacheData = {
+	guilds?: Array<Object>
+	channels?: Array<Object>
+	users?: Array<Object>
+}
+
 type HotReloadOptions = {
-	sessionData: SessionData
-	unpatchOnExit: boolean
-	patchSource: string | Object
+	sessionData?: SessionData
+	cacheData?: CacheData
+	onUnload?: Function
 }
 
 declare module "discord.js-light" {
