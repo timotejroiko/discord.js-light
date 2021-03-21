@@ -217,6 +217,115 @@ Discord.Structures.extend("Guild", G => {
 				}
 			}
 		}
+		_unpatch() {
+			/**
+			 * Discord raw guild data as documented: https://github.com/discordjs/discord-api-types/blob/main/v8/payloads/guild.ts
+			 */
+			return {
+				id: this.id,
+				unavailable: this.available,
+				name: this.name,
+				icon: this.icon,
+				splash: this.splash,
+				banner: this.banner,
+				description: this.description,
+				features: this.features,
+				verification_level: this.verificationLevel,
+				discovery_splash: this.discoverySplash,
+				owner_id: this.ownerID,
+				region: this.region,
+				afk_channel_id: this.afkChannelID,
+				afk_timeout: this.afkTimeout,
+				widget_enabled: this.widgetEnabled,
+				widget_channel_id: this.widgetChannelID,
+				default_message_notifications: this.defaultMessageNotifications,
+				explicit_content_filter: this.explicitContentFilter,
+				/**
+				 * Roles in the guild
+				 *
+				 * See https://discord.com/developers/docs/topics/permissions#role-object
+				 */
+				roles: this.roles.cache.map(r => ({
+					name: r.name,
+					color: r.color
+				})),
+				/**
+				 * Custom guild emojis
+				 *
+				 * See https://discord.com/developers/docs/resources/emoji#emoji-object
+				 */
+				emojis: this.emojis.cache.map(e => ({
+					id: e.id,
+					name: e.name
+				})),
+				mfa_level: this.mfaLevel,
+				application_id: this.applicationID,
+				system_channel_id: this.systemChannelID,
+				system_channel_flags: this.systemChannelFlags,
+				rules_channel_id: this.rulesChannelID,
+				joined_at: this.joinedAt,
+				large: this.large,
+				member_count: this.memberCount,
+				voice_states: this.voiceStates.cache.map(v => ({
+					guild_id: v.guild.id,
+					channel_id: v.channelID,
+					user_id: v.userID,
+					session_id: v.sessionID,
+					deaf: v.deaf,
+					mute: v.mute,
+					self_deaf: v.selfDeaf,
+					self_mute: v.selfMute,
+					suppress: v.suppress
+				})),
+				members: this.members.cache.map(m => ({
+					user: m.user,
+					nick: m.nickname,
+					roles: m.roles,
+					joined_at: m.joinedAt,
+					premium_since: m.premiumSinceTimestamp,
+					deaf: m.deaf,
+					mute: m.mute,
+					pending: m.pending,
+					permissions: m.permissions
+				})),
+				channels: this.channels.cache.map(c => ({
+					id: c.id,
+					type: c.type,
+					guild_id: c.guild.id,
+					position: c.position,
+					permission_overwrites: c.permissionOverwrites,
+					name: c.name,
+					topic: c.topic,
+					nsfw: c.nsfw,
+					last_message_id: c.lastMessageID,
+					bitrate: c.bitrate,
+					user_limit: c.userLimit,
+					rate_limit_per_user: c.rateLimitPerUser,
+					recipients: c.recipients,
+					icon: c.icon,
+					owner_id: c.ownerID,
+					application_id: c.applicationID,
+					parent_id: c.parentID,
+					last_pin_timestamp: c.lastPinTimestamp
+				})),
+				presences: this.presences.cache.map(p => ({
+					user: p.user,
+					guild_id: p.guild.id,
+					status: p.status,
+					activities: p.activities,
+					client_status: p.clientStatus
+				})),
+				max_presences: this.maximumPresences,
+				max_members: this.maximumMembers,
+				vanity_url_code: this.vanityURLCode,
+				premium_tier: this.premiumTier,
+				premium_subscription_count: this.premiumSubscriptionCount,
+				preferred_locale: this.preferredLocale || "en-US",
+				public_updates_channel_id: this.publicUpdatesChannelID,
+				approximate_member_count: this.approximateMemberCount,
+				approximate_presence_count: this.approximatePresenceCount
+			};
+		}
 		get nameAcronym() {
 			return this.name ? super.nameAcronym : void 0;
 		}
