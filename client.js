@@ -17,23 +17,12 @@ Discord.Client = class Client extends Discord.Client {
 			cacheEmojis: false,
 			cacheMembers: false,
 			disabledEvents: [],
-			sessions: {},
-			..._options,
-			restoreCache: {
-				channels: false,
-				guilds: true,
-				presences: false,
-				roles: false,
-				overwrites: false,
-				emojis: false,
-				members: false,
-				..._options.restoreCache
-			},
-			exitEvents: ["exit", "uncaughtException", "SIGINT", "SIGTERM", ..._options.exitEvents]
+			hotReload: false,
+			..._options
 		};
 		super(options);
 		actions(this);
-		if (options.hotreload) {
+		if (options.hotReload) {
 			this.cacheFilePath = `${process.cwd()}/.sessions`;
 			if (options.sessions && Object.keys(options.sessions).length) {
 				this.ws._hotreload = options.sessions;
@@ -46,7 +35,7 @@ Discord.Client = class Client extends Discord.Client {
 				}
 			}
 
-			if (options.restoreCache.guilds) {
+			if (options.cacheGuilds) {
 				const discordGuildData = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/guilds.json`, "utf8"));
 				for (const guild of discordGuildData) {
 					this.guilds.cache.set(guild.id, new Discord.Guild(this, guild));
@@ -68,7 +57,7 @@ Discord.Client = class Client extends Discord.Client {
 					...sessions
 				};
 				fs.writeFileSync(`${client.cacheFilePath}/sessions.json`, JSON.stringify(client.ws._hotreload));
-				if (options.restoreCache.guilds) {
+				if (options.cacheGuilds) {
 					const discordGuilds = client.guilds.cache.map(g => g._unpatch());
 					fs.writeFileSync(`${client.cacheFilePath}/guilds.json`, JSON.stringify(discordGuilds));
 					const discordMe = client.user._unpatch();
