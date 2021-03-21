@@ -27,18 +27,8 @@ Discord.Client = class Client extends Discord.Client {
 		actions(this);
 		if(options.hotreload) {
 			this.cacheFilePath = `${process.cwd()}/.sessions`;
-			this.ws._hotreload = {};
-			if (options.sessionID && options.sequence) {
-				if (!Array.isArray(options.sessionID) && !Array.isArray(options.sequence)) {
-					options.sessionID = [options.sessionID];
-					options.sequence = [options.sequence];
-				}
-				for (let shard = 0; shard < options.sessionID.length; shard++) {
-					this.ws._hotreload[shard] = {
-						id: options.sessionID[shard],
-						seq: options.sequence[shard]
-					};
-				}
+			if (options.sessions && Object.keys(options.sessions).length) {
+				this.ws._hotreload = options.sessions;
 			}
 			else {
 				try {
