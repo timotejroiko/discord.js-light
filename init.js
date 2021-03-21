@@ -4,6 +4,8 @@ const { resolve } = require("path");
 const Permissions = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Permissions.js")));
 const Constants = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Constants.js")));
 const APIMessage = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/APIMessage.js")));
+const Util = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Util.js")));
+const { Error: DJSError } = require(resolve(require.resolve("discord.js").replace("index.js", "/errors")));
 
 const RHPath = resolve(require.resolve("discord.js").replace("index.js", "/rest/APIRequest.js"));
 const RH = require(RHPath);
@@ -55,6 +57,103 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 			}
 		}
 		return super.identify();
+	}
+};
+
+const SHMPath = resolve(require.resolve("discord.js").replace("index.js", "/client/websocket/WebSocketManager.js"));
+const SHM = require(SHMPath);
+require.cache[SHMPath].exports = class WebSocketManager extends SHM {
+	async createShards() {
+		const UNRECOVERABLE_CLOSE_CODES = Object.keys(Constants.WSCodes).slice(1).map(Number);
+		const UNRESUMABLE_CLOSE_CODES = [1000, 4006, 4007];
+
+		// If we don't have any shards to handle, return
+		if (!this.shardQueue.size) {return false;}
+
+		const [shard] = this.shardQueue;
+
+		this.shardQueue.delete(shard);
+
+		if (!shard.eventsAttached) {
+			shard.on(Constants.ShardEvents.ALL_READY, unavailableGuilds => {
+				this.client.emit(Constants.Events.SHARD_READY, shard.id, unavailableGuilds);
+
+				if (!this.shardQueue.size) {this.reconnecting = false;}
+				this.checkShardsReady();
+			});
+
+			shard.on(Constants.ShardEvents.CLOSE, event => {
+				if (event.code === 1000 ? this.destroyed : UNRECOVERABLE_CLOSE_CODES.includes(event.code)) {
+					this.client.emit(Constants.Events.SHARD_DISCONNECT, event, shard.id);
+					this.debug(Constants.WSCodes[event.code], shard);
+					return;
+				}
+
+				if (UNRESUMABLE_CLOSE_CODES.includes(event.code)) {
+					// These event codes cannot be resumed
+					shard.sessionID = null;
+				}
+
+				this.client.emit(Constants.Events.SHARD_RECONNECTING, shard.id);
+
+				this.shardQueue.add(shard);
+
+				if (shard.sessionID) {
+					this.debug("Session ID is present, attempting an immediate reconnect...", shard);
+					this.reconnect(true);
+				} else {
+					shard.destroy({
+						reset: true,
+						emit: false,
+						log: false
+					});
+					this.reconnect();
+				}
+			});
+
+			shard.on(Constants.ShardEvents.INVALID_SESSION, () => {
+				this.client.emit(Constants.Events.SHARD_RECONNECTING, shard.id);
+			});
+
+			shard.on(Constants.ShardEvents.DESTROYED, () => {
+				this.debug("Shard was destroyed but no WebSocket connection was present! Reconnecting...", shard);
+
+				this.client.emit(Constants.Events.SHARD_RECONNECTING, shard.id);
+
+				this.shardQueue.add(shard);
+				this.reconnect();
+			});
+
+			shard.eventsAttached = true;
+		}
+
+		this.shards.set(shard.id, shard);
+
+		try {
+			await shard.connect();
+		} catch (error) {
+			if (error && error.code && UNRECOVERABLE_CLOSE_CODES.includes(error.code)) {
+				throw new DJSError(Constants.WSCodes[error.code]);
+				// Undefined if session is invalid, error event for regular closes
+			} else if (!error || error.code) {
+				this.debug("Failed to connect to the gateway, requeueing...", shard);
+				this.shardQueue.add(shard);
+			} else {
+				throw error;
+			}
+		}
+		// If we have multiple shards add a 5s delay if identifying or no delay if resuming
+		if (this.shardQueue.size && Object.keys(this._hotreload).length) {
+			this.debug(`Shard Queue Size: ${this.shardQueue.size} with sessions; continuing immediately`);
+			return this.createShards();
+		} else if (this.shardQueue.size) {
+			this.debug(`Shard Queue Size: ${this.shardQueue.size}; continuing in 5s seconds...`);
+			await Util.delayFor(5000);
+			await this._handleSessionLimit();
+			return this.createShards();
+		}
+
+		return true;
 	}
 };
 
