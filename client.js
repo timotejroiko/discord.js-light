@@ -72,6 +72,12 @@ Discord.Client = class Client extends Discord.Client {
 				});
 			}
 		}
+		if (options.userSweepInterval > 0) {
+			this.setInterval(this.sweepUsers.bind(this), options.userSweepInterval * 1000);
+		}
+		if (options.channelSweepInterval > 0) {
+			this.setInterval(this.sweepChannels.bind(this), options.channelSweepInterval * 1000);
+		}
 	}
 	sweepUsers(_lifetime = this.options.userCacheLifetime) {
 		const lifetime = _lifetime * 1000;
