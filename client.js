@@ -20,13 +20,20 @@ Discord.Client = class Client extends Discord.Client {
 			sessions: {},
 			..._options,
 			restoreCache: {
+				channels: false,
 				guilds: true,
-			}
+				presences: false,
+				roles: false,
+				overwrites: false,
+				emojis: false,
+				members: false,
+				..._options.restoreCache
+			},
 			exitEvents: ["exit", "uncaughtException", "SIGINT", "SIGTERM", ..._options.exitEvents]
 		};
 		super(options);
 		actions(this);
-		if(options.hotreload) {
+		if (options.hotreload) {
 			this.cacheFilePath = `${process.cwd()}/.sessions`;
 			if (options.sessions && Object.keys(options.sessions).length) {
 				this.ws._hotreload = options.sessions;
@@ -38,23 +45,13 @@ Discord.Client = class Client extends Discord.Client {
 					this.ws._hotreload = {};
 				}
 			}
-			try {
-				for (const toCache of options.restoreCache) {
-					const data = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/${toCache}.json`, "utf8"));
-					switch (toCache) {
-						case "guilds": {
-							console.log("Created");
-							data.cache.forEach(i => {
-								console.log(i);
-								this.guilds.cache.set(i.id, new Discord.Guild(this, i));
-								console.log(i.id);
-							});
-							break;
-						}
-					}
+
+			if (options.restoreCache.guilds) {
+				const discordGuildData = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/guilds.json`, "utf8"));
+				for (const guild of discordGuildData) {
+					this.guilds.cache.set(guild.id, new Discord.Guild(this, guild));
 				}
-			} catch(e) {
-				// Do nothing
+				this.user = new Discord.User(this, JSON.parse(fs.readFileSync(`${this.cacheFilePath}/guilds.json`, "utf8")));
 			}
 			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
 				if(!this.readyAt) { this.ws.checkShardsReady(); }
