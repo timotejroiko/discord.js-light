@@ -79,12 +79,19 @@ Discord.Client = class Client extends Discord.Client {
 					if (options.restoreCache) {
 						for (const toCache of options.restoreCache) {
 							fs.writeFileSync(`${this.cacheFilePath}/${toCache}.json`, JSON.stringify(this[toCache]));
+			this._uncaughtExceptionOnExit = false;
 			for (const eventType of options.exitEvents) {
+				process.on(eventType, async () => {
+					if (eventType === "uncaughtException") {
+						this._uncaughtExceptionOnExit = true;
+					}
 						}
 					}
-					if(eventType !== "exit") {
-						process.exit();
+					else {
+						console.error("There was an uncaughtException inside your exit loop causing an infinite loop. Your exit function was not run");
+						process.exit(1);
 					}
+
 				});
 			}
 		}
