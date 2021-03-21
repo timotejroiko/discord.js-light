@@ -24,14 +24,23 @@ Discord.Client = class Client extends Discord.Client {
 		actions(this);
 		this._validateOptionsLight();
 		if (options.hotReload) {
+			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
+				if (!this.readyAt) { this.ws.checkShardsReady(); }
+			});
 			this.cacheFilePath = `${process.cwd()}/.sessions`;
+			this.ws._hotreload = {};
 			if (options.hotReload.sessionData && Object.keys(options.hotReload.sessionData).length) {
 				this.ws._hotreload = options.hotReload.sessionData;
 			}
 			else {
 				try {
-					this.ws._hotreload = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/sessions.json`, "utf8"));
-				} catch(e) {
+					const shards = fs.readdirSync(`${this.cacheFilePath}/sessions`)
+						.filter(file => file.endsWith(".json"))
+						.map(shardSession => shardSession.substr(0, shardSession.lastIndexOf(".")));
+					for (const shardID of shards) {
+						this.ws._hotreload[shardID] = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/sessions/${shardID}.json`, "utf8"));
+					}
+				} catch (e) {
 					this.ws._hotreload = {};
 				}
 			}
