@@ -33,16 +33,7 @@ Discord.Client = class Client extends Discord.Client {
 				this.ws._hotreload = options.hotReload.sessionData;
 			}
 			else {
-				try {
-					const shards = fs.readdirSync(`${this.cacheFilePath}/sessions`)
-						.filter(file => file.endsWith(".json"))
-						.map(shardSession => shardSession.substr(0, shardSession.lastIndexOf(".")));
-					for (const shardID of shards) {
-						this.ws._hotreload[shardID] = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/sessions/${shardID}.json`, "utf8"));
-					}
-				} catch (e) {
-					this.ws._hotreload = {};
-				}
+				this._loadSessions();
 			}
 
 			if (options.cacheGuilds) {
@@ -102,6 +93,22 @@ Discord.Client = class Client extends Discord.Client {
 
 				});
 			}
+		}
+	}
+	/**
+ 	 * Loads all of the stored sessions on disk into memory
+ 	 * @private
+ 	 */
+	_loadSessions() {
+		try {
+			const shards = fs.readdirSync(`${this.cacheFilePath}/sessions`)
+				.filter(file => file.endsWith(".json"))
+				.map(shardSession => shardSession.substr(0, shardSession.lastIndexOf(".")));
+			for (const shardID of shards) {
+				this.ws._hotreload[shardID] = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/sessions/${shardID}.json`, "utf8"));
+			}
+		} catch (e) {
+			this.ws._hotreload = {};
 		}
 	}
 	sweepUsers(_lifetime = 86400) {
