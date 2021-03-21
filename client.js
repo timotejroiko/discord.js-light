@@ -35,34 +35,23 @@ Discord.Client = class Client extends Discord.Client {
 			else {
 				this._loadSessions();
 			}
-
-			if (options.cacheGuilds) {
-				const discordGuildData = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/guilds.json`, "utf8"));
-				for (const guild of discordGuildData) {
-					this.guilds.cache.set(guild.id, new Discord.Guild(this, guild));
-				}
-				this.user = new Discord.User(this, JSON.parse(fs.readFileSync(`${this.cacheFilePath}/guilds.json`, "utf8")));
-			}
-			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
-				if(!this.readyAt) { this.ws.checkShardsReady(); }
-			});
-			this.dumpCache = (sessions, client) => {
-				if (!fs.existsSync(client.cacheFilePath)) { fs.mkdirSync(client.cacheFilePath); }
-				try {
-					client.ws._hotreload = JSON.parse(fs.readFileSync(`${client.cacheFilePath}/sessions.json`, "utf8"));
-				} catch (e) {
-					client.ws._hotreload = {};
-				}
-				client.ws._hotreload = {
-					...client.ws._hotreload,
+			this.onUnload = (sessions, cache) => {
+				this._makeDir(this.cacheFilePath);
+				this._makeDir(`${this.cacheFilePath}/sessions`);
+				this._loadSessions();
+				this.ws._hotreload = {
+					...this.ws._hotreload,
 					...sessions
 				};
-				fs.writeFileSync(`${client.cacheFilePath}/sessions.json`, JSON.stringify(client.ws._hotreload));
+				this._unLoadSessions();
 				if (options.cacheGuilds) {
-					const discordGuilds = client.guilds.cache.map(g => g._unpatch());
-					fs.writeFileSync(`${client.cacheFilePath}/guilds.json`, JSON.stringify(discordGuilds));
-					const discordMe = client.user._unpatch();
-					fs.writeFileSync(`${client.cacheFilePath}/me.json`, JSON.stringify(discordMe));
+					this._makeDir(`${this.cacheFilePath}/guilds`);
+				}
+				if (options.cacheChannels) {
+					this._makeDir(`${this.cacheFilePath}/channels`);
+				}
+				if (options.cacheMembers) {
+					this._makeDir(`${this.cacheFilePath}/users`);
 				}
 			};
 			this._uncaughtExceptionOnExit = false;
@@ -96,6 +85,29 @@ Discord.Client = class Client extends Discord.Client {
 		}
 	}
 	/**
+ 	 * Loads all of the stored caches on disk into memory
+	 * @returns {object} All of the stored cache
+ 	 * @private
+ 	 */
+	_loadCache() {
+		const allCache = {};
+		for (const cache of ["guilds", "channels", "users"]) {
+			try {
+				const cachedFiles = fs.readdirSync(`${this.cacheFilePath}/${cache}`)
+					.filter(file => file.endsWith(".json"))
+					.map(c => c.substr(0, c.lastIndexOf(".")));
+				if (cachedFiles.length) { continue; }
+				allCache[cache] = [];
+				for (const id of cachedFiles) {
+					allCache[cache].push(JSON.parse(fs.readFileSync(`${this.cacheFilePath}/sessions/${id}.json`, "utf8")));
+				}
+			} catch (d) {
+				// Do nothing
+			}
+		}
+		return allCache;
+	}
+	/**
  	 * Loads all of the stored sessions on disk into memory
  	 * @private
  	 */
@@ -110,6 +122,22 @@ Discord.Client = class Client extends Discord.Client {
 		} catch (e) {
 			this.ws._hotreload = {};
 		}
+	}
+	/**
+ 	 * Unloads all of the stored sessions in memory onto disk
+ 	 * @private
+ 	 */
+	_unLoadSessions() {
+		for (const [shardID, session] of this.ws._hotreload) {
+			fs.writeFileSync(`${this.cacheFilePath}/sessions/${shardID}.json`, JSON.stringify(session));
+		}
+	}
+	/**
+ 	 * Creates a directory if it does not already exist
+ 	 * @private
+ 	 */
+	_makeDir(dir) {
+		if (!fs.existsSync(dir)) { fs.mkdirSync(dir); }
 	}
 	sweepUsers(_lifetime = 86400) {
 		const lifetime = _lifetime * 1000;
