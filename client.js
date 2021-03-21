@@ -22,7 +22,7 @@ Discord.Client = class Client extends Discord.Client {
 		};
 		super(options);
 		actions(this);
-		this._validateOptionsLight();
+		this._validateOptionsLight(options);
 		if (options.hotReload) {
 			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
 				if (!this.readyAt) { this.ws.checkShardsReady(); }
@@ -59,7 +59,7 @@ Discord.Client = class Client extends Discord.Client {
 				if (!fs.existsSync(client.cacheFilePath)) { fs.mkdirSync(client.cacheFilePath); }
 				try {
 					client.ws._hotreload = JSON.parse(fs.readFileSync(`${client.cacheFilePath}/sessions.json`, "utf8"));
-				} catch(e) {
+				} catch (e) {
 					client.ws._hotreload = {};
 				}
 				client.ws._hotreload = {
@@ -75,6 +75,7 @@ Discord.Client = class Client extends Discord.Client {
 				}
 			};
 			this._uncaughtExceptionOnExit = false;
+			for (const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, async () => {
 					if (eventType === "uncaughtException") {
 						this._uncaughtExceptionOnExit = true;
@@ -151,10 +152,10 @@ Discord.Client = class Client extends Discord.Client {
 			throw new TypeError("CLIENT_INVALID_OPTION", "disabledEvents", "an array");
 		}
 		if (options.hotReload) {
-			if (typeof options.hotReload.sessionData !== "object") {
+			if (options.hotReload.sessionData && typeof options.hotReload.sessionData !== "object") {
 				throw new TypeError("CLIENT_INVALID_OPTION", "sessionData", "an object");
 			}
-			if (typeof options.hotReload.cacheData !== "object") {
+			if (options.hotReload.cacheData && typeof options.hotReload.cacheData !== "object") {
 				throw new TypeError("CLIENT_INVALID_OPTION", "cacheData", "a object");
 			}
 			if (options.hotReload.onUnload && typeof options.hotReload.onUnload !== "function") {
