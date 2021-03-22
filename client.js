@@ -60,7 +60,7 @@ Discord.Client = class Client extends Discord.Client {
 			};
 			this._uncaughtExceptionOnExit = false;
 			for (const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
-				process.on(eventType, async () => {
+				process.on(eventType, async (...args) => {
 					if (eventType === "uncaughtException") {
 						this._uncaughtExceptionOnExit = true;
 					}
@@ -79,11 +79,11 @@ Discord.Client = class Client extends Discord.Client {
 							process.exit();
 						}
 					}
-					else {
-						console.error("There was an uncaughtException inside your exit loop causing an infinite loop. Your exit function was not run");
+					else if (eventType !== "exit") {
+						console.error(args[0]);
+						console.error("UNCAUGHT_EXCEPTION_LOOP", "There was an uncaughtException inside your exit loop causing an infinite loop. Your exit function was not run or failed");
 						process.exit(1);
 					}
-
 				});
 			}
 		}
