@@ -219,15 +219,20 @@ Discord.Client = class Client extends Discord.Client {
 		if (!Array.isArray(options.disabledEvents)) {
 			throw new TypeError("CLIENT_INVALID_OPTION", "disabledEvents", "an array");
 		}
-		if (options.hotReload) {
-			if (options.hotReload.sessionData && typeof options.hotReload.sessionData !== "object") {
-				throw new TypeError("CLIENT_INVALID_OPTION", "sessionData", "an object");
+		if (typeof options.hotReload !== "boolean") {
+			if (options.hotReload && typeof options.hotReload === "object") {
+				if (options.hotReload.sessionData && typeof options.hotReload.sessionData !== "object") {
+					throw new TypeError("CLIENT_INVALID_OPTION", "sessionData", "an object");
+				}
+				if (options.hotReload.cacheData && typeof options.hotReload.cacheData !== "object") {
+					throw new TypeError("CLIENT_INVALID_OPTION", "cacheData", "a object");
+				}
+				if (options.hotReload.onUnload && typeof options.hotReload.onUnload !== "function") {
+					throw new TypeError("CLIENT_INVALID_OPTION", "onUnload", "a function");
+				}
 			}
-			if (options.hotReload.cacheData && typeof options.hotReload.cacheData !== "object") {
-				throw new TypeError("CLIENT_INVALID_OPTION", "cacheData", "a object");
-			}
-			if (options.hotReload.onUnload && typeof options.hotReload.onUnload !== "function") {
-				throw new TypeError("CLIENT_INVALID_OPTION", "onUnload", "a function");
+			else {
+				throw new TypeError("CLIENT_INVALID_OPTION", "hotReload", "a boolean or an object");
 			}
 		}
 	}
