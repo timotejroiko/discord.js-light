@@ -36,7 +36,7 @@ Discord.Client = class Client extends Discord.Client {
 				this._loadSessions();
 			}
 			this._patchCache(options.hotReload.cacheData || this._loadCache());
-			this.onUnload = (sessions, cache) => {
+			this.onUnload = (sessions, { guilds, channels, users }) => {
 				this._makeDir(this.cacheFilePath);
 				this._makeDir(`${this.cacheFilePath}/sessions`);
 				this._loadSessions();
@@ -94,6 +94,11 @@ Discord.Client = class Client extends Discord.Client {
  	 * @returns {object} All of the cache
  	 */
 	dumpCache() {
+		return {
+			guilds: this.guilds.cache.map(g => g._unpatch()),
+			channels: this.channels.cache.map(c => c._unpatch()),
+			users: this.users.cache.map(u => u._unpatch())
+		};
 	}
 	/**
  	 * Loads all of the stored caches on disk into memory
