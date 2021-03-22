@@ -47,12 +47,15 @@ Discord.Client = class Client extends Discord.Client {
 				this._unLoadSessions();
 				if (options.cacheGuilds) {
 					this._makeDir(`${this.cacheFilePath}/guilds`);
+					this._write("guilds", guilds);
 				}
 				if (options.cacheChannels) {
 					this._makeDir(`${this.cacheFilePath}/channels`);
+					this._write("channels", channels);
 				}
 				if (options.cacheMembers) {
 					this._makeDir(`${this.cacheFilePath}/users`);
+					this._write("users", users);
 				}
 			};
 			this._uncaughtExceptionOnExit = false;
@@ -152,6 +155,17 @@ Discord.Client = class Client extends Discord.Client {
  	 */
 	_makeDir(dir) {
 		if (!fs.existsSync(dir)) { fs.mkdirSync(dir); }
+	}
+	/**
+ 	 * Writes a cache array to multiple files indexed by ID to disk using the cached file path and JSON format
+	 * @param {string} path The path to write the data to
+	 * @param {Array} data An array of all of the data items to write
+ 	 * @private
+ 	 */
+	_write(path, data) {
+		for (const item of data) {
+			fs.writeFileSync(`${this.cacheFilePath}/${path}/${item.id}.json`, JSON.stringify(item));
+		}
 	}
 	sweepUsers(_lifetime = 86400) {
 		const lifetime = _lifetime * 1000;
