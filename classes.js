@@ -120,6 +120,22 @@ Discord.Structures.extend("Message", M => {
 	};
 });
 
+Discord.Strictures.extend("User", U => {
+	return class User extends U {
+		_unpatch() {
+			return {
+				id: this.id,
+				username: this.username,
+				bot: this.bot,
+				discriminator: this.discriminator,
+				avatar: this.avatar,
+				system: this.system,
+				public_flags: this.flags.valueOf()
+			}
+		}
+	}
+});
+
 Discord.Structures.extend("GuildMember", G => {
 	return class GuildMember extends G {
 		_patch(data) {
@@ -136,6 +152,16 @@ Discord.Structures.extend("GuildMember", G => {
 						this._user = user;
 					}
 				}
+			}
+		}
+		_unpatch() {
+			return {
+				user: this.user._unpatch(),
+				nick: this.nickname,
+				joined_at: this.joinedTimestamp,
+				premium_since: this.premiumSinceTimestamp,
+				roles: this._roles,
+				pending: this.pending
 			}
 		}
 		equals(member) {
@@ -217,112 +243,48 @@ Discord.Structures.extend("Guild", G => {
 			}
 		}
 		_unpatch() {
-			/**
-			 * Discord raw guild data as documented: https://github.com/discordjs/discord-api-types/blob/main/v8/payloads/guild.ts
-			 */
 			return {
-				id: this.id,
-				unavailable: this.available,
+				unavailable: !this.available,
+				shardID: this.shardID,
 				name: this.name,
 				icon: this.icon,
 				splash: this.splash,
-				banner: this.banner,
-				description: this.description,
-				features: this.features,
-				verification_level: this.verificationLevel,
 				discovery_splash: this.discoverySplash,
-				owner_id: this.ownerID,
 				region: this.region,
-				afk_channel_id: this.afkChannelID,
-				afk_timeout: this.afkTimeout,
-				widget_enabled: this.widgetEnabled,
-				widget_channel_id: this.widgetChannelID,
-				default_message_notifications: this.defaultMessageNotifications,
-				explicit_content_filter: this.explicitContentFilter,
-				/**
-				 * Roles in the guild
-				 *
-				 * See https://discord.com/developers/docs/topics/permissions#role-object
-				 */
-				roles: this.roles.cache.map(r => ({
-					name: r.name,
-					color: r.color
-				})),
-				/**
-				 * Custom guild emojis
-				 *
-				 * See https://discord.com/developers/docs/resources/emoji#emoji-object
-				 */
-				emojis: this.emojis.cache.map(e => ({
-					id: e.id,
-					name: e.name
-				})),
-				mfa_level: this.mfaLevel,
-				application_id: this.applicationID,
-				system_channel_id: this.systemChannelID,
-				system_channel_flags: this.systemChannelFlags,
-				rules_channel_id: this.rulesChannelID,
-				joined_at: this.joinedAt,
-				large: this.large,
 				member_count: this.memberCount,
-				voice_states: this.voiceStates.cache.map(v => ({
-					guild_id: v.guild.id,
-					channel_id: v.channelID,
-					user_id: v.userID,
-					session_id: v.sessionID,
-					deaf: v.deaf,
-					mute: v.mute,
-					self_deaf: v.selfDeaf,
-					self_mute: v.selfMute,
-					suppress: v.suppress
-				})),
-				members: this.members.cache.map(m => ({
-					user: m.user,
-					nick: m.nickname,
-					roles: m.roles,
-					joined_at: m.joinedAt,
-					premium_since: m.premiumSinceTimestamp,
-					deaf: m.deaf,
-					mute: m.mute,
-					pending: m.pending,
-					permissions: m.permissions
-				})),
-				channels: this.channels.cache.map(c => ({
-					id: c.id,
-					type: c.type,
-					guild_id: c.guild.id,
-					position: c.position,
-					permission_overwrites: c.permissionOverwrites,
-					name: c.name,
-					topic: c.topic,
-					nsfw: c.nsfw,
-					last_message_id: c.lastMessageID,
-					bitrate: c.bitrate,
-					user_limit: c.userLimit,
-					rate_limit_per_user: c.rateLimitPerUser,
-					recipients: c.recipients,
-					icon: c.icon,
-					owner_id: c.ownerID,
-					application_id: c.applicationID,
-					parent_id: c.parentID,
-					last_pin_timestamp: c.lastPinTimestamp
-				})),
-				presences: this.presences.cache.map(p => ({
-					user: p.user,
-					guild_id: p.guild.id,
-					status: p.status,
-					activities: p.activities,
-					client_status: p.clientStatus
-				})),
-				max_presences: this.maximumPresences,
-				max_members: this.maximumMembers,
-				vanity_url_code: this.vanityURLCode,
+				large: this.large,
+				features: this.features,
+				application_id: this.applicationID,
+				afk_timeout: this.afkTimeout,
+				afk_channel_id: this.afkChannelID,
+				system_channel_id: this.systemChannelID,
 				premium_tier: this.premiumTier,
 				premium_subscription_count: this.premiumSubscriptionCount,
-				preferred_locale: this.preferredLocale || "en-US",
-				public_updates_channel_id: this.publicUpdatesChannelID,
+				widget_enabled: this.widgetEnabled,
+				widget_channel_id: this.widgetChannelID,
+				verification_level: Discord.Util.Constants.VerificationLevels.indexOf(this.verificationLevel),
+				explicit_content_filter: Discord.Util.Constants.ExplicitContentFilterLevels.indexOf(this.explicitContentFilter),
+				mfa_level: this.mfaLevel,
+				joinedTimestamp: this.joinedTimestamp,
+				default_message_notifications: this.defaultMessageNotifications,
+				system_channel_flags: this.systemChannelFlags.valueOf(),
+				max_members: this.maximumMembers,
+				max_presences: this.maximumPresences,
 				approximate_member_count: this.approximateMemberCount,
-				approximate_presence_count: this.approximatePresenceCount
+				approximate_presence_count: this.approximatePresenceCount,
+				vanity_url_code: this.vanityURLCode,
+				description: this.description,
+				banner: this.banner,
+				id: this.id,
+				rules_channel_id: this.rulesChannelID,
+				public_updates_channel_id: this.publicUpdatesChannelID,
+				preferred_locale: this.preferredLocale,
+				roles: this.roles.cache.map(x => x._unpatch()),
+				members: this.members.cache.map(x => x._unpatch()),
+				owner_id: this.ownerID,
+				presences: this.presences.cache.map(x => x._unpatch()),
+				voice_states: this.voiceStates.cache.map(x => x._unpatch()),
+				emojis: this.emojis.cache.map(x => x._unpatch())
 			};
 		}
 		get nameAcronym() {
@@ -384,6 +346,18 @@ Discord.Structures.extend("GuildEmoji", E => {
 				this._author = data.user.id;
 			}
 		}
+		_unpatch() {
+			return {
+				animated: this.animated,
+				name: this.name,
+				id: this.id,
+				require_colons: this.requiresColons,
+				managed: this.managed,
+				available: this.available,
+				roles: this._roles,
+				user: this.author ? this.author._unpatch() : void 0;
+			}
+		}
 		async fetchAuthor(cache = true) {
 			if(this.managed) {
 				throw new Error("EMOJI_MANAGED");
@@ -400,6 +374,28 @@ Discord.Structures.extend("GuildEmoji", E => {
 	};
 });
 
+Discord.Structures.extend("Role", R => {
+	return class Role extends R {
+		_unpatch() {
+			return {
+				id: this.id,
+				name: this.name,
+				color: this.color,
+				hoist: this.hoist,
+				position: this.rawPosition,
+				permissions: this.permissions.valueOf().toString(),
+				managed: this.managed,
+				mentionable: this.mentionable,
+				tags: {
+					bot_id: this.tags.botID,
+					integration_id: this.tags.integrationID,
+					premium_subscriber: this.tags.premiumSubscriberRole
+				}
+			}
+		}
+	}
+});
+
 Discord.Structures.extend("VoiceState", V => {
 	return class VoiceState extends V {
 		_patch(data) {
@@ -408,6 +404,19 @@ Discord.Structures.extend("VoiceState", V => {
 				this._member = data.member;
 			}
 			return this;
+		}
+		_unpatch() {
+			return {
+				user_id: this.id,
+				deaf: this.serverDeaf,
+				mute: this.serverMute,
+				self_deaf: this.selfDeaf,
+				self_mute: this.selfMute,
+				self_video: this.selfVideo,
+				session_id: this.sessionID,
+				self_stream: this.streaming,
+				channel_id: this.channelID
+			}
 		}
 		get channel() {
 			return this.channelID ? this.client.channels.cache.get(this.channelID) || this.client.channels.add({
@@ -462,6 +471,42 @@ Discord.Structures.extend("Presence", P => {
 				};
 			}
 			return this;
+		}
+		_unpatch() {
+			return {
+				user: {
+					id: this.userID
+				},
+				status: this.status,
+				activities: this.activities.map(a => ({
+					name: a.name,
+					type: a.type,
+					url: a.url,
+					details: a.details,
+					state: a.state,
+					application_id: a.applicationID,
+					timestamps: {
+						start: a.timestamps.start ? a.timestamps.start.getTime() : null,
+						end: a.timestamps.end ? a.timestamps.end.getTime() : null
+					},
+					party: a.party,
+					assets: {
+						large_text: a.assets.largeText,
+						small_text: a.assets.smallText,
+						large_image: a.assets.largeImage,
+						small_image: a.assets.smallImage
+					},
+					sync_id: a.syncID,
+					flags: a.flags.valueOf(),
+					emoji: {
+						animated: a.emoji.animated,
+						name: a.emoji.name,
+						id: a.emoji.id
+					},
+					created_at: a.createdTimestamp
+				})),
+				client_status: this.clientStatus
+			}
 		}
 		get user() {
 			return this.client.users.cache.get(this.userID) || this.client.users.add((this._member || {}).user || { id: this.userID }, false);
