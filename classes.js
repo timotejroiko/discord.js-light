@@ -390,7 +390,7 @@ Discord.Channel.create = (client, data, _guild) => {
 					channel = new TextChannel(guild, data);
 					break;
 				}
-				case Discord.Constants.ChannelTypes.VOICE: case 13: {
+				case Discord.Constants.ChannelTypes.VOICE: {
 					const VoiceChannel = Discord.Structures.get("VoiceChannel");
 					channel = new VoiceChannel(guild, data);
 					break;

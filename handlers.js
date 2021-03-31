@@ -28,12 +28,14 @@ PacketHandlers.READY = (client, { d: data }, shard) => {
 PacketHandlers.CHANNEL_CREATE = (client, packet, shard) => {
 	packet.d.shardID = shard.id;
 	const { channel } = client.actions.ChannelCreate.handle(packet.d);
+	if(!channel) { return; }
 	client.emit(Constants.Events.CHANNEL_CREATE, channel);
 };
 
 PacketHandlers.CHANNEL_DELETE = (client, packet, shard) => {
 	packet.d.shardID = shard.id;
 	const { channel } = client.actions.ChannelDelete.handle(packet.d);
+	if(!channel) { return; }
 	client.emit(Constants.Events.CHANNEL_DELETE, channel);
 };
 
