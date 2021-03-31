@@ -47,6 +47,7 @@ module.exports = client => {
 		this.triggerClientReady();
 	};
 	client.actions.ChannelCreate.handle = function(data) {
+		if(!data) { return; }
 		const c = this.client;
 		const guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({
 			id: data.guild_id,
@@ -56,6 +57,7 @@ module.exports = client => {
 		return { channel };
 	};
 	client.actions.ChannelDelete.handle = function(data) {
+		if(!data) { return; }
 		const c = this.client;
 		const guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({
 			id: data.guild_id,
@@ -76,6 +78,7 @@ module.exports = client => {
 		return { channel };
 	};
 	client.actions.ChannelUpdate.handle = function(data) {
+		if(!data) { return; }
 		const c = this.client;
 		const guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({
 			id: data.guild_id,
@@ -289,6 +292,7 @@ module.exports = client => {
 		};
 	};
 	client.actions.InviteCreate.handle = function(data) {
+		if(!data.channel_id || !data.guild_id) { return; }
 		const c = this.client;
 		const guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({
 			id: data.guild_id,
@@ -305,6 +309,7 @@ module.exports = client => {
 		return { invite };
 	};
 	client.actions.InviteDelete.handle = function(data) {
+		if(!data.channel_id || !data.guild_id) { return; }
 		const c = this.client;
 		const guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({
 			id: data.guild_id,
