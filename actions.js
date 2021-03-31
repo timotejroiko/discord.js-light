@@ -88,7 +88,8 @@ module.exports = client => {
 			let newChannel = c.channels.cache.get(data.id);
 			if(guild && (!c.options.cacheOverwrites && !newChannel.permissionOverwrites.size)) { data.permission_overwrites = []; }
 			const oldChannel = newChannel._update(data);
-			if(Constants.ChannelTypes[oldChannel.type.toUpperCase()] !== data.type) {
+			const isTextOrNews = ["text", "news"].includes(oldChannel.type) && ["text", "news"].includes(Object.keys(Constants.ChannelTypes)[data.type]?.toLowerCase());
+			if(Constants.ChannelTypes[oldChannel.type.toUpperCase()] !== data.type && isTextOrNews) {
 				const changedChannel = Channel.create(c, data, guild);
 				for(const [id, message] of newChannel.messages.cache) {
 					changedChannel.messages.cache.set(id, message);
