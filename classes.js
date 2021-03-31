@@ -93,6 +93,81 @@ Discord.Structures.extend("Message", M => {
 				}
 			}
 		}
+		_unpatch() {
+			return {
+				id: this.id,
+				type: Discord.Constants.MessageTypes.indexOf(this.type),
+				content: this.content,
+				author: this.author._unpatch(),
+				pinned: this.pinned,
+				tts: this.tts,
+				nonce: this.nonce,
+				embeds: this.embeds.map(x => x.toJSON()),
+				attachments: this.attachments.map(x => ({
+					filename: x.name,
+					id: x.id,
+					size: x.size,
+					url: x.url,
+					proxy_url: x.proxyURL,
+					height: x.height,
+					width: x.width
+				})),
+				edited_timestamp: this.editedTimestamp,
+				reactions: this.reactions.cache.map(x => ({
+					me: x.me,
+					emoji: {
+						animated: x.emoji.animated,
+						name: x.emoji.name,
+						id: x.emoji.id
+					},
+					count: x.count
+				})),
+				mentions: this.mentions.users.map(x => x._unpatch()),
+				mention_roles: this.mentions.roles.map(x => x._unpatch()),
+				mention_everyone: this.mentions.everyone,
+				mention_channels: this.mentions.crosspostedChannels.map(x => ({
+					id: x.channelID,
+					guild_id: x.guildID,
+					type: Discord.Constants.ChannelTypes[x.type.toUpperCase()],
+					name: x.name
+				})),
+				webhook_id: this.webhookID,
+				application: this.application ? {
+					id: this.application.id,
+					name: this.application.name,
+					description: this.application.description,
+					icon: this.application.icon,
+					cover_image: this.application.cover,
+					rpc_origins: this.application.rpcOrigins,
+					bot_require_code_grant: this.botRequireCodeGrant,
+					bot_public: this.application.botPublic,
+					team: this.application.owner instanceof Discord.Team ? {
+						id: this.application.owner.id,
+						name: this.application.owner.name,
+						icon: this.application.owner.icon,
+						owner_user_id: this.application.owner.ownerID,
+						members: this.application.owner.members.map(x => ({
+							permissions: x.permissions,
+							membership_state: x.membershipState,
+							user: x.user._unpatch()
+						}))
+					} : void 0,
+					owner: this.application.owner instanceof Discord.User ? this.application.owner._unpatch() : void 0
+				} : void 0,
+				activity: this.activity ? {
+					party_id: this.activity.partyID,
+					type: this.activity.type
+				} : void 0,
+				member: this.member._unpatch(),
+				flags: this.flags.valueOf(),
+				message_reference: this.reference ? {
+					channel_id: this.reference.channelID,
+					guild_id: this.reference.guildID,
+					message_id: this.reference.messageID
+				} : void 0,
+				referenced_message: this.client.guilds.cache.get(this.reference?.guildID)?.channels.cache.get(this.reference?.channelID)?.messages.cache.get(this.reference?.messageID)?._unpatch()
+			}
+		}
 		get member() {
 			if(!this.guild) { return null; }
 			const id = (this.author || {}).id || (this._member || {}).id;
@@ -262,8 +337,8 @@ Discord.Structures.extend("Guild", G => {
 				premium_subscription_count: this.premiumSubscriptionCount,
 				widget_enabled: this.widgetEnabled,
 				widget_channel_id: this.widgetChannelID,
-				verification_level: Discord.Util.Constants.VerificationLevels.indexOf(this.verificationLevel),
-				explicit_content_filter: Discord.Util.Constants.ExplicitContentFilterLevels.indexOf(this.explicitContentFilter),
+				verification_level: Discord.Constants.VerificationLevels.indexOf(this.verificationLevel),
+				explicit_content_filter: Discord.Constants.ExplicitContentFilterLevels.indexOf(this.explicitContentFilter),
 				mfa_level: this.mfaLevel,
 				joinedTimestamp: this.joinedTimestamp,
 				default_message_notifications: this.defaultMessageNotifications,
@@ -485,24 +560,24 @@ Discord.Structures.extend("Presence", P => {
 					details: a.details,
 					state: a.state,
 					application_id: a.applicationID,
-					timestamps: {
+					timestamps: a.timestamps ? {
 						start: a.timestamps.start ? a.timestamps.start.getTime() : null,
 						end: a.timestamps.end ? a.timestamps.end.getTime() : null
-					},
+					} : void 0,
 					party: a.party,
-					assets: {
+					assets: a.assets ? {
 						large_text: a.assets.largeText,
 						small_text: a.assets.smallText,
 						large_image: a.assets.largeImage,
 						small_image: a.assets.smallImage
-					},
+					} : void 0,
 					sync_id: a.syncID,
 					flags: a.flags.valueOf(),
-					emoji: {
+					emoji: a.emoji ? {
 						animated: a.emoji.animated,
 						name: a.emoji.name,
 						id: a.emoji.id
-					},
+					} : void 0,
 					created_at: a.createdTimestamp
 				})),
 				client_status: this.clientStatus
