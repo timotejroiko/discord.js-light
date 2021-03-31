@@ -258,10 +258,61 @@ require.cache[GCPath].exports = class GuildChannel extends GC {
 			});
 		}
 	}
+	_unpatch() {
+		let obj = super._unpatch();
+		obj.name = this.name;
+		obj.position = this.rawPosition;
+		obj.parent_id = this.parentID;
+		obj.permission_overwrites = this.permissionOverwrites.map(x => ({
+			id: x.id,
+			type: Constants.OverwriteTypes[x.type],
+			deny: x.deny.valueOf().toString(),
+			allow: x.allow.valueOf().toString()
+		}));
+		return obj;
+	}
 	get deletable() {
 		if(this.deleted) { return false; }
 		if(!this.client.options.cacheRoles && !this.guild.roles.cache.size) { return false; }
 		return this.permissionsFor(this.client.user).has(Permissions.FLAGS.MANAGE_CHANNELS, false);
+	}
+};
+
+const CPath = resolve(require.resolve("discord.js").replace("index.js", "/structures/Channel.js"));
+const C = require(CPath);
+require.cache[CPath].exports = class Channel extends C {
+	_unpatch() {
+		let obj = {
+			type: Constants.ChannelTypes[this.type.toUpperCase()],
+			id: this.id
+		};
+		if(this.messages) {
+			obj.last_message_id: this.lastMessageID;
+			obj.last_pin_timestamp: this.lastPinTimestamp;
+		}
+		switch(this.type) {
+			case "dm": {
+				obj.recipients: [this.recipient._unpatch()];
+				break;
+			}
+			case "text": case "news": {
+				obj.nsfw: this.nsfw;
+				obj.topic: this.topic;
+				obj.rate_limit_per_user: this.rateLimitPerUser;
+				obj.messages = this.messages.cache.map(x => x._unpatch());
+				break;
+			}
+			case "voice": {
+				obj.bitrate: this.bitrate;
+				obj.user_limit: this.userLimit
+				break;
+			}
+			case "store": {
+				obj.nsfw: this.nsfw;
+				break;
+			}
+		}
+		return obj;
 	}
 };
 
