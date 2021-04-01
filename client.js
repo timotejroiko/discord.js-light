@@ -73,7 +73,6 @@ Discord.Client = class Client extends Discord.Client {
 			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
 				if(!this.readyAt) { this.ws.checkShardsReady(); }
 			});
-			this._patchCache(options.hotReload.cacheData || this._loadCache());
 			let dumped = false;
 			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, async (...args) => {
@@ -82,12 +81,9 @@ Discord.Client = class Client extends Discord.Client {
 						const cache = this.dumpCache();
 						const sessions = this.dumpSessions();
 						if(options.hotReload.onExit) {
-							await options.hotReload.onExit(cache, sessions).catch(() => {}); // async will not work on exit
+							await options.hotReload.onExit(sessions, cache).catch(() => {}); // async will not work on exit
 						} else {
-							for(const folder of ["websocket", "users", "guilds", "channels"]) {
-								if(!fs.existsSync(`${process.cwd()}/.sessions/${folder}`)) { fs.mkdirSync(`${process.cwd()}/.sessions/${folder}`, { recursive: true }); }
-							}
-							for(const shard of sessions) { /* no-op */ }
+							this._storeData(sessions, cache);
 						}
 					}
 					if(eventType === "uncaughtException") {
@@ -123,22 +119,24 @@ Discord.Client = class Client extends Discord.Client {
  	 */
 	dumpCache() {
 		return {
-			guilds: this.guilds.cache.map(g => g._unpatch()),
-			channels: this.channels.cache.map(c => c._unpatch()),
-			users: this.users.cache.map(u => u._unpatch())
-		};
+			guilds: this.guilds.cache.reduce((a, g) => {
+				a[g.id] = g._unpatch();
+				return a;
+			}, {})
+		}
 	}
 	/**
  	 * Generates a complete dump of the current stored cache
 	 * @returns {object} Session data
  	 */
 	dumpSessions() {
-		return this.ws.shards.map(s => ({
-			[s.id]: {
+		return this.ws.shards.reduce((a, s) => {
+			a[s.id] = {
 				id: s.sessionID,
 				sequence: s.sequence
-			}
-		}));
+			};
+			return a;
+		}, {});
 	}
 	/**
  	 * Loads all of the stored caches on disk into memory
@@ -194,6 +192,23 @@ Discord.Client = class Client extends Discord.Client {
 			for(const item of items) {
 				this[cache].add(item);
 			}
+		}
+	}
+	/**
+ 	 * Built-in cache storing
+ 	 * @private
+ 	 */
+	_storeData(sessions, cache) {
+		for(const [id, data] of Object.entries(sessions)) {
+			if(!fs.existsSync(`${process.cwd()}/.sessions/websocket`)) { fs.mkdirSync(`${process.cwd()}/.sessions/websocket`, { recursive: true }); }
+			let obj = JSON.stringify(data);
+			fs.writeFileSync(`${process.cwd()}/.sessions/websocket/${id}.json`, obj, "utf8");
+		}
+		for(const folder of Object.keys(cache)) {
+			for(const [id, data] of Object.entries(cache[folder])) {
+				let obj = JSON.stringify(data);
+				fs.writeFileSync(`${process.cwd()}/.sessions/${folder}/${id}.json`, obj, "utf8");
+			}	
 		}
 	}
 };
