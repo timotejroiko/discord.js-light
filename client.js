@@ -6,6 +6,52 @@ const actions = require("./actions.js");
 const pkg = require("./package.json");
 const fs = require("fs");
 
+/**
+ * Validate client options.
+ * @param {object} options Options to validate
+ * @private
+ */
+validateOptions(options) {
+	if(typeof options.cacheChannels !== "boolean") {
+		throw new TypeError("CLIENT_INVALID_OPTION", "cacheChannels", "a boolean");
+	}
+	if(typeof options.cacheGuilds !== "boolean") {
+		throw new TypeError("CLIENT_INVALID_OPTION", "cacheGuilds", "a boolean");
+	}
+	if(typeof options.cachePresences !== "boolean") {
+		throw new TypeError("CLIENT_INVALID_OPTION", "cachePresences", "a boolean");
+	}
+	if(typeof options.cacheRoles !== "boolean") {
+		throw new TypeError("CLIENT_INVALID_OPTION", "cacheRoles", "a boolean");
+	}
+	if(typeof options.cacheOverwrites !== "boolean") {
+		throw new TypeError("CLIENT_INVALID_OPTION", "cacheOverwrites", "a boolean");
+	}
+	if(typeof options.cacheEmojis !== "boolean") {
+		throw new TypeError("CLIENT_INVALID_OPTION", "cacheEmojis", "a boolean");
+	}
+	if(typeof options.cacheMembers !== "boolean") {
+		throw new TypeError("CLIENT_INVALID_OPTION", "cacheMembers", "a boolean");
+	}
+	if(!Array.isArray(options.disabledEvents)) {
+		throw new TypeError("CLIENT_INVALID_OPTION", "disabledEvents", "an array");
+	}
+	if(options.hotReload && typeof options.hotReload === "object") {
+		if (options.hotReload.sessionData && typeof options.hotReload.sessionData !== "object") {
+			throw new TypeError("CLIENT_INVALID_OPTION", "sessionData", "an object");
+		}
+		if (options.hotReload.cacheData && typeof options.hotReload.cacheData !== "object") {
+			throw new TypeError("CLIENT_INVALID_OPTION", "cacheData", "an object");
+		}
+		if (options.hotReload.onExit && typeof options.hotReload.onExit !== "function") {
+			throw new TypeError("CLIENT_INVALID_OPTION", "onExit", "a function");
+		}
+	}
+	else if(typeof options.hotReload !== "boolean") {
+		throw new TypeError("CLIENT_INVALID_OPTION", "hotReload", "a boolean or an object");
+	}
+}
+
 Discord.Client = class Client extends Discord.Client {
 	constructor(_options = {}) {
 		const options = {
@@ -16,160 +62,38 @@ Discord.Client = class Client extends Discord.Client {
 			cacheOverwrites: false,
 			cacheEmojis: false,
 			cacheMembers: false,
-			disabledEvents: [],
 			hotReload: false,
+			disabledEvents: [],
 			..._options
 		};
+		validateOptions(options);
 		super(options);
 		actions(this);
-		this._validateOptionsLight(options);
-		if (options.hotReload) {
+		if(options.hotReload) {
 			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
-				if (!this.readyAt) { this.ws.checkShardsReady(); }
+				if(!this.readyAt) { this.ws.checkShardsReady(); }
 			});
-			this.cacheFilePath = `${process.cwd()}/.sessions`;
-			this.ws._hotreload = {};
-			if (options.hotReload.sessionData && Object.keys(options.hotReload.sessionData).length) {
-				this.ws._hotreload = options.hotReload.sessionData;
-			}
-			else {
-				this._loadSessions();
-			}
-			this._patchCache(options.hotReload.cacheData || this._loadCache());
-			this.onUnload = (sessions, { guilds, channels, users }) => {
-				this._makeDir(this.cacheFilePath);
-				this._makeDir(`${this.cacheFilePath}/sessions`);
-				this._loadSessions();
-				this.ws._hotreload = {
-					...this.ws._hotreload,
-					...sessions
-				};
-				this._unLoadSessions();
-				if (options.cacheGuilds) {
-					this._makeDir(`${this.cacheFilePath}/guilds`);
-					this._write("guilds", guilds);
-				}
-				if (options.cacheChannels) {
-					this._makeDir(`${this.cacheFilePath}/channels`);
-					this._write("channels", channels);
-				}
-				if (options.cacheMembers) {
-					this._makeDir(`${this.cacheFilePath}/users`);
-					this._write("users", users);
-				}
-			};
-			this._uncaughtExceptionOnExit = false;
-			for (const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
+			this._patchCache(options.hotReload.cacheData || this._loadCache());			
+			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, async (...args) => {
-					if (eventType === "uncaughtException") {
-						this._uncaughtExceptionOnExit = true;
-					}
-					if (!this._uncaughtExceptionOnExit) {
-						Object.assign(this.ws._hotreload, ...this.ws.shards.map(s => {
-							s.connection.close();
-							return {
-								[s.id]: {
-									id: s.sessionID,
-									seq: s.sequence
-								}
-							};
-						}));
-						if (eventType !== "exit") {
-							await this.onUnload(this.ws._hotreload, this.dumpCache());
-							process.exit();
+					let cache = this.dumpCache();
+					let sessions = this.dumpSessions();
+					if(options.hotReload.onExit) {
+						await options.hotReload.onExit(cache, sessions); // async will not work on exit and exception but might work on SIGINT and SIGTERM
+					} else {
+						for(const folder of ["websocket", "users", "guilds", "channels"]) {
+							if(!fs.existsSync(`${process.cwd()}/.sessions/${folder}`)) { fs.mkdirSync(`${process.cwd()}/.sessions/${folder}`, { recursive: true }); }
 						}
+						for(const shard of sessions)
 					}
-					else if (eventType !== "exit") {
-						console.error(args[0]);
-						console.error("UNCAUGHT_EXCEPTION_LOOP", "There was an uncaughtException inside your exit loop causing an infinite loop. Your exit function was not run or failed");
-						process.exit(1);
+					if(eventType === "uncaughtException") {
+						console.error(...args);
+					}
+					if(eventType !== "exit") {
+						process.exit(process.exitCode);
 					}
 				});
 			}
-		}
-	}
-	/**
- 	 * Generates a complete dump of the current stored cache
- 	 * @param {object} options Options to validate
- 	 * @returns {object} All of the cache
- 	 */
-	dumpCache() {
-		return {
-			guilds: this.guilds.cache.map(g => g._unpatch()),
-			channels: this.channels.cache.map(c => c._unpatch()),
-			users: this.users.cache.map(u => u._unpatch())
-		};
-	}
-	/**
- 	 * Loads all of the stored caches on disk into memory
-	 * @returns {object} All of the stored cache
- 	 * @private
- 	 */
-	_loadCache() {
-		const allCache = {};
-		for (const cache of ["guilds", "channels", "users"]) {
-			try {
-				const cachedFiles = fs.readdirSync(`${this.cacheFilePath}/${cache}`)
-					.filter(file => file.endsWith(".json"))
-					.map(c => c.substr(0, c.lastIndexOf(".")));
-				if (cachedFiles.length) { continue; }
-				allCache[cache] = [];
-				for (const id of cachedFiles) {
-					allCache[cache].push(JSON.parse(fs.readFileSync(`${this.cacheFilePath}/sessions/${id}.json`, "utf8")));
-				}
-			} catch (d) {
-				// Do nothing
-			}
-		}
-		return allCache;
-	}
-	/**
- 	 * Patches raw discord api objects into the discord.js cache
- 	 * @private
- 	 */
-	_patchCache({ guilds, channels, users }) {
-	}
-	/**
- 	 * Loads all of the stored sessions on disk into memory
- 	 * @private
- 	 */
-	_loadSessions() {
-		try {
-			const shards = fs.readdirSync(`${this.cacheFilePath}/sessions`)
-				.filter(file => file.endsWith(".json"))
-				.map(shardSession => shardSession.substr(0, shardSession.lastIndexOf(".")));
-			for (const shardID of shards) {
-				this.ws._hotreload[shardID] = JSON.parse(fs.readFileSync(`${this.cacheFilePath}/sessions/${shardID}.json`, "utf8"));
-			}
-		} catch (e) {
-			this.ws._hotreload = {};
-		}
-	}
-	/**
- 	 * Unloads all of the stored sessions in memory onto disk
- 	 * @private
- 	 */
-	_unLoadSessions() {
-		for (const [shardID, session] of this.ws._hotreload) {
-			fs.writeFileSync(`${this.cacheFilePath}/sessions/${shardID}.json`, JSON.stringify(session));
-		}
-	}
-	/**
- 	 * Creates a directory if it does not already exist
- 	 * @private
- 	 */
-	_makeDir(dir) {
-		if (!fs.existsSync(dir)) { fs.mkdirSync(dir); }
-	}
-	/**
- 	 * Writes a cache array to multiple files indexed by ID to disk using the cached file path and JSON format
-	 * @param {string} path The path to write the data to
-	 * @param {Array} data An array of all of the data items to write
- 	 * @private
- 	 */
-	_write(path, data) {
-		for (const item of data) {
-			fs.writeFileSync(`${this.cacheFilePath}/${path}/${item.id}.json`, JSON.stringify(item));
 		}
 	}
 	sweepUsers(_lifetime = 86400) {
@@ -190,49 +114,81 @@ Discord.Client = class Client extends Discord.Client {
 		}
 	}
 	/**
- 	 * Validates the client options.
- 	 * @param {object} options Options to validate
+ 	 * Generates a complete dump of the current stored cache
+ 	 * @returns {object} Cache data
+ 	 */
+	dumpCache() {
+		return {
+			guilds: this.guilds.cache.map(g => g._unpatch()),
+			channels: this.channels.cache.map(c => c._unpatch()),
+			users: this.users.cache.map(u => u._unpatch())
+		};
+	}
+	/**
+ 	 * Generates a complete dump of the current stored cache
+	 * @returns {object} Session data
+ 	 */
+	dumpSessions() {
+		return this.ws.shards.map(s => ({
+			[s.id]: {
+				id: s.sessionID,
+				sequence: s.sequence
+			}
+		}));
+	}
+	/**
+ 	 * Loads all of the stored caches on disk into memory
+	 * @returns {object} All of the stored cache
  	 * @private
  	 */
-	_validateOptionsLight(options) {
-		if (typeof options.cacheChannels !== "boolean") {
-			throw new TypeError("CLIENT_INVALID_OPTION", "cacheChannels", "a boolean");
-		}
-		if (typeof options.cacheGuilds !== "boolean") {
-			throw new TypeError("CLIENT_INVALID_OPTION", "cacheGuilds", "a boolean");
-		}
-		if (typeof options.cachePresences !== "boolean") {
-			throw new TypeError("CLIENT_INVALID_OPTION", "cachePresences", "a boolean");
-		}
-		if (typeof options.cacheRoles !== "boolean") {
-			throw new TypeError("CLIENT_INVALID_OPTION", "cacheRoles", "a boolean");
-		}
-		if (typeof options.cacheOverwrites !== "boolean") {
-			throw new TypeError("CLIENT_INVALID_OPTION", "cacheOverwrites", "a boolean");
-		}
-		if (typeof options.cacheEmojis !== "boolean") {
-			throw new TypeError("CLIENT_INVALID_OPTION", "cacheEmojis", "a boolean");
-		}
-		if (typeof options.cacheMembers !== "boolean") {
-			throw new TypeError("CLIENT_INVALID_OPTION", "cacheMembers", "a boolean");
-		}
-		if (!Array.isArray(options.disabledEvents)) {
-			throw new TypeError("CLIENT_INVALID_OPTION", "disabledEvents", "an array");
-		}
-		if (typeof options.hotReload !== "boolean") {
-			if (options.hotReload && typeof options.hotReload === "object") {
-				if (options.hotReload.sessionData && typeof options.hotReload.sessionData !== "object") {
-					throw new TypeError("CLIENT_INVALID_OPTION", "sessionData", "an object");
-				}
-				if (options.hotReload.cacheData && typeof options.hotReload.cacheData !== "object") {
-					throw new TypeError("CLIENT_INVALID_OPTION", "cacheData", "a object");
-				}
-				if (options.hotReload.onUnload && typeof options.hotReload.onUnload !== "function") {
-					throw new TypeError("CLIENT_INVALID_OPTION", "onUnload", "a function");
-				}
+	_loadCache() {
+		const allCache = {
+			guilds: [],
+			channels: [],
+			users: []
+		};
+		for(const cache of ["guilds", "channels", "users"]) {
+			const files = [];
+			try {
+				files = fs.readdirSync(`${process.cwd()}/.sessions/${cache}`).filter(file => file.endsWith(".json"));
+			} catch(e) { /* no-op */ }
+			for(const file of files) {
+				try {
+					const json = fs.readFileSync(`${process.cwd()}/.sessions/${cache}/${file}`, "utf8");
+					const obj = JSON.parse(json);
+					allCache[cache].push(obj);
+				} catch(e) { /* no-op */ }
 			}
-			else {
-				throw new TypeError("CLIENT_INVALID_OPTION", "hotReload", "a boolean or an object");
+		}
+		return allCache;
+	}
+	/**
+ 	 * Loads all of the stored sessions on disk into memory
+ 	 * @private
+ 	 */
+	_loadSessions() {
+		let data = {}
+		let files = [];
+		try {
+			files = fs.readdirSync(`${process.cwd()}/.sessions/websocket`).filter(file => file.endsWith(".json"));
+		} catch (e) { /* no-op */ }
+		for(const file of files) {
+			try {
+				const json = fs.readFileSync(`${process.cwd()}/.sessions/websocket/${file}`, "utf8");
+				const obj = JSON.parse(json);
+				data[file.slice(0, -5)] = obj;
+			} catch(e) { /* no-op */ }
+		}
+		return data;
+	}
+	/**
+ 	 * Patches raw discord api objects into the discord.js cache
+ 	 * @private
+ 	 */
+	_patchCache(data) {
+		for(const [cache, items] of Object.entries(data)) {
+			for(const item of items) {
+				this[cache].add(item);
 			}
 		}
 	}
