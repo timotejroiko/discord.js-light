@@ -196,7 +196,7 @@ Discord.Structures.extend("Message", M => {
 	};
 });
 
-Discord.Strictures.extend("User", U => {
+Discord.Structures.extend("User", U => {
 	return class User extends U {
 		_unpatch() {
 			return {
@@ -206,7 +206,7 @@ Discord.Strictures.extend("User", U => {
 				discriminator: this.discriminator,
 				avatar: this.avatar,
 				system: this.system,
-				public_flags: this.flags.valueOf()
+				public_flags: this.flags?.valueOf()
 			};
 		}
 	};
@@ -464,9 +464,9 @@ Discord.Structures.extend("Role", R => {
 				managed: this.managed,
 				mentionable: this.mentionable,
 				tags: {
-					bot_id: this.tags.botID,
-					integration_id: this.tags.integrationID,
-					premium_subscriber: this.tags.premiumSubscriberRole
+					bot_id: this.tags?.botID,
+					integration_id: this.tags?.integrationID,
+					premium_subscriber: this.tags?.premiumSubscriberRole
 				}
 			};
 		}

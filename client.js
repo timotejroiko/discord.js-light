@@ -205,6 +205,7 @@ Discord.Client = class Client extends Discord.Client {
 			fs.writeFileSync(`${process.cwd()}/.sessions/websocket/${id}.json`, obj, "utf8");
 		}
 		for(const folder of Object.keys(cache)) {
+			if(!fs.existsSync(`${process.cwd()}/.sessions/${folder}`)) { fs.mkdirSync(`${process.cwd()}/.sessions/${folder}`, { recursive: true }); }
 			for(const [id, data] of Object.entries(cache[folder])) {
 				let obj = JSON.stringify(data);
 				fs.writeFileSync(`${process.cwd()}/.sessions/${folder}/${id}.json`, obj, "utf8");

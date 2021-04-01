@@ -287,28 +287,28 @@ require.cache[CPath].exports = class Channel extends C {
 			id: this.id
 		};
 		if(this.messages) {
-			obj.last_message_id: this.lastMessageID;
-			obj.last_pin_timestamp: this.lastPinTimestamp;
+			obj.last_message_id = this.lastMessageID;
+			obj.last_pin_timestamp = this.lastPinTimestamp;
 		}
 		switch(this.type) {
 			case "dm": {
-				obj.recipients: [this.recipient._unpatch()];
+				obj.recipients = [this.recipient._unpatch()];
 				break;
 			}
 			case "text": case "news": {
-				obj.nsfw: this.nsfw;
-				obj.topic: this.topic;
-				obj.rate_limit_per_user: this.rateLimitPerUser;
+				obj.nsfw = this.nsfw;
+				obj.topic = this.topic;
+				obj.rate_limit_per_user = this.rateLimitPerUser;
 				obj.messages = this.messages.cache.map(x => x._unpatch());
 				break;
 			}
 			case "voice": {
-				obj.bitrate: this.bitrate;
-				obj.user_limit: this.userLimit
+				obj.bitrate = this.bitrate;
+				obj.user_limit = this.userLimit
 				break;
 			}
 			case "store": {
-				obj.nsfw: this.nsfw;
+				obj.nsfw = this.nsfw;
 				break;
 			}
 		}
