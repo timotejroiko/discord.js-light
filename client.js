@@ -79,7 +79,9 @@ Discord.Client = class Client extends Discord.Client {
 					const cache = this.dumpCache();
 					const sessions = this.dumpSessions();
 					if(options.hotReload.onExit) {
-						await options.hotReload.onExit(cache, sessions); // async will not work on exit and exception but might work on SIGINT and SIGTERM
+						try {
+							await options.hotReload.onExit(cache, sessions); // async will not work on exit
+						} catch (e) { /* no-op */ }
 					} else {
 						for(const folder of ["websocket", "users", "guilds", "channels"]) {
 							if(!fs.existsSync(`${process.cwd()}/.sessions/${folder}`)) { fs.mkdirSync(`${process.cwd()}/.sessions/${folder}`, { recursive: true }); }
