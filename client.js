@@ -74,19 +74,21 @@ Discord.Client = class Client extends Discord.Client {
 				if(!this.readyAt) { this.ws.checkShardsReady(); }
 			});
 			this._patchCache(options.hotReload.cacheData || this._loadCache());
+			let dumped = false;
 			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, async (...args) => {
-					const cache = this.dumpCache();
-					const sessions = this.dumpSessions();
-					if(options.hotReload.onExit) {
-						try {
-							await options.hotReload.onExit(cache, sessions); // async will not work on exit
-						} catch (e) { /* no-op */ }
-					} else {
-						for(const folder of ["websocket", "users", "guilds", "channels"]) {
-							if(!fs.existsSync(`${process.cwd()}/.sessions/${folder}`)) { fs.mkdirSync(`${process.cwd()}/.sessions/${folder}`, { recursive: true }); }
+					if(!dumped) {
+						dumped = true;
+						const cache = this.dumpCache();
+						const sessions = this.dumpSessions();
+						if(options.hotReload.onExit) {
+							await options.hotReload.onExit(cache, sessions).catch(() => {}); // async will not work on exit
+						} else {
+							for(const folder of ["websocket", "users", "guilds", "channels"]) {
+								if(!fs.existsSync(`${process.cwd()}/.sessions/${folder}`)) { fs.mkdirSync(`${process.cwd()}/.sessions/${folder}`, { recursive: true }); }
+							}
+							for(const shard of sessions) { /* no-op */ }
 						}
-						for(const shard of sessions) { /* no-op */ }
 					}
 					if(eventType === "uncaughtException") {
 						console.error(...args);
