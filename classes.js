@@ -357,6 +357,7 @@ Discord.Structures.extend("Guild", G => {
 				preferred_locale: this.preferredLocale,
 				roles: this.roles.cache.map(x => x._unpatch()),
 				members: this.members.cache.map(x => x._unpatch()),
+				channels: this.channels.cache.map(x => x._unpatch()),
 				owner_id: this.ownerID,
 				presences: this.presences.cache.map(x => x._unpatch()),
 				voice_states: this.voiceStates.cache.map(x => x._unpatch()),
