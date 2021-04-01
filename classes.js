@@ -167,7 +167,7 @@ Discord.Structures.extend("Message", M => {
 					message_id: this.reference.messageID
 				} : void 0,
 				referenced_message: this.client.guilds.cache.get(this.reference?.guildID)?.channels.cache.get(this.reference?.channelID)?.messages.cache.get(this.reference?.messageID)?._unpatch()
-			}
+			};
 		}
 		get member() {
 			if(!this.guild) { return null; }
@@ -207,9 +207,9 @@ Discord.Strictures.extend("User", U => {
 				avatar: this.avatar,
 				system: this.system,
 				public_flags: this.flags.valueOf()
-			}
+			};
 		}
-	}
+	};
 });
 
 Discord.Structures.extend("GuildMember", G => {
@@ -238,7 +238,7 @@ Discord.Structures.extend("GuildMember", G => {
 				premium_since: this.premiumSinceTimestamp,
 				roles: this._roles,
 				pending: this.pending
-			}
+			};
 		}
 		equals(member) {
 			return member && this.deleted === member.deleted && this.nickname === member.nickname && this._roles.length === member._roles.length;
@@ -431,8 +431,8 @@ Discord.Structures.extend("GuildEmoji", E => {
 				managed: this.managed,
 				available: this.available,
 				roles: this._roles,
-				user: this.author ? this.author._unpatch() : void 0;
-			}
+				user: this.author ? this.author._unpatch() : void 0
+			};
 		}
 		async fetchAuthor(cache = true) {
 			if(this.managed) {
@@ -467,9 +467,9 @@ Discord.Structures.extend("Role", R => {
 					integration_id: this.tags.integrationID,
 					premium_subscriber: this.tags.premiumSubscriberRole
 				}
-			}
+			};
 		}
-	}
+	};
 });
 
 Discord.Structures.extend("VoiceState", V => {
@@ -492,7 +492,7 @@ Discord.Structures.extend("VoiceState", V => {
 				session_id: this.sessionID,
 				self_stream: this.streaming,
 				channel_id: this.channelID
-			}
+			};
 		}
 		get channel() {
 			return this.channelID ? this.client.channels.cache.get(this.channelID) || this.client.channels.add({
@@ -550,9 +550,7 @@ Discord.Structures.extend("Presence", P => {
 		}
 		_unpatch() {
 			return {
-				user: {
-					id: this.userID
-				},
+				user: { id: this.userID },
 				status: this.status,
 				activities: this.activities.map(a => ({
 					name: a.name,
@@ -582,7 +580,7 @@ Discord.Structures.extend("Presence", P => {
 					created_at: a.createdTimestamp
 				})),
 				client_status: this.clientStatus
-			}
+			};
 		}
 		get user() {
 			return this.client.users.cache.get(this.userID) || this.client.users.add((this._member || {}).user || { id: this.userID }, false);

@@ -11,7 +11,7 @@ const fs = require("fs");
  * @param {object} options Options to validate
  * @private
  */
-validateOptions(options) {
+function validateOptions(options) {
 	if(typeof options.cacheChannels !== "boolean") {
 		throw new TypeError("CLIENT_INVALID_OPTION", "cacheChannels", "a boolean");
 	}
@@ -73,18 +73,18 @@ Discord.Client = class Client extends Discord.Client {
 			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
 				if(!this.readyAt) { this.ws.checkShardsReady(); }
 			});
-			this._patchCache(options.hotReload.cacheData || this._loadCache());			
+			this._patchCache(options.hotReload.cacheData || this._loadCache());
 			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, async (...args) => {
-					let cache = this.dumpCache();
-					let sessions = this.dumpSessions();
+					const cache = this.dumpCache();
+					const sessions = this.dumpSessions();
 					if(options.hotReload.onExit) {
 						await options.hotReload.onExit(cache, sessions); // async will not work on exit and exception but might work on SIGINT and SIGTERM
 					} else {
 						for(const folder of ["websocket", "users", "guilds", "channels"]) {
 							if(!fs.existsSync(`${process.cwd()}/.sessions/${folder}`)) { fs.mkdirSync(`${process.cwd()}/.sessions/${folder}`, { recursive: true }); }
 						}
-						for(const shard of sessions)
+						for(const shard of sessions) { /* no-op */ }
 					}
 					if(eventType === "uncaughtException") {
 						console.error(...args);
@@ -148,7 +148,7 @@ Discord.Client = class Client extends Discord.Client {
 			users: []
 		};
 		for(const cache of ["guilds", "channels", "users"]) {
-			const files = [];
+			let files = [];
 			try {
 				files = fs.readdirSync(`${process.cwd()}/.sessions/${cache}`).filter(file => file.endsWith(".json"));
 			} catch(e) { /* no-op */ }
@@ -167,7 +167,7 @@ Discord.Client = class Client extends Discord.Client {
  	 * @private
  	 */
 	_loadSessions() {
-		let data = {}
+		const data = {};
 		let files = [];
 		try {
 			files = fs.readdirSync(`${process.cwd()}/.sessions/websocket`).filter(file => file.endsWith(".json"));
