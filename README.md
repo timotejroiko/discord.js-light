@@ -153,19 +153,33 @@ Messages are cached only if the Channel they belong to is cached. Message cachin
 
 **THIS FEATURE IS CURRENTLY EXPERIMENTAL USE AT YOUR OWN RISK!**
 
-When developing bots you will likely do lots of trial and error which often requires restartig your bot.
+When developing bots you will likely do lots of trial and error which often requires restarting your bot.
 Each restart requires reconnecting to the Discord gateway on every shard which can often take a long time and eat up your daily identifies.
 
 Hot reloading provides a way to simply resume the previous gateway sessions on startup rather than creating new ones.
 This is done by storing the process data outside the process right before it exits and reloading the data into it when it starts.
-
-This option can be overriden with a few custom methods:
+ 
+This option can be overridden with a few custom methods:
 
 ```js
+const cache = {
+    guilds: {
+        "581072557512458241": {} // Discord api type
+    }
+}
+
+const sessions = {
+    "0": {
+        id: "3e961ec59a7c24b91198d07dd3189fa0", // Session ID
+        sequence: 19, // The close sequence of the session
+        lastConnected: 1617382560867 // Time the session was closed at
+    }
+}
+
 new Discord.Client({
     hotReload: {
-        cacheData: cache // user-supplied cache data. if not present, cache will be loaded from disk
-        sessionData: sessions // user-supplied session data. if not present, sessions will be loaded from disk
+        cacheData: cache, // user-supplied cache data. if not present, cache will be loaded from disk
+        sessionData: sessions, // user-supplied session data. if not present, sessions will be loaded from disk
         onExit: (sessions, cache) => {} // user-supplied data storing function. if not present, data will be stored to disk. This function can be async if the process is exited by using SIGINT (Ctrl+C), any other ways of exit are sync-only.
     }
 })
