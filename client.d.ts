@@ -52,6 +52,7 @@ type SessionData = {
 	[shardID: string]: {
 		id: string
 		sequence: number
+		lastConnected: number
 	}
 }
 
@@ -62,9 +63,9 @@ type CacheData = {
 }
 
 type HotReloadOptions = {
-	sessionData?: SessionData
 	cacheData?: CacheData
-	onUnload?: Function
+	sessionData?: SessionData
+	onExit?: Function
 }
 
 declare module "discord.js-light" {
@@ -76,8 +77,8 @@ declare module "discord.js-light" {
 		cacheOverwrites?:boolean
 		cacheEmojis?:boolean
 		cacheMembers?:boolean
-		disabledEvents?: Array<string>
 		hotReload?: boolean | HotReloadOptions
+		disabledEvents?: Array<string>
 	}
 	interface ClientEvents {
 		rest:[{path:string,method:string,response?:Promise<Buffer>}]
