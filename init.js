@@ -58,20 +58,21 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 				this.sessionID = data.id;
 				this.closeSequence = this.sequence = data.sequence;
 			}
-			else { return super.identify(); }
-			const cache = this.manager.client.options.hotReload.cacheData;
-			if(cache?.guilds) {
-				for(const [id, guild] of Object.entries(cache.guilds)) {
-					if(ShardClientUtil.shardIDForGuildID(id, this.manager.totalShards) === this.id) {
+			this.once(Constants.ShardEvents.RESUMED, () => {
+				const cache = this.manager.client.options.hotReload.cacheData;
+				if(cache?.guilds) {
+					for(const [id, guild] of Object.entries(cache.guilds)) {
+						if(ShardClientUtil.shardIDForGuildID(id, this.manager.totalShards) === this.id) {
+							this.manager.client.guilds.add(guild);
+						}
+					}
+				} else {
+					const { guilds } = this.manager.client._loadCache("guilds", id => ShardClientUtil.shardIDForGuildID(id, this.manager.totalShards) === this.id);
+					for(const guild of Object.values(guilds)) {
 						this.manager.client.guilds.add(guild);
 					}
 				}
-			} else {
-				const { guilds } = this.manager.client._loadCache("guilds", id => ShardClientUtil.shardIDForGuildID(id, this.manager.totalShards) === this.id);
-				for(const guild of Object.values(guilds)) {
-					this.manager.client.guilds.add(guild);
-				}
-			}
+			})
 		}
 		return super.identify();
 	}
