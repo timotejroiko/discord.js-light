@@ -53,23 +53,20 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 	identify() {
 		let hotReload = this.manager.client.options.hotReload;
 		if(hotReload) {
-			const t = hotReload.sessionData || this.manager.client._loadSession(this.id)
-			console.log(t);
-			const data = (t)?.[this.id]
+			const data = (hotReload.sessionData || this.manager.client._loadSession(this.id))?.[this.id]
 			if(data?.id && data.sequence > 0 && !this.sessionID && data.lastConnected + 60000 > Date.now()) {
 				this.sessionID = data.id;
 				this.closeSequence = this.sequence = data.sequence;
 			}
-			const cache = this.manager.client.options.hotReload.cacheData;
-			if(cache?.guilds && typeof cache.guilds === "object") {
-				const keys = Object.keys(cache.guilds);
-				for(const id of keys) {
+			const { guilds } = this.manager.client.options.hotReload.cacheData;
+			if(guilds) {
+				for(const [id, guild] of Object.entries(guilds)) {
 					if(ShardClientUtil.shardIDForGuildID(id, this.manager.totalShards) === this.id) {
-						this.manager.client.guilds.add(cache.guilds[id]);
+						this.manager.client.guilds.add(guild);
 					}
 				}
 			} else {
-				const guilds = this.manager.client._loadCache("guilds", id => ShardClientUtil.shardIDForGuildID(id, this.manager.totalShards));
+				const { guilds } = this.manager.client._loadCache("guilds", id => ShardClientUtil.shardIDForGuildID(id, this.manager.totalShards) === this.id);
 				for(const guild of Object.values(guilds)) {
 					this.manager.client.guilds.add(guild);
 				}

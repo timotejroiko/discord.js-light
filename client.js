@@ -154,14 +154,13 @@ Discord.Client = class Client extends Discord.Client {
 		} catch(e) { /* no-op */ }
 		for(const file of files) {
 			let name = file.slice(0, -5);
-			if(typeof filter === "function" && !filter(name)) { continue; }
+			if(typeof filter === "function" && filter(name) === false) { continue; }
 			try {
 				const json = fs.readFileSync(`${process.cwd()}/.sessions/${cacheType}/${file}`, "utf8");
-				const obj = JSON.parse(json);
-				cache[name] = obj;
+				cache[name] = JSON.parse(json);
 			} catch(e) { /* no-op */ }
 		}
-		return cache;
+		return { [cacheType]: cache};
 	}
 	/**
  	 * Loads the selected stored sessions on disk into memory
