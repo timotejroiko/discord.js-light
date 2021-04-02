@@ -53,7 +53,7 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 	identify() {
 		let hotReload = this.manager.client.options.hotReload;
 		if(hotReload) {
-			const data = hotReload.sessionData?[this.id] || this.manager.client._loadSessions(this.id);
+			const data = hotReload.sessionData?.[this.id] || this.manager.client._loadSessions(this.id)
 			if(data?.id && !this.sessionID) {
 				this.sessionID = data.id;
 				this.closeSequence = this.sequence = data.sequence;

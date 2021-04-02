@@ -80,7 +80,7 @@ Discord.Client = class Client extends Discord.Client {
 						dumped = true;
 						const cache = this.dumpCache();
 						const sessions = this.dumpSessions();
-						if(options.hotReload.onExit) {
+						if(options.hotReload?.onExit) {
 							await options.hotReload.onExit(sessions, cache).catch(() => {}); // async will not work on exit
 						} else {
 							this._storeData(sessions, cache);
@@ -173,7 +173,7 @@ Discord.Client = class Client extends Discord.Client {
 			files = fs.readdirSync(`${process.cwd()}/.sessions/websocket`).filter(file => file.endsWith(".json"));
 		} catch (e) { /* no-op */ }
 		if(id) {
-			const file = files.find(file => Number(file.slice(0, -5) === id);
+			const file = files.find(file => Number(file.slice(0, -5) === id));
 			if(file) {
 				try {
 					const json = fs.readFileSync(`${process.cwd()}/.sessions/websocket/${file}`, "utf8");
@@ -184,7 +184,7 @@ Discord.Client = class Client extends Discord.Client {
 			for(const file of files) {
 				try {
 					const json = fs.readFileSync(`${process.cwd()}/.sessions/websocket/${file}`, "utf8");
-					const shard = Number(file.slice(0, -5);
+					const shard = Number(file.slice(0, -5));
 					data[shard] = JSON.parse(json);
 				} catch(e) { /* no-op */ }
 			}
@@ -209,14 +209,12 @@ Discord.Client = class Client extends Discord.Client {
 	_storeData(sessions, cache) {
 		for(const [id, data] of Object.entries(sessions)) {
 			if(!fs.existsSync(`${process.cwd()}/.sessions/websocket`)) { fs.mkdirSync(`${process.cwd()}/.sessions/websocket`, { recursive: true }); }
-			let obj = JSON.stringify(data);
-			fs.writeFileSync(`${process.cwd()}/.sessions/websocket/${id}.json`, obj, "utf8");
+			fs.writeFileSync(`${process.cwd()}/.sessions/websocket/${id}.json`, JSON.stringify(data), "utf8");
 		}
 		for(const folder of Object.keys(cache)) {
 			if(!fs.existsSync(`${process.cwd()}/.sessions/${folder}`)) { fs.mkdirSync(`${process.cwd()}/.sessions/${folder}`, { recursive: true }); }
 			for(const [id, data] of Object.entries(cache[folder])) {
-				let obj = JSON.stringify(data);
-				fs.writeFileSync(`${process.cwd()}/.sessions/${folder}/${id}.json`, obj, "utf8");
+				fs.writeFileSync(`${process.cwd()}/.sessions/${folder}/${id}.json`, JSON.stringify(data), "utf8");
 			}	
 		}
 	}
