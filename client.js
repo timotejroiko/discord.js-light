@@ -134,7 +134,8 @@ Discord.Client = class Client extends Discord.Client {
 		return this.ws.shards.reduce((a, s) => {
 			a[s.id] = {
 				id: s.sessionID,
-				sequence: s.sequence
+				sequence: s.sequence,
+				lastConnected: Date.now()
 			};
 			return a;
 		}, {});
