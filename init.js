@@ -58,6 +58,7 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 				this.sessionID = data.id;
 				this.closeSequence = this.sequence = data.sequence;
 			}
+			else { return super.identify(); }
 			const { guilds } = this.manager.client.options.hotReload.cacheData;
 			if(guilds) {
 				for(const [id, guild] of Object.entries(guilds)) {
