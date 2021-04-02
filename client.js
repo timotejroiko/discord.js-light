@@ -167,18 +167,18 @@ Discord.Client = class Client extends Discord.Client {
  	 * Loads the selected stored sessions on disk into memory
  	 * @private
  	 */
-	_loadSessions(id) {
+	_loadSession(id) {
 		let data = {};
 		let files = [];
 		try {
 			files = fs.readdirSync(`${process.cwd()}/.sessions/websocket`).filter(file => file.endsWith(".json"));
 		} catch (e) { /* no-op */ }
-		if(id && files.length) {
-			const file = files.find(file => Number(file.slice(0, -5) === id));
+		if(Number(id) >= 0 && files.length) {
+			const file = files.find(file => Number(file.slice(0, -5)) === id);
 			if(file) {
 				try {
 					const json = fs.readFileSync(`${process.cwd()}/.sessions/websocket/${file}`, "utf8");
-					data = JSON.parse(json);
+					data[id] = JSON.parse(json);
 				} catch(e) { /* no-op */ }
 			}
 		} else if (files.length) {
