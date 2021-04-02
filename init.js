@@ -6,6 +6,7 @@ const Constants = require(resolve(require.resolve("discord.js").replace("index.j
 const APIMessage = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/APIMessage.js")));
 const Util = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Util.js")));
 const { Error: DJSError } = require(resolve(require.resolve("discord.js").replace("index.js", "/errors")));
+const ShardClientUtil = require(resolve(require.resolve("discord.js").replace("index.js", "/sharding/ShardClientUtil.js")));
 
 const RHPath = resolve(require.resolve("discord.js").replace("index.js", "/rest/APIRequest.js"));
 const RH = require(RHPath);
@@ -48,12 +49,26 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 		}, 15000);
 	}
 	identify() {
-		if(this.manager.client.options.hotreload && this.manager._hotreload) {
-			const data = this.manager._hotreload[this.id];
-			if(data && !this.sessionID) {
+		let hotReload = this.manager.client.options.hotReload;
+		if(hotReload) {
+			const data = hotReload.sessionData?[this.id] || this.manager.client._loadSessions(this.id);
+			if(data?.id && !this.sessionID) {
 				this.sessionID = data.id;
 				this.closeSequence = this.sequence = data.sequence;
-				delete this.manager._hotreload[this.id];
+			}
+			const cache = this.manager.client.options.hotReload.cacheData;
+			if(cache?.guilds && typeof cache.guilds === "object") {
+				const keys = Object.keys(cache.guilds);
+				for(const id of keys) {
+					if(ShardClientUtil.shardIDForGuildID(id, this.manager.totalShards) === this.id) {
+						this.manager.client.guilds.add(cache.guilds[id]);
+					}
+				}
+			} else {
+				const guilds = this.manager.client._loadCache("guilds", id => ShardClientUtil.shardIDForGuildID(id, this.manager.totalShards));
+				for(const guild of Object.values(guilds)) {
+					this.manager.guilds.add(guild);
+				}
 			}
 		}
 		return super.identify();
