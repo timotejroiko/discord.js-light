@@ -115,6 +115,7 @@ Discord.Client = class Client extends Discord.Client {
 	}
 	/**
  	 * Generates a complete dump of the current stored cache
+	 * Only guild cache is dumped for now
  	 * @returns {object} Cache data
  	 */
 	dumpCache() {
@@ -139,47 +140,54 @@ Discord.Client = class Client extends Discord.Client {
 		}, {});
 	}
 	/**
- 	 * Loads all of the stored caches on disk into memory
-	 * @returns {object} All of the stored cache
+ 	 * Loads the selected stored cache on disk into memory
+	 * @returns {object} The stored cache
  	 * @private
  	 */
-	_loadCache() {
-		const allCache = {
-			guilds: [],
-			channels: [],
-			users: []
-		};
-		for(const cache of ["guilds", "channels", "users"]) {
-			let files = [];
+	_loadCache(cacheType, filter) {
+		const cache = {};
+		if(typeof cacheType !== "string" || !["guilds"].includes(cacheType.toLowerCase())) { return cache; } // to allow expanding in the future
+		let files = [];
+		try {
+			files = fs.readdirSync(`${process.cwd()}/.sessions/${cacheType}`).filter(file => file.endsWith(".json"));
+		} catch(e) { /* no-op */ }
+		for(const file of files) {
+			let name = file.slice(0, -5);
+			if(typeof filter === "function" && !filter(name)) { continue; }
 			try {
-				files = fs.readdirSync(`${process.cwd()}/.sessions/${cache}`).filter(file => file.endsWith(".json"));
+				const json = fs.readFileSync(`${process.cwd()}/.sessions/${cacheType}/${file}`, "utf8");
+				const obj = JSON.parse(json);
+				cache[name] = obj;
 			} catch(e) { /* no-op */ }
-			for(const file of files) {
-				try {
-					const json = fs.readFileSync(`${process.cwd()}/.sessions/${cache}/${file}`, "utf8");
-					const obj = JSON.parse(json);
-					allCache[cache].push(obj);
-				} catch(e) { /* no-op */ }
-			}
 		}
-		return allCache;
+		return cache;
 	}
 	/**
- 	 * Loads all of the stored sessions on disk into memory
+ 	 * Loads the selected stored sessions on disk into memory
  	 * @private
  	 */
-	_loadSessions() {
-		const data = {};
+	_loadSessions(id) {
+		let data = {};
 		let files = [];
 		try {
 			files = fs.readdirSync(`${process.cwd()}/.sessions/websocket`).filter(file => file.endsWith(".json"));
 		} catch (e) { /* no-op */ }
-		for(const file of files) {
-			try {
-				const json = fs.readFileSync(`${process.cwd()}/.sessions/websocket/${file}`, "utf8");
-				const obj = JSON.parse(json);
-				data[file.slice(0, -5)] = obj;
-			} catch(e) { /* no-op */ }
+		if(id) {
+			const file = files.find(file => Number(file.slice(0, -5) === id);
+			if(file) {
+				try {
+					const json = fs.readFileSync(`${process.cwd()}/.sessions/websocket/${file}`, "utf8");
+					data = JSON.parse(json);
+				} catch(e) { /* no-op */ }
+			}
+		} else {
+			for(const file of files) {
+				try {
+					const json = fs.readFileSync(`${process.cwd()}/.sessions/websocket/${file}`, "utf8");
+					const shard = Number(file.slice(0, -5);
+					data[shard] = JSON.parse(json);
+				} catch(e) { /* no-op */ }
+			}
 		}
 		return data;
 	}
