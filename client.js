@@ -173,7 +173,7 @@ Discord.Client = class Client extends Discord.Client {
 		try {
 			files = fs.readdirSync(`${process.cwd()}/.sessions/websocket`).filter(file => file.endsWith(".json"));
 		} catch (e) { /* no-op */ }
-		if(id) {
+		if(id && files.length) {
 			const file = files.find(file => Number(file.slice(0, -5) === id));
 			if(file) {
 				try {
@@ -181,7 +181,7 @@ Discord.Client = class Client extends Discord.Client {
 					data = JSON.parse(json);
 				} catch(e) { /* no-op */ }
 			}
-		} else {
+		} else if (files.length) {
 			for(const file of files) {
 				try {
 					const json = fs.readFileSync(`${process.cwd()}/.sessions/websocket/${file}`, "utf8");
