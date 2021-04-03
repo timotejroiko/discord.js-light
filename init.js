@@ -7,8 +7,6 @@ const APIMessage = require(resolve(require.resolve("discord.js").replace("index.
 const Util = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Util.js")));
 const { Error: DJSError } = require(resolve(require.resolve("discord.js").replace("index.js", "/errors")));
 const ShardClientUtil = require(resolve(require.resolve("discord.js").replace("index.js", "/sharding/ShardClientUtil.js")));
-const Util = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Util.js")));
-const { Error: DJSError } = require(resolve(require.resolve("discord.js").replace("index.js", "/errors")));
 
 const RHPath = resolve(require.resolve("discord.js").replace("index.js", "/rest/APIRequest.js"));
 const RH = require(RHPath);
