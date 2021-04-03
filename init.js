@@ -143,7 +143,7 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 			}
 		}
 		// If we have multiple shards add a 5s delay if identifying or no delay if resuming
-		if (this.shardQueue.size && Object.keys(this._hotreload).length) {
+		if (this.shardQueue.size && Object.keys(this._hotreload || {}).length) {
 			this.debug(`Shard Queue Size: ${this.shardQueue.size} with sessions; continuing immediately`);
 			return this.createShards();
 		} else if (this.shardQueue.size) {
