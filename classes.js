@@ -3,7 +3,6 @@
 const { resolve } = require("path");
 const { Error, RangeError } = require(resolve(require.resolve("discord.js").replace("index.js", "/errors")));
 const PartialGroupDMChannel = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/PartialGroupDMChannel.js")));
-const IntegrationApplication = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/IntegrationApplication.js")));
 const Discord = require("discord.js");
 
 Discord.Structures.extend("Message", M => {
@@ -478,7 +477,7 @@ Discord.TeamMember.prototype._patch = function(data) {
 	return this;
 };
 
-IntegrationApplication.prototype._patch = function(data) {
+Discord.IntegrationApplication.prototype._patch = function(data) {
 	this.id = data.id;
 	this.name = data.name ?? this.name ?? null;
 	this.description = data.description ?? this.description ?? null;
