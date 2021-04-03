@@ -2,15 +2,14 @@
 
 const { resolve } = require("path");
 const PacketHandlers = require(resolve(require.resolve("discord.js").replace("index.js", "/client/websocket/handlers")));
-const { Collection, ClientUser, Constants } = require("discord.js");
+const { Collection, ClientUser, Constants, ClientApplication } = require("discord.js");
 
 PacketHandlers.READY = (client, { d: data }, shard) => {
 	if(client.user) {
 		client.user._patch(data.user);
 	} else {
-		const clientUser = new ClientUser(client, data.user);
-		client.user = clientUser;
-		client.users.cache.set(clientUser.id, clientUser);
+		client.user = new ClientUser(client, data.user);
+		client.users.cache.set(client.user.id, client.user);
 	}
 	const guilds = new Collection();
 	for(const guild of data.guilds) {
@@ -22,24 +21,32 @@ PacketHandlers.READY = (client, { d: data }, shard) => {
 		shard.debug("Guild cache is disabled, skipping guild check.");
 		shard.expectedGuilds.clear();
 	}
+	if (client.application) {
+		client.application._patch(data.application);
+	} else {
+		client.application = new ClientApplication(client, data.application);
+	}
 	shard.checkReady();
 };
 
 PacketHandlers.CHANNEL_CREATE = (client, packet, shard) => {
 	packet.d.shardID = shard.id;
 	const { channel } = client.actions.ChannelCreate.handle(packet.d);
+	if(!channel) { return; }
 	client.emit(Constants.Events.CHANNEL_CREATE, channel);
 };
 
 PacketHandlers.CHANNEL_DELETE = (client, packet, shard) => {
 	packet.d.shardID = shard.id;
 	const { channel } = client.actions.ChannelDelete.handle(packet.d);
+	if(!channel) { return; }
 	client.emit(Constants.Events.CHANNEL_DELETE, channel);
 };
 
 PacketHandlers.CHANNEL_UPDATE = (client, packet, shard) => {
 	packet.d.shardID = shard.id;
 	const { old, updated } = client.actions.ChannelUpdate.handle(packet.d);
+	if(!updated) { return; }
 	client.emit(Constants.Events.CHANNEL_UPDATE, old, updated);
 };
 

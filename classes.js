@@ -456,6 +456,36 @@ Discord.GuildTemplate.prototype._patch = function(data) {
 	return this;
 };
 
+Discord.ClientApplication.prototype._patch = function(data) {
+	this.id = data.id;
+	this.name = data.name ?? this.name ?? null;
+	this.description = data.description ?? this.description ?? null;
+	this.icon = data.icon ?? this.icon ?? null;
+	this.flags = "flags" in data ? new Discord.ApplicationFlags(data.flags) : this.flags;
+	this.cover = data.cover_image ?? this.cover ?? null;
+	this.rpcOrigins = data.rpc_origins ?? this.rpcOrigins ?? [];
+	this.botRequireCodeGrant = data.bot_require_code_grant ?? this.botRequireCodeGrant ?? null;
+	this.botPublic = data.bot_public ?? this.botPublic ?? null;
+	this.owner = data.team ? new Discord.Team(this.client, data.team) : data.owner ? this.client.users.add(data.owner, this.client.users.cache.has(data.owner.id)) : this.owner ?? null;
+	return this;
+};
+
+Discord.TeamMember.prototype._patch = function(data) {
+	this.permissions = data.permissions;
+	this.membershipState = Discord.Constants.MembershipStates[data.membership_state];
+	this.user = this.client.users.add(data.user, this.client.users.cache.has(data.user.id));
+	return this;
+};
+
+Discord.IntegrationApplication.prototype._patch = function(data) {
+	this.id = data.id;
+	this.name = data.name ?? this.name ?? null;
+	this.description = data.description ?? this.description ?? null;
+	this.icon = data.icon ?? this.icon ?? null;
+	this.bot = data.bot ? this.client.users.add(data.bot, this.client.users.cache.has(data.bot.id)) : this.bot ?? null;
+	return this;
+};
+
 Discord.UserManager.prototype.forge = function(id) {
 	return this.add({ id }, false);
 };
@@ -847,12 +877,13 @@ Discord.ReactionManager.prototype.forge = function(id) {
 	return this.add({ emoji }, false);
 };
 
-Discord.ReactionUserManager.prototype.fetch = async function({ limit = 100, after, before, cache = true } = {}) {
+Discord.ReactionUserManager.prototype.fetch = async function({ limit = 100, after, cache = true } = {}) {
 	const { message } = this.reaction;
+	// removed `before` query parameter. see:
+	// https://discord.com/channels/222078108977594368/682166281826598932/827243964871475260
 	const data = await this.client.api.channels(message.channel.id).messages(message.id).reactions(this.reaction.emoji.identifier).get({
 		query: {
 			limit,
-			before,
 			after
 		}
 	});

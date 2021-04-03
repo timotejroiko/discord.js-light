@@ -299,6 +299,7 @@ module.exports = client => {
 			id: data.channel_id,
 			type: guild ? 0 : 1
 		}, guild, false);
+		if(!channel) { return; }
 		const invite = new Invite(c, Object.assign(data, {
 			channel,
 			guild
@@ -315,6 +316,7 @@ module.exports = client => {
 			id: data.channel_id,
 			type: guild ? 0 : 1
 		}, guild, false);
+		if(!channel) { return; }
 		const invite = new Invite(c, Object.assign(data, {
 			channel,
 			guild

@@ -149,7 +149,6 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 		} else if (this.shardQueue.size) {
 			this.debug(`Shard Queue Size: ${this.shardQueue.size}; continuing in 5s seconds...`);
 			await Util.delayFor(5000);
-			await this._handleSessionLimit();
 			return this.createShards();
 		}
 
