@@ -159,7 +159,7 @@ Discord.Structures.extend("Message", M => {
 					party_id: this.activity.partyID,
 					type: this.activity.type
 				} : void 0,
-				member: this.member._unpatch(),
+				member: this.member?._unpatch(),
 				flags: this.flags.valueOf(),
 				message_reference: this.reference ? {
 					channel_id: this.reference.channelID,
@@ -343,7 +343,7 @@ Discord.Structures.extend("Guild", G => {
 				mfa_level: this.mfaLevel,
 				joinedTimestamp: this.joinedTimestamp,
 				default_message_notifications: this.defaultMessageNotifications,
-				system_channel_flags: this.systemChannelFlags.valueOf(),
+				system_channel_flags: this.systemChannelFlags?.valueOf(),
 				max_members: this.maximumMembers,
 				max_presences: this.maximumPresences,
 				approximate_member_count: this.approximateMemberCount,
@@ -361,7 +361,7 @@ Discord.Structures.extend("Guild", G => {
 				owner_id: this.ownerID,
 				presences: this.presences.cache.map(x => x._unpatch()),
 				voice_states: this.voiceStates.cache.map(x => x._unpatch()),
-				emojis: this.emojis.cache.map(x => x._unpatch())
+				emojis: this.emojis?.cache.map(x => x._unpatch())
 			};
 		}
 		get nameAcronym() {

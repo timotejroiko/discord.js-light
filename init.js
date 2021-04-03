@@ -246,6 +246,44 @@ require.cache[ALPath].exports = class GuildAuditLogs extends AL {
 	}
 };
 
+const CPath = resolve(require.resolve("discord.js").replace("index.js", "/structures/Channel.js"));
+const C = require(CPath);
+require.cache[CPath].exports = class Channel extends C {
+	_unpatch() {
+		let obj = {
+			type: Constants.ChannelTypes[this.type.toUpperCase()],
+			id: this.id
+		};
+		if(this.messages) {
+			obj.last_message_id = this.lastMessageID;
+			obj.last_pin_timestamp = this.lastPinTimestamp;
+		}
+		switch(this.type) {
+			case "dm": {
+				obj.recipients = [this.recipient._unpatch()];
+				break;
+			}
+			case "text": case "news": {
+				obj.nsfw = this.nsfw;
+				obj.topic = this.topic;
+				obj.rate_limit_per_user = this.rateLimitPerUser;
+				obj.messages = this.messages.cache.map(x => x._unpatch());
+				break;
+			}
+			case "voice": {
+				obj.bitrate = this.bitrate;
+				obj.user_limit = this.userLimit
+				break;
+			}
+			case "store": {
+				obj.nsfw = this.nsfw;
+				break;
+			}
+		}
+		return obj;
+	}
+};
+
 const TXPath = resolve(require.resolve("discord.js").replace("index.js", "/structures/interfaces/TextBasedChannel.js"));
 const TX = require(TXPath);
 require.cache[TXPath].exports = class TextBasedChannel extends TX {
@@ -314,43 +352,7 @@ require.cache[GCPath].exports = class GuildChannel extends GC {
 	}
 };
 
-const CPath = resolve(require.resolve("discord.js").replace("index.js", "/structures/Channel.js"));
-const C = require(CPath);
-require.cache[CPath].exports = class Channel extends C {
-	_unpatch() {
-		let obj = {
-			type: Constants.ChannelTypes[this.type.toUpperCase()],
-			id: this.id
-		};
-		if(this.messages) {
-			obj.last_message_id = this.lastMessageID;
-			obj.last_pin_timestamp = this.lastPinTimestamp;
-		}
-		switch(this.type) {
-			case "dm": {
-				obj.recipients = [this.recipient._unpatch()];
-				break;
-			}
-			case "text": case "news": {
-				obj.nsfw = this.nsfw;
-				obj.topic = this.topic;
-				obj.rate_limit_per_user = this.rateLimitPerUser;
-				obj.messages = this.messages.cache.map(x => x._unpatch());
-				break;
-			}
-			case "voice": {
-				obj.bitrate = this.bitrate;
-				obj.user_limit = this.userLimit
-				break;
-			}
-			case "store": {
-				obj.nsfw = this.nsfw;
-				break;
-			}
-		}
-		return obj;
-	}
-};
+
 
 const Action = require(resolve(require.resolve("discord.js").replace("index.js", "/client/actions/Action.js")));
 Action.prototype.getPayload = function(data, manager, id, partialType, cache) {
