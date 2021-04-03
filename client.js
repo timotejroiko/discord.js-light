@@ -137,7 +137,7 @@ Discord.Client = class Client extends Discord.Client {
 				id: s.sessionID,
 				sequence: s.sequence,
 				lastConnected: Date.now(),
-				shardCount: this.ws.shards.size
+				shardCount: this.ws.totalShards
 			};
 			return a;
 		}, {});
