@@ -50,28 +50,6 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 			this.emitReady();
 		}, 15000);
 	}
-	identify() {
-		let hotReload = this.manager.client.options.hotReload;
-		if(hotReload) {
-			this.once(Constants.ShardEvents.RESUMED, () => {
-				this.debug("Shard session resumed. Restoring cache");
-				const cache = this.manager.client.options.hotReload.cacheData;
-				if(cache?.guilds) {
-					for(const [id, guild] of Object.entries(cache.guilds)) {
-						if(ShardClientUtil.shardIDForGuildID(id, this.manager.totalShards) === this.id) {
-							this.manager.client.guilds.add(guild);
-						}
-					}
-				} else {
-					const { guilds } = this.manager.client._loadCache("guilds", id => ShardClientUtil.shardIDForGuildID(id, this.manager.totalShards) === this.id);
-					for(const guild of Object.values(guilds)) {
-						this.manager.client.guilds.add(guild);
-					}
-				}
-			})
-		}
-		return super.identify();
-	}
 };
 
 const SHMPath = resolve(require.resolve("discord.js").replace("index.js", "/client/websocket/WebSocketManager.js"));
@@ -155,6 +133,34 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 				this.shardQueue.add(shard);
 				this.reconnect();
 			});
+
+			const hotReload = this.client.options.hotReload;
+			if(hotReload && shard.sessionID) {
+				shard.once(Constants.ShardEvents.RESUMED, () => {
+					this.debug("Shard session resumed. Restoring cache", shard);
+					shard.loadCacheTimeout = null;
+					this.client.clearTimeout(this.loadCacheTimeout);
+					const cache = hotReload.cacheData;
+					if(cache?.guilds) {
+						for(const [id, guild] of Object.entries(cache.guilds)) {
+							if(ShardClientUtil.shardIDForGuildID(id, this.totalShards) === shard.id) {
+								this.client.guilds.add(guild);
+							}
+						}
+					} else {
+						const { guilds } = this.client._loadCache("guilds", id => ShardClientUtil.shardIDForGuildID(id, this.totalShards) === shard.id);
+						for(const guild of Object.values(guilds)) {
+							this.client.guilds.add(guild);
+						}
+					}
+				})
+
+				shard.loadCacheTimeout = this.client.setTimeout(() => {
+					this.debug("Shard cache was never loaded as the session didn't resume in 15s", shard);
+					shard.loadCacheTimeout = null;
+					shard.removeEventListener(Constants.ShardEvents.RESUMED) // Remove the event in a better way?
+				}, 15000);
+			}
 
 			shard.eventsAttached = true;
 		}
