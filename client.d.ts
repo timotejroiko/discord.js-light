@@ -53,6 +53,7 @@ type SessionData = {
 		id: string
 		sequence: number
 		lastConnected: number
+		shardCount: number
 	}
 }
 

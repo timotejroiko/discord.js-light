@@ -54,6 +54,7 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 		let hotReload = this.manager.client.options.hotReload;
 		if(hotReload) {
 			this.once(Constants.ShardEvents.RESUMED, () => {
+				this.debug("Shard session resumed. Restoring cache");
 				const cache = this.manager.client.options.hotReload.cacheData;
 				if(cache?.guilds) {
 					for(const [id, guild] of Object.entries(cache.guilds)) {
@@ -89,15 +90,16 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 		const hotReload = this.client.options.hotReload;
 		if (hotReload) {
 			const data = (hotReload.sessionData || this.client._loadSession(shard.id))?.[shard.id]
-			if(data?.id && data.sequence > 0 && !shard.sessionID && data.lastConnected + 60000 > Date.now()) {
+			if(data?.id && data.sequence > 0 && !shard.sessionID && data.shardCount === this.totalShards && data.lastConnected + 60000 > Date.now()) {
 				shard.sessionID = data.id;
 				shard.closeSequence = shard.sequence = data.sequence;
+				this.debug("Loaded sessions from cache, resuming previous session.", shard);
 			}
 			else if (this.shardQueue.size > 1 && !shard.requeued) {
 				shard.requeued = true;
 				this.shardQueue.delete(shard);
 				this.shardQueue.add(shard);
-				this.debug("Shard required to identify, pushed to the back of the queue", shard);
+				this.debug("Shard required to identify, pushed to the back of the queue.", shard);
 				return this.createShards();
 			}
 		}	
@@ -174,7 +176,7 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 		}
 		// If we have multiple shards add a 5s delay if identifying or no delay if resuming
 		if (this.shardQueue.size && this.shards.last().closeSequence) {
-			this.debug(`Shard Queue Size: ${this.shardQueue.size} with sessions; continuing immediately`);
+			this.debug(`Shard Queue Size: ${this.shardQueue.size} with sessions; continuing immediately.`);
 			return this.createShards();
 		} else if (this.shardQueue.size) {
 			this.debug(`Shard Queue Size: ${this.shardQueue.size}; continuing in 5s seconds...`);

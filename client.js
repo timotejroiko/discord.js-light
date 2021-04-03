@@ -77,6 +77,7 @@ Discord.Client = class Client extends Discord.Client {
 			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
 				process.on(eventType, async (...args) => {
 					if(!dumped) {
+						this.ws.debug(`${eventType} Exit event. Storing shard sessions and cache.`);
 						dumped = true;
 						const cache = this.dumpCache();
 						const sessions = this.dumpSessions();
@@ -135,7 +136,8 @@ Discord.Client = class Client extends Discord.Client {
 			a[s.id] = {
 				id: s.sessionID,
 				sequence: s.sequence,
-				lastConnected: Date.now()
+				lastConnected: Date.now(),
+				shardCount: this.ws.shards.size
 			};
 			return a;
 		}, {});
