@@ -53,11 +53,6 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 	identify() {
 		let hotReload = this.manager.client.options.hotReload;
 		if(hotReload) {
-			const data = (hotReload.sessionData || this.manager.client._loadSession(this.id))?.[this.id]
-			if(data?.id && data.sequence > 0 && !this.sessionID && data.lastConnected + 60000 > Date.now()) {
-				this.sessionID = data.id;
-				this.closeSequence = this.sequence = data.sequence;
-			}
 			this.once(Constants.ShardEvents.RESUMED, () => {
 				const cache = this.manager.client.options.hotReload.cacheData;
 				if(cache?.guilds) {
@@ -89,6 +84,23 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 		if (!this.shardQueue.size) {return false;}
 
 		const [shard] = this.shardQueue;
+
+		// Pushes shards that require reidentifying to the back of the queue
+		const hotReload = this.client.options.hotReload;
+		if (hotReload) {
+			const data = (hotReload.sessionData || this.client._loadSession(shard.id))?.[shard.id]
+			if(data?.id && data.sequence > 0 && !shard.sessionID && data.lastConnected + 60000 > Date.now()) {
+				shard.sessionID = data.id;
+				shard.closeSequence = shard.sequence = data.sequence;
+			}
+			else if (this.shardQueue.size > 1 && !shard.requeued) {
+				shard.requeued = true;
+				this.shardQueue.delete(shard);
+				this.shardQueue.add(shard);
+				this.debug("Shard required to identify, pushed to the back of the queue", shard);
+				return this.createShards();
+			}
+		}	
 
 		this.shardQueue.delete(shard);
 
