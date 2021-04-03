@@ -410,9 +410,6 @@ Discord.Channel.create = (client, data, _guild) => {
 					channel = new StoreChannel(guild, data);
 					break;
 				}
-				default: {
-					channel = data;
-				}
 			}
 		}
 	}
