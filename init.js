@@ -138,8 +138,8 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 			if(hotReload && shard.sessionID) {
 				shard.once(Constants.ShardEvents.RESUMED, () => {
 					this.debug("Shard session resumed. Restoring cache", shard);
+					this.client.clearTimeout(shard.loadCacheTimeout);
 					shard.loadCacheTimeout = null;
-					this.client.clearTimeout(this.loadCacheTimeout);
 					const cache = hotReload.cacheData;
 					if(cache?.guilds) {
 						for(const [id, guild] of Object.entries(cache.guilds)) {
@@ -158,7 +158,7 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 				shard.loadCacheTimeout = this.client.setTimeout(() => {
 					this.debug("Shard cache was never loaded as the session didn't resume in 15s", shard);
 					shard.loadCacheTimeout = null;
-					shard.removeEventListener(Constants.ShardEvents.RESUMED) // Remove the event in a better way?
+					shard.removeListener(Constants.ShardEvents.RESUMED, shard.listeners(Constants.ShardEvents.RESUMED)[0]) // Remove the event in a better way?
 				}, 15000);
 			}
 
