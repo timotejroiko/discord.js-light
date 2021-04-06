@@ -444,6 +444,7 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [Kable](https://kable.bot) | ![](https://top.gg/api/widget/servers/699844962057060393.svg) |
 | [Monika](https://top.gg/bot/340476335279570945) | ![](https://top.gg/api/widget/servers/340476335279570945.svg) |
 | [Hydra bot](https://hydrabot.xyz) | ![](https://top.gg/api/widget/servers/716708153143590952.svg) |
+| [Zenitsu.](https://top.gg/bot/721080193678311554/) | ![](https://top.gg/api/widget/servers/721080193678311554.svg) |
 | [CalcBot](https://top.gg/bot/674457690646249472) | ![](https://top.gg/api/widget/servers/674457690646249472.svg) |
 | [Helper](https://top.gg/bot/409538753997307915) | ![](https://top.gg/api/widget/servers/409538753997307915.svg) |
 | [Scathach](https://discord.bots.gg/bots/724047481561809007) | ![](https://top.gg/api/widget/servers/724047481561809007.svg) |
