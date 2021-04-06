@@ -2,12 +2,13 @@
 
 const { resolve } = require("path");
 const PacketHandlers = require(resolve(require.resolve("discord.js").replace("index.js", "/client/websocket/handlers")));
-const { Collection, ClientUser, Constants, Intents } = require("discord.js");
+const { Collection, Constants, Intents } = require("discord.js");
 
 PacketHandlers.READY = (client, { d: data }, shard) => {
 	if(client.user) {
 		client.user._patch(data.user);
 	} else {
+		const { ClientUser } = require("discord.js"); // does not extend User correctly if called at the top
 		const clientUser = new ClientUser(client, data.user);
 		client.user = clientUser;
 		client.users.cache.set(clientUser.id, clientUser);

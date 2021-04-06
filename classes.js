@@ -593,6 +593,7 @@ Discord.GuildChannelManager.prototype.fetch = async function(id, cache) {
 	for(const channel of channels) {
 		if(options.withOverwrites) { channel._withOverwrites = true; }
 		const c = this.client.channels.add(channel, this.guild, false);
+		if(!c) { continue; }
 		collection.set(c.id, c);
 	}
 	return collection;
