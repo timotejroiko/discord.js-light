@@ -419,6 +419,11 @@ Discord.Channel.create = (client, data, _guild) => {
 					channel = new StoreChannel(guild, data);
 					break;
 				}
+				case Discord.Constants.ChannelTypes.STAGE: {
+					const StageChannel = Discord.Structures.get("StageChannel");
+					channel = new StageChannel(guild, data);
+					break;
+				}
 			}
 		}
 	}
