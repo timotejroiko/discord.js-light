@@ -315,11 +315,21 @@ Discord.Structures.extend("VoiceState", V => {
 Discord.Structures.extend("VoiceChannel", V => {
 	return class VoiceChannel extends V {
 		get joinable() {
-			if(Discord.Constants.browser) { return false; }
 			if((!this.guild.roles.cache.size && !this.client.options.cacheRoles) || (!this.permissionOverwrites.size && !this.client.options.cacheOverwrites)) { return true; }
 			if(!this.viewable) { return false; }
 			if(!this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.CONNECT, false)) { return false; }
 			if(this.full && !this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MOVE_MEMBERS, false)) { return false; }
+			return true;
+		}
+	};
+});
+
+Discord.Structures.extend("StageChannel", V => {
+	return class StageChannel extends V {
+		get joinable() {
+			if((!this.guild.roles.cache.size && !this.client.options.cacheRoles) || (!this.permissionOverwrites.size && !this.client.options.cacheOverwrites)) { return true; }
+			if(!this.viewable) { return false; }
+			if(!this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.CONNECT, false)) { return false; }
 			return true;
 		}
 	};
@@ -417,6 +427,11 @@ Discord.Channel.create = (client, data, _guild) => {
 				case Discord.Constants.ChannelTypes.STORE: {
 					const StoreChannel = Discord.Structures.get("StoreChannel");
 					channel = new StoreChannel(guild, data);
+					break;
+				}
+				case Discord.Constants.ChannelTypes.STAGE: {
+					const StageChannel = Discord.Structures.get("StageChannel");
+					channel = new StageChannel(guild, data);
 					break;
 				}
 			}
