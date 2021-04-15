@@ -26,7 +26,7 @@
 	},
 	"license": "Apache-2.0",
 	"dependencies": {
-		"discord.js": "github:discordjs/discord.js#eb43ce4d4fb4d634696c5b0f026174dc0e435fe3"
+		"discord.js": "github:discordjs/discord.js#3c175cb5116fe50ba3084163565dd244a25b657f"
 	},
 	"engines": {
 		"node": ">=14.0.0"
