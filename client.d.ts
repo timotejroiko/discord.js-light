@@ -108,7 +108,7 @@ declare module "discord.js-light" {
 		fetch(options: ChannelFetchOptions): Promise<Discord.Collection<Discord.Snowflake, Discord.GuildChannel>>
 	}
 	interface GuildMemberManager {
-		forge(id: Discord.Snowflake): Discord.GuildMemberManager
+		forge(id: Discord.Snowflake): Discord.GuildMember
 		fetch(): Promise<Discord.Collection<Discord.Snowflake, Discord.GuildMember>>
 		fetch(user: Discord.Snowflake): Promise<Discord.GuildMember>
 		fetch(user: Discord.Snowflake, cache: boolean): Promise<Discord.GuildMember>
