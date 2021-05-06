@@ -500,7 +500,11 @@ Discord.IntegrationApplication.prototype._patch = function(data) {
 
 Discord.Webhook.prototype._patch = function(data) {
 	this.name = data.name;
-	Object.defineProperty(this, 'token', { value: data.token || null, writable: true, configurable: true });
+	Object.defineProperty(this, "token", {
+		value: data.token || null,
+		writable: true,
+		configurable: true
+	});
 	this.avatar = data.avatar;
 	this.id = data.id;
 	this.type = Discord.Constants.WebhookTypes[data.type];
@@ -509,7 +513,7 @@ Discord.Webhook.prototype._patch = function(data) {
 	this.owner = data.user ? this.client.users?.add(data.user, this.client.users.cache.has(data.user.id)) ?? data.user : null;
 	this.sourceGuild = data.source_guild ? this.client.guilds?.add(data.source_guild, false) ?? data.source_guild : null;
 	this.sourceChannel = this.client.channels?.resolve(data.source_channel?.id) ?? data.source_channel ?? null;
-}
+};
 
 Discord.UserManager.prototype.forge = function(id) {
 	return this.add({ id }, false);
