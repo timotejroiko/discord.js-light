@@ -454,6 +454,7 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [Game Tracker](https://game-tracker.js.org) | ![](https://top.gg/api/widget/servers/475421235950518292.svg) |
 | [Denky](https://denkybot.ga) | ![](https://top.gg/api/widget/servers/704517722100465746.svg) |
 | [Anti NSFW](https://top.gg/bot/706054368318980138) | ![](https://top.gg/api/widget/servers/706054368318980138.svg) |
+| [Gerald](https://top.gg/bot/806383966969790494) | ![](https://top.gg/api/widget/servers/806383966969790494.svg) |
 | [Animal Bot](https://top.gg/bot/716061781172158464) | ![](https://top.gg/api/widget/servers/716061781172158464.svg) |
 | [Aeon](https://aeon.js.org) | ![](https://top.gg/api/widget/servers/635833307510079490.svg) |
 | [Zenitsu.](https://top.gg/bot/721080193678311554/) | ![](https://top.gg/api/widget/servers/721080193678311554.svg) |
@@ -462,7 +463,6 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [CleverChat](https://top.gg/bot/781834206325243954) | ![](https://top.gg/api/widget/servers/781834206325243954.svg) |
 | [Tamaki](https://top.gg/bot/716322665283059754) | ![](https://top.gg/api/widget/servers/716322665283059754.svg) |
 | [Music Boat](https://top.gg/bot/735963752259911752) | ![](https://top.gg/api/widget/servers/735963752259911752.svg) |
-| [Gerald](https://top.gg/bot/806383966969790494) | ![](https://top.gg/api/widget/servers/806383966969790494.svg) |
 | [Message Viewer](https://top.gg/bot/642052166982303754) | ![](https://top.gg/api/widget/servers/642052166982303754.svg) |
 | [Art Prompts](https://eledris.com/art-prompts/discord-bot) | ![](https://top.gg/api/widget/servers/676880644076339228.svg) |
 | [T_Music_Bot](https://top.gg/bot/421978090823090186) | ![](https://top.gg/api/widget/servers/421978090823090186.svg) |
