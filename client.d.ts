@@ -48,6 +48,27 @@ type ReactionUserFetchOptions = {
 	after?: Discord.Snowflake
 }
 
+type SessionData = {
+	[shardID: string]: {
+		id: string
+		sequence: number
+		lastConnected: number
+		shardCount: number
+	}
+}
+
+type CacheData = {
+	guilds?: Array<Object>
+	channels?: Array<Object>
+	users?: Array<Object>
+}
+
+type HotReloadOptions = {
+	cacheData?: CacheData
+	sessionData?: SessionData
+	onExit?: Function
+}
+
 declare module "discord.js-light" {
 	interface ClientOptions {
 		cacheChannels?:boolean
@@ -57,6 +78,7 @@ declare module "discord.js-light" {
 		cacheOverwrites?:boolean
 		cacheEmojis?:boolean
 		cacheMembers?:boolean
+		hotReload?: boolean | HotReloadOptions
 		disabledEvents?: Array<string>
 	}
 	interface ClientEvents {

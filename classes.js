@@ -93,6 +93,81 @@ Discord.Structures.extend("Message", M => {
 				}
 			}
 		}
+		_unpatch() {
+			return {
+				id: this.id,
+				type: Discord.Constants.MessageTypes.indexOf(this.type),
+				content: this.content,
+				author: this.author._unpatch(),
+				pinned: this.pinned,
+				tts: this.tts,
+				nonce: this.nonce,
+				embeds: this.embeds.map(x => x.toJSON()),
+				attachments: this.attachments.map(x => ({
+					filename: x.name,
+					id: x.id,
+					size: x.size,
+					url: x.url,
+					proxy_url: x.proxyURL,
+					height: x.height,
+					width: x.width
+				})),
+				edited_timestamp: this.editedTimestamp,
+				reactions: this.reactions.cache.map(x => ({
+					me: x.me,
+					emoji: {
+						animated: x.emoji.animated,
+						name: x.emoji.name,
+						id: x.emoji.id
+					},
+					count: x.count
+				})),
+				mentions: this.mentions.users.map(x => x._unpatch()),
+				mention_roles: this.mentions.roles.map(x => x._unpatch()),
+				mention_everyone: this.mentions.everyone,
+				mention_channels: this.mentions.crosspostedChannels.map(x => ({
+					id: x.channelID,
+					guild_id: x.guildID,
+					type: Discord.Constants.ChannelTypes[x.type.toUpperCase()],
+					name: x.name
+				})),
+				webhook_id: this.webhookID,
+				application: this.application ? {
+					id: this.application.id,
+					name: this.application.name,
+					description: this.application.description,
+					icon: this.application.icon,
+					cover_image: this.application.cover,
+					rpc_origins: this.application.rpcOrigins,
+					bot_require_code_grant: this.botRequireCodeGrant,
+					bot_public: this.application.botPublic,
+					team: this.application.owner instanceof Discord.Team ? {
+						id: this.application.owner.id,
+						name: this.application.owner.name,
+						icon: this.application.owner.icon,
+						owner_user_id: this.application.owner.ownerID,
+						members: this.application.owner.members.map(x => ({
+							permissions: x.permissions,
+							membership_state: x.membershipState,
+							user: x.user._unpatch()
+						}))
+					} : void 0,
+					owner: this.application.owner instanceof Discord.User ? this.application.owner._unpatch() : void 0
+				} : void 0,
+				activity: this.activity ? {
+					party_id: this.activity.partyID,
+					type: this.activity.type
+				} : void 0,
+				member: this.member?._unpatch(),
+				flags: this.flags.valueOf(),
+				message_reference: this.reference ? {
+					channel_id: this.reference.channelID,
+					guild_id: this.reference.guildID,
+					message_id: this.reference.messageID
+				} : void 0,
+				referenced_message: this.client.guilds.cache.get(this.reference?.guildID)?.channels.cache.get(this.reference?.channelID)?.messages.cache.get(this.reference?.messageID)?._unpatch()
+			};
+		}
 		get member() {
 			if(!this.guild) { return null; }
 			const id = (this.author || {}).id || (this._member || {}).id;
@@ -120,6 +195,22 @@ Discord.Structures.extend("Message", M => {
 	};
 });
 
+Discord.Structures.extend("User", U => {
+	return class User extends U {
+		_unpatch() {
+			return {
+				id: this.id,
+				username: this.username,
+				bot: this.bot,
+				discriminator: this.discriminator,
+				avatar: this.avatar,
+				system: this.system,
+				public_flags: this.flags?.valueOf()
+			};
+		}
+	};
+});
+
 Discord.Structures.extend("GuildMember", G => {
 	return class GuildMember extends G {
 		_patch(data) {
@@ -137,6 +228,16 @@ Discord.Structures.extend("GuildMember", G => {
 					}
 				}
 			}
+		}
+		_unpatch() {
+			return {
+				user: this.user._unpatch(),
+				nick: this.nickname,
+				joined_at: this.joinedTimestamp,
+				premium_since: this.premiumSinceTimestamp,
+				roles: this._roles,
+				pending: this.pending
+			};
 		}
 		equals(member) {
 			return member && this.deleted === member.deleted && this.nickname === member.nickname && this._roles.length === member._roles.length;
@@ -186,8 +287,8 @@ Discord.Structures.extend("Guild", G => {
 						this.members.add(member);
 					}
 				}
-				if(!this.members.cache.has(this.client.user.id)) {
-					this.members.fetch(this.client.user.id).catch(() => {});
+				if(!this.members.cache.has(this.client.user?.id)) {
+					this.members.fetch(this.client.user?.id).catch(() => {});
 				}
 			}
 			if(Array.isArray(data.presences)) {
@@ -215,6 +316,52 @@ Discord.Structures.extend("Guild", G => {
 					}
 				}
 			}
+		}
+		_unpatch() {
+			return {
+				unavailable: !this.available,
+				shardID: this.shardID,
+				name: this.name,
+				icon: this.icon,
+				splash: this.splash,
+				discovery_splash: this.discoverySplash,
+				region: this.region,
+				member_count: this.memberCount,
+				large: this.large,
+				features: this.features,
+				application_id: this.applicationID,
+				afk_timeout: this.afkTimeout,
+				afk_channel_id: this.afkChannelID,
+				system_channel_id: this.systemChannelID,
+				premium_tier: this.premiumTier,
+				premium_subscription_count: this.premiumSubscriptionCount,
+				widget_enabled: this.widgetEnabled,
+				widget_channel_id: this.widgetChannelID,
+				verification_level: Discord.Constants.VerificationLevels.indexOf(this.verificationLevel),
+				explicit_content_filter: Discord.Constants.ExplicitContentFilterLevels.indexOf(this.explicitContentFilter),
+				mfa_level: this.mfaLevel,
+				joinedTimestamp: this.joinedTimestamp,
+				default_message_notifications: this.defaultMessageNotifications,
+				system_channel_flags: this.systemChannelFlags?.valueOf(),
+				max_members: this.maximumMembers,
+				max_presences: this.maximumPresences,
+				approximate_member_count: this.approximateMemberCount,
+				approximate_presence_count: this.approximatePresenceCount,
+				vanity_url_code: this.vanityURLCode,
+				description: this.description,
+				banner: this.banner,
+				id: this.id,
+				rules_channel_id: this.rulesChannelID,
+				public_updates_channel_id: this.publicUpdatesChannelID,
+				preferred_locale: this.preferredLocale,
+				roles: this.roles.cache.map(x => x._unpatch()),
+				members: this.members.cache.map(x => x._unpatch()),
+				channels: this.channels.cache.map(x => x._unpatch()),
+				owner_id: this.ownerID,
+				presences: this.presences.cache.map(x => x._unpatch()),
+				voice_states: this.voiceStates.cache.map(x => x._unpatch()),
+				emojis: this.emojis?.cache.map(x => x._unpatch())
+			};
 		}
 		get nameAcronym() {
 			return this.name ? super.nameAcronym : void 0;
@@ -272,6 +419,18 @@ Discord.Structures.extend("GuildEmoji", E => {
 				this._author = data.user.id;
 			}
 		}
+		_unpatch() {
+			return {
+				animated: this.animated,
+				name: this.name,
+				id: this.id,
+				require_colons: this.requiresColons,
+				managed: this.managed,
+				available: this.available,
+				roles: this._roles,
+				user: this.author ? this.author._unpatch() : void 0
+			};
+		}
 		async fetchAuthor(cache = true) {
 			if(this.managed) {
 				throw new Error("EMOJI_MANAGED");
@@ -288,6 +447,28 @@ Discord.Structures.extend("GuildEmoji", E => {
 	};
 });
 
+Discord.Structures.extend("Role", R => {
+	return class Role extends R {
+		_unpatch() {
+			return {
+				id: this.id,
+				name: this.name,
+				color: this.color,
+				hoist: this.hoist,
+				position: this.rawPosition,
+				permissions: this.permissions.valueOf().toString(),
+				managed: this.managed,
+				mentionable: this.mentionable,
+				tags: {
+					bot_id: this.tags?.botID,
+					integration_id: this.tags?.integrationID,
+					premium_subscriber: this.tags?.premiumSubscriberRole
+				}
+			};
+		}
+	};
+});
+
 Discord.Structures.extend("VoiceState", V => {
 	return class VoiceState extends V {
 		_patch(data) {
@@ -296,6 +477,19 @@ Discord.Structures.extend("VoiceState", V => {
 				this._member = data.member;
 			}
 			return this;
+		}
+		_unpatch() {
+			return {
+				user_id: this.id,
+				deaf: this.serverDeaf,
+				mute: this.serverMute,
+				self_deaf: this.selfDeaf,
+				self_mute: this.selfMute,
+				self_video: this.selfVideo,
+				session_id: this.sessionID,
+				self_stream: this.streaming,
+				channel_id: this.channelID
+			};
 		}
 		get channel() {
 			return this.channelID ? this.client.channels.cache.get(this.channelID) || this.client.channels.add({
@@ -360,6 +554,40 @@ Discord.Structures.extend("Presence", P => {
 				};
 			}
 			return this;
+		}
+		_unpatch() {
+			return {
+				user: { id: this.userID },
+				status: this.status,
+				activities: this.activities.map(a => ({
+					name: a.name,
+					type: a.type,
+					url: a.url,
+					details: a.details,
+					state: a.state,
+					application_id: a.applicationID,
+					timestamps: a.timestamps ? {
+						start: a.timestamps.start ? a.timestamps.start.getTime() : null,
+						end: a.timestamps.end ? a.timestamps.end.getTime() : null
+					} : void 0,
+					party: a.party,
+					assets: a.assets ? {
+						large_text: a.assets.largeText,
+						small_text: a.assets.smallText,
+						large_image: a.assets.largeImage,
+						small_image: a.assets.smallImage
+					} : void 0,
+					sync_id: a.syncID,
+					flags: a.flags.valueOf(),
+					emoji: a.emoji ? {
+						animated: a.emoji.animated,
+						name: a.emoji.name,
+						id: a.emoji.id
+					} : void 0,
+					created_at: a.createdTimestamp
+				})),
+				client_status: this.clientStatus
+			};
 		}
 		get user() {
 			return this.client.users.cache.get(this.userID) || this.client.users.add((this._member || {}).user || { id: this.userID }, false);

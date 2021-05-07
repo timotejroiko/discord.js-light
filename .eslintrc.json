@@ -111,6 +111,7 @@
 		"prefer-numeric-literals":"error",
 		"prefer-spread":"error",
 		"prefer-template":"error",
-		"symbol-description":"error"
+		"symbol-description":"error",
+		"no-func-loop": false
 	}
 }

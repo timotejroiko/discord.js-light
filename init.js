@@ -6,6 +6,7 @@ const Constants = require(resolve(require.resolve("discord.js").replace("index.j
 const APIMessage = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/APIMessage.js")));
 const Util = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Util.js")));
 const { Error: DJSError } = require(resolve(require.resolve("discord.js").replace("index.js", "/errors")));
+const ShardClientUtil = require(resolve(require.resolve("discord.js").replace("index.js", "/sharding/ShardClientUtil.js")));
 
 const RHPath = resolve(require.resolve("discord.js").replace("index.js", "/rest/APIRequest.js"));
 const RH = require(RHPath);
@@ -47,17 +48,6 @@ require.cache[SHPath].exports = class WebSocketShard extends SH {
 			this.emitReady();
 		}, 15000);
 	}
-	identify() {
-		if(this.manager.client.options.hotreload && this.manager._hotreload) {
-			const data = this.manager._hotreload[this.id];
-			if(data && !this.sessionID) {
-				this.sessionID = data.id;
-				this.closeSequence = this.sequence = data.seq;
-				delete this.manager._hotreload[this.id];
-			}
-		}
-		return super.identify();
-	}
 };
 
 const SHMPath = resolve(require.resolve("discord.js").replace("index.js", "/client/websocket/WebSocketManager.js"));
@@ -71,6 +61,24 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 		if (!this.shardQueue.size) {return false;}
 
 		const [shard] = this.shardQueue;
+
+		// Pushes shards that require reidentifying to the back of the queue
+		const hotReload = this.client.options.hotReload;
+		if (hotReload) {
+			const data = (hotReload.sessionData || this.client._loadSession(shard.id))?.[shard.id]
+			if(data?.id && data.sequence > 0 && !shard.sessionID && data.shardCount === this.totalShards && data.lastConnected + 60000 > Date.now()) {
+				shard.sessionID = data.id;
+				shard.closeSequence = shard.sequence = data.sequence;
+				this.debug("Loaded sessions from cache, resuming previous session.", shard);
+			}
+			else if (this.shardQueue.size > 1 && !shard.requeued) {
+				shard.requeued = true;
+				this.shardQueue.delete(shard);
+				this.shardQueue.add(shard);
+				this.debug("Shard required to identify, pushed to the back of the queue.", shard);
+				return this.createShards();
+			}
+		}	
 
 		this.shardQueue.delete(shard);
 
@@ -124,6 +132,34 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 				this.reconnect();
 			});
 
+			const hotReload = this.client.options.hotReload;
+			if(hotReload && shard.sessionID) {
+				shard.once(Constants.ShardEvents.RESUMED, () => {
+					this.debug("Shard session resumed. Restoring cache", shard);
+					this.client.clearTimeout(shard.loadCacheTimeout);
+					shard.loadCacheTimeout = null;
+					const cache = hotReload.cacheData;
+					if(cache?.guilds) {
+						for(const [id, guild] of Object.entries(cache.guilds)) {
+							if(ShardClientUtil.shardIDForGuildID(id, this.totalShards) === shard.id) {
+								this.client.guilds.add(guild);
+							}
+						}
+					} else {
+						const { guilds } = this.client._loadCache("guilds", id => ShardClientUtil.shardIDForGuildID(id, this.totalShards) === shard.id);
+						for(const guild of Object.values(guilds)) {
+							this.client.guilds.add(guild);
+						}
+					}
+				})
+
+				shard.loadCacheTimeout = this.client.setTimeout(() => {
+					this.debug("Shard cache was never loaded as the session didn't resume in 15s", shard);
+					shard.loadCacheTimeout = null;
+					shard.removeListener(Constants.ShardEvents.RESUMED, shard.listeners(Constants.ShardEvents.RESUMED)[0]) // Remove the event in a better way?
+				}, 15000);
+			}
+
 			shard.eventsAttached = true;
 		}
 
@@ -143,8 +179,8 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 			}
 		}
 		// If we have multiple shards add a 5s delay if identifying or no delay if resuming
-		if (this.shardQueue.size && Object.keys(this._hotreload || {}).length) {
-			this.debug(`Shard Queue Size: ${this.shardQueue.size} with sessions; continuing immediately`);
+		if (this.shardQueue.size && this.shards.last().closeSequence) {
+			this.debug(`Shard Queue Size: ${this.shardQueue.size} with sessions; continuing immediately.`);
 			return this.createShards();
 		} else if (this.shardQueue.size) {
 			this.debug(`Shard Queue Size: ${this.shardQueue.size}; continuing in 5s seconds...`);
@@ -210,6 +246,44 @@ require.cache[ALPath].exports = class GuildAuditLogs extends AL {
 	}
 };
 
+const CPath = resolve(require.resolve("discord.js").replace("index.js", "/structures/Channel.js"));
+const C = require(CPath);
+require.cache[CPath].exports = class Channel extends C {
+	_unpatch() {
+		let obj = {
+			type: Constants.ChannelTypes[this.type.toUpperCase()],
+			id: this.id
+		};
+		if(this.messages) {
+			obj.last_message_id = this.lastMessageID;
+			obj.last_pin_timestamp = this.lastPinTimestamp;
+		}
+		switch(this.type) {
+			case "dm": {
+				obj.recipients = [this.recipient._unpatch()];
+				break;
+			}
+			case "text": case "news": {
+				obj.nsfw = this.nsfw;
+				obj.topic = this.topic;
+				obj.rate_limit_per_user = this.rateLimitPerUser;
+				obj.messages = this.messages.cache.map(x => x._unpatch());
+				break;
+			}
+			case "voice": {
+				obj.bitrate = this.bitrate;
+				obj.user_limit = this.userLimit
+				break;
+			}
+			case "store": {
+				obj.nsfw = this.nsfw;
+				break;
+			}
+		}
+		return obj;
+	}
+};
+
 const TXPath = resolve(require.resolve("discord.js").replace("index.js", "/structures/interfaces/TextBasedChannel.js"));
 const TX = require(TXPath);
 require.cache[TXPath].exports = class TextBasedChannel extends TX {
@@ -258,12 +332,27 @@ require.cache[GCPath].exports = class GuildChannel extends GC {
 			});
 		}
 	}
+	_unpatch() {
+		let obj = super._unpatch();
+		obj.name = this.name;
+		obj.position = this.rawPosition;
+		obj.parent_id = this.parentID;
+		obj.permission_overwrites = this.permissionOverwrites.map(x => ({
+			id: x.id,
+			type: Constants.OverwriteTypes[x.type],
+			deny: x.deny.valueOf().toString(),
+			allow: x.allow.valueOf().toString()
+		}));
+		return obj;
+	}
 	get deletable() {
 		if(this.deleted) { return false; }
 		if(!this.client.options.cacheRoles && !this.guild.roles.cache.size) { return false; }
 		return this.permissionsFor(this.client.user).has(Permissions.FLAGS.MANAGE_CHANNELS, false);
 	}
 };
+
+
 
 const Action = require(resolve(require.resolve("discord.js").replace("index.js", "/client/actions/Action.js")));
 Action.prototype.getPayload = function(data, manager, id, partialType, cache) {

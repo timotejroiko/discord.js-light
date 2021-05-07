@@ -104,6 +104,7 @@ The following client options are available to control caching behavior:
 | cacheEmojis | boolean | false | Enables caching of all Emojis at login |
 | cachePresences | boolean | false | Enables caching of all Presences. If not enabled, Presences will be cached only for cached Users |
 | cacheMembers | boolean | false | Enables caching of Users and Members when possible |
+| hotReload | boolean or object | false | Enables hot reloading, an experimental feature that enables instantly restarting the bot |
 | disabledEvents | array | [] | An array of events to ignore ([Discord events](https://github.com/discordjs/discord.js/blob/master/src/util/Constants.js#L339), not Discord.JS events). Use this in combination with intents for fine tuning which events your bot should process |
 
 This library implements its own partials system, therefore the `partials` client option is not available. All other discord.js client options continue to be available and should work normally.
@@ -147,6 +148,44 @@ Voice States will be cached if the `GUILD_VOICE_STATES` intent is enabled (requi
 ### Messages
 
 Messages are cached only if the Channel they belong to is cached. Message caching can further be controlled via discord.js's `messageCacheMaxSize`, `messageCacheLifetime` and `messageSweepInterval` client options as usual. Additionally, the `messageEditHistoryMaxSize` client option is set to `1` by default (instead of infinity).
+
+## Hot reloading
+
+**THIS FEATURE IS CURRENTLY EXPERIMENTAL USE AT YOUR OWN RISK!**
+
+When developing bots you will likely do lots of trial and error which often requires restarting your bot.
+Each restart requires reconnecting to the Discord gateway on every shard which can often take a long time and eat up your daily identifies.
+
+Hot reloading provides a way to simply resume the previous gateway sessions on startup rather than creating new ones.
+This is done by storing the process data outside the process right before it exits and reloading the data into it when it starts.
+ 
+This option can be overridden with a few custom methods:
+
+```js
+const cache = {
+    guilds: {
+        "581072557512458241": {} // Discord api type
+    }
+}
+
+const sessions = {
+    "0": {
+        id: "3e961ec59a7c24b91198d07dd3189fa0", // Session ID
+        sequence: 19, // The close sequence of the session
+        lastConnected: 1617382560867 // Time the session was closed at
+    }
+}
+
+new Discord.Client({
+    hotReload: {
+        cacheData: cache, // user-supplied cache data. if not present, cache will be loaded from disk
+        sessionData: sessions, // user-supplied session data. if not present, sessions will be loaded from disk
+        onExit: (sessions, cache) => {} // user-supplied data storing function. if not present, data will be stored to disk. This function can be async if the process is exited by using SIGINT (Ctrl+C), any other ways of exit are sync-only.
+    }
+})
+```
+
+Session and cache data can also be obtained at runtime using `client.dumpCache()` and `client.dumpSessions()` for storage before a manually induced exit. In this case the user should pass an empty function to onExit to override the built-in disk storage.
 
 ## Events
 
