@@ -439,7 +439,7 @@ You can also find me in [discord](https://discord.gg/BpeedKh) (Tim#2373)
 | [Bump Reminder](https://top.gg/bot/735147814878969968) | ![](https://top.gg/api/widget/servers/735147814878969968.svg) |
 | [Suggestions](https://top.gg/bot/474051954998509571) | ![](https://top.gg/api/widget/servers/474051954998509571.svg) |
 | [Filo](https://filobot.xyz) | ![](https://top.gg/api/widget/servers/568083171455795200.svg) |
-| [Alita](https://top.gg/bot/590047618479030272) | ![](https://top.gg/api/widget/servers/590047618479030272.svg) 
+| [Alita](https://top.gg/bot/590047618479030272) | ![](https://top.gg/api/widget/servers/590047618479030272.svg)
 | [Kable](https://kable.bot) | ![](https://top.gg/api/widget/servers/699844962057060393.svg) |
 | [Astrobot](https://top.gg/bot/astrobot) | ![](https://top.gg/api/widget/servers/344272098488877057.svg) |
 | [Monika](https://top.gg/bot/340476335279570945) | ![](https://top.gg/api/widget/servers/340476335279570945.svg) |
