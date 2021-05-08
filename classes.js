@@ -55,7 +55,7 @@ Discord.Structures.extend("Message", M => {
 		_patch(data) {
 			const d = {};
 			for(const i in data) {
-				if(!["author", "member", "mentions", "mention_roles"].includes(i)) { d[i] = data[i]; }
+				if(!["author", "member", "mentions", "mention_roles", "interaction"].includes(i)) { d[i] = data[i]; }
 			}
 			super._patch(d);
 			this.author = data.author ? this.client.users.add(data.author, this.client.options.cacheMembers || this.client.users.cache.has(data.author.id)) : null;
@@ -91,6 +91,14 @@ Discord.Structures.extend("Message", M => {
 						permissions: 0
 					}, false));
 				}
+			}
+			if(data.interaction) {
+				this.interaction = {
+					id: data.interaction.id,
+					type: Discord.Constants.InteractionTypes[data.interaction.type],
+					commandName: data.interaction.name,
+					user: this.client.users.add(data.interaction.user, this.client.options.cacheMembers || this.client.users.cache.has(data.author.id))
+				};
 			}
 		}
 		get member() {
@@ -378,6 +386,33 @@ Discord.Structures.extend("ClientPresence", P => {
 		}
 		get member() {
 			return null;
+		}
+	};
+});
+
+Discord.Structures.extend("CommandInteraction", I => {
+	return class CommandInteraction extends I {
+		transformOption(option, resolved) {
+			const result = {
+				name: option.name,
+				type: Discord.Constants.ApplicationCommandOptionTypes[option.type]
+			};
+			if("value" in option) { result.value = option.value; }
+			if("options" in option) { result.options = option.options.map(o => this.transformOption(o, resolved)); }
+			const user = resolved?.users?.[option.value];
+			if(user) { result.user = this.client.users.add(user, this.client.options.cacheMembers || this.client.users.cache.has(user.id)); }
+			const member = resolved?.members?.[option.value];
+			if(member) {
+				result.member = this.guild?.members.add({
+					user,
+					...member
+				}, this.client.options.cacheMembers || this.client.users.cache.has(user.id)) ?? member;
+			}
+			const channel = resolved?.channels?.[option.value];
+			if(channel) { result.channel = this.client.channels.add(channel, this.guild, this.client.options.cacheChannels || this.client.channels.has(channel.id)) ?? channel; }
+			const role = resolved?.roles?.[option.value];
+			if(role) { result.role = this.guild?.roles.add(role, this.client.options.cacheRoles || this.guild?.roles.cache.size) ?? role; }
+			return result;
 		}
 	};
 });
@@ -1005,6 +1040,24 @@ Object.defineProperty(Discord.MessageMentions.prototype, "members", {
 			members.set(id, m);
 		}
 		return members;
+	}
+});
+
+Object.defineProperty(Discord.Interaction.prototype, "channel", {
+	get: function() {
+		return this.client.channels.cache.get(this.channelID) ?? this.client.channels.add({
+			id: this.channelID,
+			type: 0
+		}, this.guild, false);
+	}
+});
+
+Object.defineProperty(Discord.Interaction.prototype, "guild", {
+	get: function() {
+		return this.client.guilds.cache.get(this.guildID) ?? this.client.guilds.add({
+			id: this.guildID,
+			shardID: Discord.ShardClientUtil.shardIDForGuildID(this.guildID, this.client.options.shardCount)
+		}, false);
 	}
 });
 

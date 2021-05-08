@@ -2,7 +2,7 @@
 
 const { resolve } = require("path");
 const PacketHandlers = require(resolve(require.resolve("discord.js").replace("index.js", "/client/websocket/handlers")));
-const { Collection, ClientUser, Constants, ClientApplication } = require("discord.js");
+const { Collection, ClientUser, Constants, ClientApplication, Structures } = require("discord.js");
 
 PacketHandlers.READY = (client, { d: data }, shard) => {
 	if(client.user) {
@@ -249,6 +249,65 @@ PacketHandlers.VOICE_STATE_UPDATE = (client, packet, shard) => {
 PacketHandlers.WEBHOOKS_UPDATE = (client, packet, shard) => {
 	packet.d.shardID = shard.id;
 	client.actions.WebhooksUpdate.handle(packet.d);
+};
+
+PacketHandlers.APPLICATION_COMMAND_CREATE = (client, { d: data }, shard) => {
+	let command;
+	if(data.guild_id) {
+		const guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({
+			id: data.guild_id,
+			shardID: shard.id
+		}, false);
+		command = guild.commands.add(data);
+	} else {
+		command = client.application.commands.add(data);
+	}
+	client.emit(Constants.Events.APPLICATION_COMMAND_CREATE, command);
+};
+
+PacketHandlers.APPLICATION_COMMAND_DELETE = (client, { d: data }, shard) => {
+	let command;
+	if(data.guild_id) {
+		const guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({
+			id: data.guild_id,
+			shardID: shard.id
+		}, false);
+		command = guild.commands.add(data);
+		guild.commands.cache.delete(data.id);
+	} else {
+		command = client.application.commands.add(data);
+		client.application.commands.cache.delete(data.id);
+	}
+	client.emit(Constants.Events.APPLICATION_COMMAND_DELETE, command);
+};
+
+PacketHandlers.APPLICATION_COMMAND_UPDATE = (client, { d: data }, shard) => {
+	let oldCommand;
+	let newCommand;
+	if(data.guild_id) {
+		const guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({
+			id: data.guild_id,
+			shardID: shard.id
+		}, false);
+		oldCommand = guild.commands.cache.get(data.id)?._clone() ?? null;
+		newCommand = guild.commands.add(data);
+	} else {
+		oldCommand = client.application.commands.cache.get(data.id)?._clone() ?? null;
+		newCommand = client.application.commands.add(data);
+	}
+
+	client.emit(Constants.Events.APPLICATION_COMMAND_UPDATE, oldCommand, newCommand);
+};
+
+PacketHandlers.INTERACTION_CREATE = (client, { d: data }, shard) => {
+	data.shardID = shard.id;
+	if(data.type === Constants.InteractionTypes.APPLICATION_COMMAND) {
+		const CommandInteraction = Structures.get("CommandInteraction");
+		const interaction = new CommandInteraction(client, data);
+		client.emit(Constants.Events.INTERACTION_CREATE, interaction);
+		return;
+	}
+	client.emit(Constants.Events.DEBUG, `[INTERACTION] Received interaction with unknown type: ${data.type}`);
 };
 
 module.exports = PacketHandlers;

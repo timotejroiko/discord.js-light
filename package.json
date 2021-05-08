@@ -10,6 +10,7 @@
 	"repository": {
 		"url": "https://github.com/timotejroiko/discord.js-light.git"
 	},
+	"bugs": "https://github.com/timotejroiko/discord.js-light/issues",
 	"keywords": [
 		"discord",
 		"discord.js",
@@ -25,13 +26,13 @@
 		"url": "https://patreon.com/timotejroiko"
 	},
 	"license": "Apache-2.0",
-	"dependencies": {
-		"discord.js": "github:discordjs/discord.js#af00ec8970e77ea8a0afd21571eeeef9c554e1ec"
-	},
 	"engines": {
 		"node": ">=14.0.0"
 	},
 	"devDependencies": {
-		"eslint": "^7.21.0"
+		"eslint": "^7.26.0"
+	},
+	"dependencies": {
+		"discord.js": "github:discordjs/discord.js#0e40f9b86826ba50aa3840807fb86e1bce6b1c3d"
 	}
 }

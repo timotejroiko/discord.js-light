@@ -3,8 +3,9 @@
 const { resolve } = require("path");
 const Permissions = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Permissions.js")));
 const Constants = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Constants.js")));
-const APIMessage = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/APIMessage.js")));
 const Util = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Util.js")));
+const Base = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/Base.js")));
+const APIMessage = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/APIMessage.js")));
 const { Error: DJSError } = require(resolve(require.resolve("discord.js").replace("index.js", "/errors")));
 
 const RHPath = resolve(require.resolve("discord.js").replace("index.js", "/rest/APIRequest.js"));
@@ -264,6 +265,31 @@ require.cache[GCPath].exports = class GuildChannel extends GC {
 		return this.permissionsFor(this.client.user).has(Permissions.FLAGS.MANAGE_CHANNELS, false);
 	}
 };
+
+const ItPath = resolve(require.resolve("discord.js").replace("index.js", "/structures/Interaction.js"));
+const It = require(ItPath);
+const It2 = class Interaction extends Base {
+	constructor(client, data) {
+		super(client);
+		this.type = Constants.InteractionTypes[data.type];
+		this.id = data.id;
+		Object.defineProperty(this, "token", { value: data.token });
+		this.applicationID = data.application_id;
+		this.channelID = data.channel_id ?? null;
+		this.guildID = data.guild_id ?? null;
+		const user = data.user ?? data.member.user;
+		const cache = this.client.users.cache.has(user.id);
+		this.user = this.client.users.add(user, cache);
+		this.member = data.member ? this.guild?.members.add(data.member, cache) ?? data.member : null;
+		this.version = data.version;
+	}
+};
+/* eslint guard-for-in: "off" */
+for(const [name, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(It.prototype))) {
+	if(name === "constructor") { continue; }
+	Object.defineProperty(It2.prototype, name, descriptor);
+}
+require.cache[ItPath].exports = It2;
 
 const Action = require(resolve(require.resolve("discord.js").replace("index.js", "/client/actions/Action.js")));
 Action.prototype.getPayload = function(data, manager, id, partialType, cache) {
