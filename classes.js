@@ -409,7 +409,7 @@ Discord.Structures.extend("CommandInteraction", I => {
 				}, this.client.options.cacheMembers || this.client.users.cache.has(user.id)) ?? member;
 			}
 			const channel = resolved?.channels?.[option.value];
-			if(channel) { result.channel = this.client.channels.add(channel, this.guild, this.client.options.cacheChannels || this.client.channels.has(channel.id)) ?? channel; }
+			if(channel) { result.channel = this.client.channels.add(channel, this.guild, this.client.options.cacheChannels || this.client.channels.cache.has(channel.id)) ?? channel; }
 			const role = resolved?.roles?.[option.value];
 			if(role) { result.role = this.guild?.roles.add(role, this.client.options.cacheRoles || this.guild?.roles.cache.size) ?? role; }
 			return result;
@@ -494,7 +494,7 @@ Discord.GuildTemplate.prototype._patch = function(data) {
 	this.description = data.description;
 	this.usageCount = data.usage_count;
 	this.creatorID = data.creator_id;
-	this.creator = this.client.users.add(data.creator, this.client.users.has(data.creator.id));
+	this.creator = this.client.users.add(data.creator, this.client.users.cache.has(data.creator.id));
 	this.createdAt = new Date(data.created_at);
 	this.updatedAt = new Date(data.updated_at);
 	this.guildID = data.source_guild_id;
