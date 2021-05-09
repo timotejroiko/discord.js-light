@@ -2,3 +2,5 @@ bench.png
 .github
 .gitattributes
 .eslintrc.json
+test.js
+test.ts
