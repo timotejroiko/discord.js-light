@@ -30,6 +30,8 @@
 		"node": ">=14.0.0"
 	},
 	"devDependencies": {
+		"@types/node": "^15.0.2",
+		"discord-api-types": "^0.18.1",
 		"eslint": "^7.26.0"
 	},
 	"dependencies": {

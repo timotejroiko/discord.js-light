@@ -3,3 +3,5 @@ package-lock.json
 .vscode
 .eslintrc.json
 .gitattributes
+test.js
+test.ts
