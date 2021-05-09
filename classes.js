@@ -691,7 +691,12 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		}
 		if(Array.isArray(user_ids)) {
 			if(user_ids.every(t => this.cache.has(t)) && (!presences || this.client.options.cachePresences) && !options.force) {
-				r(user_ids.map(t => this.cache.get(t)));
+				const cached = new Discord.Collection();
+				for(let i = 0; i < user_ids.length; i++) {
+					const ID = user_ids[i];
+					cached.set(ID, this.cache.get(ID));
+				}
+				r(cached);
 				return;
 			}
 			user_ids = user_ids.map(u => u.replace(/\D+/g, ""));
