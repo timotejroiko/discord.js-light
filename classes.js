@@ -1050,19 +1050,19 @@ Object.defineProperty(Discord.MessageMentions.prototype, "members", {
 
 Object.defineProperty(Discord.Interaction.prototype, "channel", {
 	get: function() {
-		return this.client.channels.cache.get(this.channelID) ?? this.client.channels.add({
+		return this.channelID ? this.client.channels.cache.get(this.channelID) || this.client.channels.add({
 			id: this.channelID,
 			type: 0
-		}, this.guild, false);
+		}, this.guild, false) : null;
 	}
 });
 
 Object.defineProperty(Discord.Interaction.prototype, "guild", {
 	get: function() {
-		return this.client.guilds.cache.get(this.guildID) ?? this.client.guilds.add({
+		return this.guildID ? this.client.guilds.cache.get(this.guildID) || this.client.guilds.add({
 			id: this.guildID,
 			shardID: Discord.ShardClientUtil.shardIDForGuildID(this.guildID, this.client.options.shardCount)
-		}, false);
+		}, false) : null;
 	}
 });
 
