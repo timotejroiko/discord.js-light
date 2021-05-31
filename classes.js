@@ -456,7 +456,7 @@ Discord.Channel.create = (client, data, _guild) => {
 };
 
 Discord.GuildBan.prototype._patch = function(data) {
-	this.user = this.client.users.add(data.user, this.client.users.cache.has(data.target_user.id));
+	this.user = this.client.users.add(data.user, this.client.users.cache.has(data.user.id));
 	if("reason" in data) {
 		this.reason = data.reason;
 	}
