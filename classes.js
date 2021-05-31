@@ -110,19 +110,19 @@ Discord.Structures.extend("Message", M => {
 		get pinnable() {
 			if(this.type !== Discord.Constants.MessageTypes[0]) { return false; }
 			if(!this.guild) { return true; }
-			if((!this.client.options.cacheRoles && !this.guild.roles.cache.size) || (!this.client.options.cacheOverwrites && !this.channel.permissionOverwrites.size)) { return false; }
+			if(!this.client.options.cacheRoles || !this.client.options.cacheOverwrites) { return true; }
 			return this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false);
 		}
 		get deletable() {
 			if(this.deleted) { return false; }
 			if(this.author.id === this.client.user.id) { return true; }
 			if(!this.guild) { return false; }
-			if((!this.client.options.cacheRoles && !this.guild.roles.cache.size) || (!this.client.options.cacheOverwrites && !this.channel.permissionOverwrites.size)) { return false; }
+			if(!this.client.options.cacheRoles || !this.client.options.cacheOverwrites) { return true; }
 			return this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, false);
 		}
 		get crosspostable() {
 			if(this.channel.type !== "news" || this.type !== "DEFAULT" || this.flags.has(Discord.MessageFlags.FLAGS.CROSSPOSTED)) { return false; }
-			if((!this.client.options.cacheRoles && !this.guild.roles.cache.size) || (!this.client.options.cacheOverwrites && !this.channel.permissionOverwrites.size)) { return false; }
+			if(!this.client.options.cacheRoles || !this.client.options.cacheOverwrites) { return true; }
 			return this.channel.viewable &&	this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.SEND_MESSAGES) && (this.author.id === this.client.user.id || this.channel.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES));
 		}
 	};
@@ -145,9 +145,6 @@ Discord.Structures.extend("GuildMember", G => {
 					}
 				}
 			}
-		}
-		equals(member) {
-			return member && this.deleted === member.deleted && this.nickname === member.nickname && this._roles.length === member._roles.length;
 		}
 		get user() {
 			if(!this._userID) { return null; }
@@ -230,31 +227,17 @@ Discord.Structures.extend("Guild", G => {
 		get joinedAt() {
 			return this.joinedTimestamp ? super.joinedAt : void 0;
 		}
-		fetchBan(user) {
-			const id = this.client.users.resolveID(user);
-			if(!id) { throw new Error("FETCH_BAN_RESOLVE_ID"); }
-			return this.client.api.guilds(this.id).bans(id).get().then(ban => ({
-				reason: ban.reason,
-				user: this.client.users.add(ban.user, this.client.options.cacheMembers || this.client.users.cache.has(ban.user.id))
-			}));
-		}
-		fetchBans() {
-			return this.client.api.guilds(this.id).bans.get().then(bans => bans.reduce((collection, ban) => {
-				collection.set(ban.user.id, {
-					reason: ban.reason,
-					user: this.client.users.add(ban.user, this.client.options.cacheMembers || this.client.users.cache.has(ban.user.id))
-				});
-				return collection;
-			}, new Discord.Collection()));
-		}
-		fetchWidget() {
-			return this.client.api.guilds(this.id).widget.get().then(data => ({
+		async fetchWidget() {
+			const data = await this.client.api.guilds(this.id).widget.get();
+			this.widgetEnabled = data.enabled;
+			this.widgetChannelID = data.channel_id;
+			return {
 				enabled: data.enabled,
 				channel: data.channel_id ? this.channels.cache.get(data.channel_id) || this.client.channels.add({
 					id: data.channel_id,
 					type: 0
 				}, this, false) : null
-			}));
+			};
 		}
 	};
 });
@@ -320,7 +303,7 @@ Discord.Structures.extend("VoiceState", V => {
 Discord.Structures.extend("VoiceChannel", V => {
 	return class VoiceChannel extends V {
 		get joinable() {
-			if((!this.guild.roles.cache.size && !this.client.options.cacheRoles) || (!this.permissionOverwrites.size && !this.client.options.cacheOverwrites)) { return true; }
+			if(!this.client.options.cacheRoles || !this.client.options.cacheOverwrites) { return true; }
 			if(!this.viewable) { return false; }
 			if(!this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.CONNECT, false)) { return false; }
 			if(this.full && !this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.MOVE_MEMBERS, false)) { return false; }
@@ -332,7 +315,7 @@ Discord.Structures.extend("VoiceChannel", V => {
 Discord.Structures.extend("StageChannel", V => {
 	return class StageChannel extends V {
 		get joinable() {
-			if((!this.guild.roles.cache.size && !this.client.options.cacheRoles) || (!this.permissionOverwrites.size && !this.client.options.cacheOverwrites)) { return true; }
+			if(!this.client.options.cacheRoles || !this.client.options.cacheOverwrites) { return true; }
 			if(!this.viewable) { return false; }
 			if(!this.permissionsFor(this.client.user).has(Discord.Permissions.FLAGS.CONNECT, false)) { return false; }
 			return true;
@@ -472,6 +455,13 @@ Discord.Channel.create = (client, data, _guild) => {
 	return channel;
 };
 
+Discord.GuildBan.prototype._patch = function(data) {
+	this.user = this.client.users.add(data.user, this.client.users.cache.has(data.target_user.id));
+	if("reason" in data) {
+		this.reason = data.reason;
+	}
+};
+
 Discord.Invite.prototype._patch = function(data) {
 	this.code = data.code;
 	this.presenceCount = "approximate_presence_count" in data ? data.approximate_presence_count : null;
@@ -552,49 +542,6 @@ Discord.Webhook.prototype._patch = function(data) {
 
 Discord.UserManager.prototype.forge = function(id) {
 	return this.add({ id }, false);
-};
-
-Discord.GuildManager.prototype.fetch = async function(id, cache) {
-	let options = {};
-	switch(typeof cache) {
-		case "boolean": options.cache = cache; break;
-		case "object": options = cache || {}; break;
-	}
-	switch(typeof id) {
-		case "string": options.id = id; break;
-		case "boolean": options.cache = id; break;
-		case "object": options = id || {}; break;
-	}
-	if(typeof options.cache === "undefined") { options.cache = true; }
-	if(options.id) {
-		const existing = this.cache.get(options.id);
-		if(!options.force && existing && existing.ownerID) { return existing; }
-		const guild = await this.client.api.guilds(options.id).get({ query: { with_counts: true } });
-		return this.add(guild, options.cache || this.cache.has(options.id));
-	}
-	const c = new Discord.Collection();
-	const l = options.limit > 100 ? 100 : options.limit || 100;
-	let guilds = await this.client.api.users("@me").guilds().get({
-		query: {
-			limit: l,
-			after: options.after || 0,
-			before: options.before || 0
-		}
-	});
-	while(guilds.length) {
-		for(const guild of guilds) {
-			c.set(guild.id, this.cache.get(guild.id) || this.add(guild, options.cache));
-			if(options.limit && c.size >= options.limit) { return c; }
-		}
-		guilds = guilds.length === 100 && (!options.limit || c.size < options.limit) ? await this.client.api.users("@me").guilds().get({
-			query: {
-				limit: 100,
-				after: c.last(),
-				before: options.before || 0
-			}
-		}) : [];
-	}
-	return c;
 };
 
 Discord.GuildManager.prototype.forge = function(id) {

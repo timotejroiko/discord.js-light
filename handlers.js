@@ -67,21 +67,13 @@ PacketHandlers.CHANNEL_PINS_UPDATE = (client, { d: data }, shard) => {
 };
 
 PacketHandlers.GUILD_BAN_ADD = (client, { d: data }, shard) => {
-	const guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({
-		id: data.guild_id,
-		shardID: shard.id
-	}, false);
-	const user = client.users.add(data.user, client.options.cacheMembers || client.users.cache.has(data.user.id));
-	client.emit(Constants.Events.GUILD_BAN_ADD, guild, user);
+	data.shardID = shard.id;
+	client.actions.GuildBanAdd.handle(data);
 };
 
 PacketHandlers.GUILD_BAN_REMOVE = (client, { d: data }, shard) => {
-	const guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({
-		id: data.guild_id,
-		shardID: shard.id
-	}, false);
-	const user = client.users.add(data.user, client.options.cacheMembers || client.users.cache.has(data.user.id));
-	client.emit(Constants.Events.GUILD_BAN_REMOVE, guild, user);
+	data.shardID = shard.id;
+	client.actions.GuildBanRemove.handle(data);
 };
 
 PacketHandlers.GUILD_CREATE = (client, { d: data }, shard) => {

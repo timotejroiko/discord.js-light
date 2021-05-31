@@ -261,7 +261,7 @@ require.cache[GCPath].exports = class GuildChannel extends GC {
 	}
 	get deletable() {
 		if(this.deleted) { return false; }
-		if(!this.client.options.cacheRoles && !this.guild.roles.cache.size) { return false; }
+		if(!this.client.options.cacheRoles) { return true; }
 		return this.permissionsFor(this.client.user).has(Permissions.FLAGS.MANAGE_CHANNELS, false);
 	}
 };

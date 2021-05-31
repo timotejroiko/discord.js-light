@@ -1,7 +1,7 @@
 "use strict";
 
 const PacketHandlers = require("./handlers.js");
-const { Constants, Collection, Channel, DMChannel, Invite } = require("discord.js");
+const { Constants, Collection, Channel, DMChannel, Invite, GuildBan } = require("discord.js");
 
 module.exports = client => {
 	if(client.voice) {
@@ -105,6 +105,22 @@ module.exports = client => {
 			old: null,
 			updated: channel
 		};
+	};
+	client.actions.GuildBanAdd.handle = function(data) {
+		const guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({
+			id: data.guild_id,
+			shardID: data.shardID
+		}, false);
+		client.emit(Constants.Events.GUILD_BAN_ADD, guild.bans.add(data));
+	};
+	client.actions.GuildBanRemove.handle = function(data) {
+		const guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({
+			id: data.guild_id,
+			shardID: data.shardID
+		}, false);
+		const ban = guild.bans.cache.get(data.user.id) ?? new GuildBan(client, data, guild);
+		guild.bans.cache.delete(ban.user.id);
+		client.emit(Constants.Events.GUILD_BAN_REMOVE, ban);
 	};
 	client.actions.GuildDelete.handle = function(data) {
 		const c = this.client;
@@ -532,7 +548,9 @@ module.exports = client => {
 		}
 		if(c.listenerCount(Constants.Events.PRESENCE_UPDATE)) {
 			if(!presence) { presence = guild.presences.add(Object.assign(data, { guild }), false); }
-			c.emit(Constants.Events.PRESENCE_UPDATE, old, presence);
+			if(!old || !presence.equals(old)) {
+				c.emit(Constants.Events.PRESENCE_UPDATE, old, presence);
+			}
 		}
 	};
 	client.actions.TypingStart.handle = function(data) {
