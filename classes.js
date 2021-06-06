@@ -934,7 +934,7 @@ Object.defineProperty(Discord.RoleManager.prototype, "everyone", {
 	}
 });
 
-Object.defineProperty(Discord.GuildMemberRoleManager.prototype, "_roles", {
+Object.defineProperty(Discord.GuildMemberRoleManager.prototype, "cache", {
 	get: function() {
 		const { everyone } = this.guild.roles;
 		const roles = new Discord.Collection();
@@ -949,7 +949,7 @@ Object.defineProperty(Discord.GuildMemberRoleManager.prototype, "_roles", {
 	}
 });
 
-Object.defineProperty(Discord.GuildEmojiRoleManager.prototype, "_roles", {
+Object.defineProperty(Discord.GuildEmojiRoleManager.prototype, "cache", {
 	get: function() {
 		const roles = new Discord.Collection();
 		for(const role of this.emoji._roles) {

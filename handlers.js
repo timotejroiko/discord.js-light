@@ -293,13 +293,24 @@ PacketHandlers.APPLICATION_COMMAND_UPDATE = (client, { d: data }, shard) => {
 
 PacketHandlers.INTERACTION_CREATE = (client, { d: data }, shard) => {
 	data.shardID = shard.id;
-	if(data.type === Constants.InteractionTypes.APPLICATION_COMMAND) {
-		const CommandInteraction = Structures.get("CommandInteraction");
-		const interaction = new CommandInteraction(client, data);
-		client.emit(Constants.Events.INTERACTION_CREATE, interaction);
-		return;
+	let interaction;
+	switch(data.type) {
+		case Constants.InteractionTypes.APPLICATION_COMMAND: {
+			const CommandInteraction = Structures.get("CommandInteraction");
+			interaction = new CommandInteraction(client, data);
+			break;
+		}
+		case Constants.InteractionTypes.MESSAGE_COMPONENT: {
+			const MessageComponentInteraction = Structures.get("MessageComponentInteraction");
+			interaction = new MessageComponentInteraction(client, data);
+			break;
+		}
+		default: {
+			client.emit(Constants.Events.DEBUG, `[INTERACTION] Received interaction with unknown type: ${data.type}`);
+			return;
+		}
 	}
-	client.emit(Constants.Events.DEBUG, `[INTERACTION] Received interaction with unknown type: ${data.type}`);
+	client.emit(Constants.Events.INTERACTION_CREATE, interaction);
 };
 
 module.exports = PacketHandlers;
