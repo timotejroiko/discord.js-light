@@ -612,7 +612,13 @@ Discord.GuildChannelManager.prototype.fetch = async function(id, cache) {
 	const channels = await this.client.api.guilds(this.guild.id).channels().get();
 	if(options.id) {
 		const c = channels.find(t => t.id === options.id);
-		if(!c) { throw new Discord.DiscordAPIError(`${this.client.api.guilds(this.guild.id).channels()}:id`, { message: "Unknown Channel" }, "GET", 404); }
+		if(!c) {
+			throw new Discord.DiscordAPIError({ message: "Unknown Channel" }, 404, {
+				path: `${this.client.api.guilds(this.guild.id).channels()}:id`,
+				method: "GET",
+				options: {}
+			});
+		}
 		if(options.withOverwrites) { c._withOverwrites = true; }
 		return this.client.channels.add(c, this.guild, options.cache);
 	}
@@ -704,7 +710,11 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		}
 		if(!query && !user_ids) {
 			if(this.client.options.ws.intents && !(this.client.options.ws.intents & Discord.Intents.FLAGS.GUILD_MEMBERS)) {
-				j(new Discord.DiscordAPIError("GUILD_MEMBERS_CHUNK", { message: "fetching all members requires the GUILD_MEMBERS intent" }, "Gateway"));
+				j(new Discord.DiscordAPIError({ message: "fetching all members requires the GUILD_MEMBERS intent" }, 403, {
+					path: "GUILD_MEMBERS_CHUNK",
+					method: "Gateway",
+					options: {}
+				}));
 				return;
 			}
 			query = "";
@@ -715,7 +725,11 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 		}
 		if(typeof user_ids === "string") {
 			if(isNaN(user_ids) || user_ids.length < 15 || user_ids.length > 25) {
-				j(new Discord.DiscordAPIError("GUILD_MEMBERS_CHUNK", { message: "Unknown User" }, "Gateway"));
+				j(new Discord.DiscordAPIError({ message: "Unknown User" }, 403, {
+					path: "GUILD_MEMBERS_CHUNK",
+					method: "Gateway",
+					options: {}
+				}));
 				return;
 			}
 			if(this.cache.has(user_ids) && (!presences || this.client.options.cachePresences) && !options.force) {
@@ -787,7 +801,11 @@ Discord.GuildMemberManager.prototype.fetch = async function(id, cache) {
 					if(result) {
 						r(result);
 					} else {
-						j(new Discord.DiscordAPIError("GUILD_MEMBERS_CHUNK", { message: "Unknown User" }, "Gateway"));
+						j(new Discord.DiscordAPIError({ message: "Unknown User" }, 403, {
+							path: "GUILD_MEMBERS_CHUNK",
+							method: "Gateway",
+							options: {}
+						}));
 					}
 				} else {
 					if(!options.limit && !this.guild.memberCount) { this.guild.memberCount = fetched.size; }
@@ -859,7 +877,13 @@ Discord.RoleManager.prototype.fetch = async function(id, cache) {
 	const roles = await this.client.api.guilds(this.guild.id).roles.get();
 	if(options.id) {
 		const r = roles.find(t => t.id === options.id);
-		if(!r) { throw new Discord.DiscordAPIError(`${this.client.api.guilds(this.guild.id).roles()}:id`, { message: "Unknown Role" }, "GET", 404); }
+		if(!r) {
+			throw new Discord.DiscordAPIError({ message: "Unknown Role" }, 404, {
+				path: `${this.client.api.guilds(this.guild.id).roles()}:id`,
+				method: "GET",
+				options: {}
+			});
+		}
 		return this.add(r, options.cache);
 	} else if(options.cache) {
 		for(const role of roles) {
