@@ -157,25 +157,6 @@ require.cache[SHMPath].exports = class WebSocketManager extends SHM {
 	}
 };
 
-const VCPath = resolve(require.resolve("discord.js").replace("index.js", "/client/voice/VoiceConnection.js"));
-const VC = require(VCPath);
-require.cache[VCPath].exports = class VoiceConnection extends VC {
-	constructor(voiceManager, channel) {
-		super(voiceManager);
-		this._channel = channel;
-		Object.defineProperty(this, "channel", {
-			enumerable: false,
-			get: function() {
-				return this.client.channels.cache.get(this._channel.id) || this._channel;
-			}
-		});
-	}
-	updateChannel(channel) {
-		this._channel = channel;
-		this.sendVoiceStateUpdate();
-	}
-};
-
 const ALPath = resolve(require.resolve("discord.js").replace("index.js", "/structures/GuildAuditLogs.js"));
 const AL = require(ALPath);
 AL.Entry = class GuildAuditLogsEntry extends AL.Entry {

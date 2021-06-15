@@ -4,27 +4,6 @@ const PacketHandlers = require("./handlers.js");
 const { Constants, Collection, Channel, DMChannel, Invite, GuildBan } = require("discord.js");
 
 module.exports = client => {
-	if(client.voice) {
-		client.voice.onVoiceStateUpdate = function({ guild_id, session_id, channel_id, shardID }) {
-			const connection = this.connections.get(guild_id);
-			this.client.emit("debug", `[VOICE] connection? ${Boolean(connection)}, ${guild_id} ${session_id} ${channel_id}`);
-			if(!connection) { return; }
-			if(!channel_id) {
-				connection._disconnect();
-				this.connections.delete(guild_id);
-				return;
-			}
-			const guild = this.client.guilds.cache.get(guild_id) || this.client.guilds.add({
-				id: guild_id,
-				shardID
-			}, false);
-			connection._channel = this.client.channels.cache.get(channel_id) || this.client.channels.add({
-				id: channel_id,
-				type: 2
-			}, guild, false);
-			connection.setSessionID(session_id);
-		};
-	}
 	for(const event of client.options.disabledEvents) { delete PacketHandlers[event]; }
 	client.ws.handlePacket = function(packet, shard) {
 		if(packet && PacketHandlers[packet.t]) {
@@ -141,7 +120,7 @@ module.exports = client => {
 		for(const channel of guild.channels.cache.values()) {
 			c.channels.remove(channel.id);
 		}
-		guild.voiceStates.cache.get(c.user.id)?.connection?.disconnect();
+		c.voice.adapters.get(data.id)?.destroy();
 		c.guilds.cache.delete(guild.id);
 		guild.deleted = true;
 		this.deleted.set(guild.id, guild);
@@ -655,5 +634,55 @@ module.exports = client => {
 			type: guild ? 0 : 1
 		}, guild, false);
 		c.emit(Constants.Events.WEBHOOKS_UPDATE, channel);
+	};
+	client.actions.StageInstanceCreate.handle = function(data) {
+		const c = this.client;
+		const guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({
+			id: data.guild_id,
+			shardID: data.shardID
+		}, false);
+		const channel = c.channels.cache.get(data.channel_id) || c.channels.add({
+			id: data.channel_id,
+			type: guild ? 0 : 1
+		}, guild, false);
+		const stageInstance = channel.guild.stageInstances.add(data);
+		client.emit(Constants.Events.STAGE_INSTANCE_CREATE, stageInstance);
+		return { stageInstance };
+	};
+	client.actions.StageInstanceDelete.handle = function(data) {
+		const c = this.client;
+		const guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({
+			id: data.guild_id,
+			shardID: data.shardID
+		}, false);
+		const channel = c.channels.cache.get(data.channel_id) || c.channels.add({
+			id: data.channel_id,
+			type: guild ? 0 : 1
+		}, guild, false);
+		const stageInstance = channel.guild.stageInstances.add(data);
+		if(stageInstance) {
+			channel.guild.stageInstances.cache.delete(stageInstance.id);
+			stageInstance.deleted = true;
+		}
+		client.emit(Constants.Events.STAGE_INSTANCE_DELETE, stageInstance);
+		return { stageInstance };
+	};
+	client.actions.StageInstanceUpdate.handle = function(data) {
+		const c = this.client;
+		const guild = c.guilds.cache.get(data.guild_id) || c.guilds.add({
+			id: data.guild_id,
+			shardID: data.shardID
+		}, false);
+		const channel = c.channels.cache.get(data.channel_id) || c.channels.add({
+			id: data.channel_id,
+			type: guild ? 0 : 1
+		}, guild, false);
+		const oldStageInstance = channel.guild.stageInstances.cache.get(data.id)?._clone() ?? null;
+		const newStageInstance = channel.guild.stageInstances.add(data);
+		client.emit(Constants.Events.STAGE_INSTANCE_UPDATE, oldStageInstance, newStageInstance);
+		return {
+			oldStageInstance,
+			newStageInstance
+		};
 	};
 };

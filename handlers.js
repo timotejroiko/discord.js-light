@@ -293,16 +293,23 @@ PacketHandlers.APPLICATION_COMMAND_UPDATE = (client, { d: data }, shard) => {
 
 PacketHandlers.INTERACTION_CREATE = (client, { d: data }, shard) => {
 	data.shardID = shard.id;
-	let interaction;
+	let InteractionType;
 	switch(data.type) {
 		case Constants.InteractionTypes.APPLICATION_COMMAND: {
-			const CommandInteraction = Structures.get("CommandInteraction");
-			interaction = new CommandInteraction(client, data);
+			InteractionType = Structures.get("CommandInteraction");
 			break;
 		}
 		case Constants.InteractionTypes.MESSAGE_COMPONENT: {
-			const MessageComponentInteraction = Structures.get("MessageComponentInteraction");
-			interaction = new MessageComponentInteraction(client, data);
+			switch(data.data.component_type) {
+				case Constants.MessageComponentTypes.BUTTON: {
+					InteractionType = Structures.get("ButtonInteraction");
+					break;
+				}
+				default: {
+					client.emit(Constants.Events.DEBUG, `[INTERACTION] Received component interaction with unknown type: ${data.data.component_type}`);
+					return;
+				}
+			}
 			break;
 		}
 		default: {
@@ -310,7 +317,22 @@ PacketHandlers.INTERACTION_CREATE = (client, { d: data }, shard) => {
 			return;
 		}
 	}
-	client.emit(Constants.Events.INTERACTION_CREATE, interaction);
+	client.emit(Constants.Events.INTERACTION_CREATE, new InteractionType(client, data));
+};
+
+PacketHandlers.STAGE_INSTANCE_CREATE = (client, packet, shard) => {
+	packet.d.shardID = shard.id;
+	client.actions.StageInstanceCreate.handle(packet.d);
+};
+
+PacketHandlers.STAGE_INSTANCE_DELETE = (client, packet, shard) => {
+	packet.d.shardID = shard.id;
+	client.actions.StageInstanceDelete.handle(packet.d);
+};
+
+PacketHandlers.STAGE_INSTANCE_UPDATE = (client, packet, shard) => {
+	packet.d.shardID = shard.id;
+	client.actions.StageInstanceUpdate.handle(packet.d);
 };
 
 module.exports = PacketHandlers;

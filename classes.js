@@ -498,7 +498,7 @@ Discord.ClientApplication.prototype._patch = function(data) {
 	this.name = data.name ?? this.name ?? null;
 	this.description = data.description ?? this.description ?? null;
 	this.icon = data.icon ?? this.icon ?? null;
-	this.flags = "flags" in data ? new Discord.ApplicationFlags(data.flags) : this.flags;
+	this.flags = "flags" in data ? new Discord.ApplicationFlags(data.flags).freeze() : this.flags;
 	this.cover = data.cover_image ?? this.cover ?? null;
 	this.rpcOrigins = data.rpc_origins ?? this.rpcOrigins ?? [];
 	this.botRequireCodeGrant = data.bot_require_code_grant ?? this.botRequireCodeGrant ?? null;
@@ -573,22 +573,12 @@ Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
 	return channel;
 };
 
-Discord.ChannelManager.prototype.fetch = async function(id, cache, force) {
-	let options = {};
-	switch(typeof cache) {
-		case "boolean": options.cache = cache; break;
-		case "object": options = cache || {}; break;
-	}
-	switch(typeof id) {
-		case "string": options.id = id; break;
-		case "boolean": options.cache = id; break;
-		case "object": options = id || {}; break;
-	}
+Discord.ChannelManager.prototype.fetch = async function(id, opts) {
+	const options = typeof opts === "object" ? opts : {};
 	if(typeof options.cache === "undefined") { options.cache = true; }
-	if(typeof options.force === "undefined" && typeof force !== "undefined") { options.force = force; }
-	const existing = this.cache.get(options.id);
+	const existing = this.cache.get(id);
 	if(!options.force && existing && !existing.partial && (!existing.guild || !options.withOverwrites || existing.permissionOverwrites.size)) { return existing; }
-	const data = await this.client.api.channels(options.id).get();
+	const data = await this.client.api.channels(id).get();
 	if(typeof options.withOverwrites !== "undefined") { data._withOverwrites = options.withOverwrites; }
 	return this.add(data, null, options.cache);
 };
