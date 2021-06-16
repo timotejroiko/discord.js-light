@@ -80,8 +80,7 @@ Discord.Client = class Client extends Discord.Client {
 	sweepChannels(_lifetime = 86400) {
 		const lifetime = _lifetime * 1000;
 		if(this.options.cacheChannels) { return; }
-		const connections = this.voice ? this.voice.connections.map(t => t.channel.id) : [];
-		this.channels.cache.sweep(t => !connections.includes(t.id) && (!t.lastMessageID || Date.now() - Discord.SnowflakeUtil.deconstruct(t.lastMessageID).timestamp > lifetime));
+		this.channels.cache.sweep(t => !t.lastMessageID || Date.now() - Discord.SnowflakeUtil.deconstruct(t.lastMessageID).timestamp > lifetime);
 		for(const guild of this.guilds.cache.values()) {
 			guild.channels.cache.sweep(t => !this.channels.cache.has(t.id));
 		}
