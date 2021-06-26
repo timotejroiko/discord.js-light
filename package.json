@@ -35,6 +35,6 @@
 		"eslint": "^7.26.0"
 	},
 	"dependencies": {
-		"discord.js": "github:discordjs/discord.js#918921e8211fc16e9b12d2502f3168264246ea22"
+		"discord.js": "github:discordjs/discord.js#985d4d6a438fc9123264f6a1c600f34fccc1825f"
 	}
 }

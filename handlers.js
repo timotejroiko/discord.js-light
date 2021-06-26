@@ -2,7 +2,7 @@
 
 const { resolve } = require("path");
 const PacketHandlers = require(resolve(require.resolve("discord.js").replace("index.js", "/client/websocket/handlers")));
-const { Collection, ClientUser, Constants, ClientApplication, Structures } = require("discord.js");
+const { Collection, ClientUser, Constants, ClientApplication } = require("discord.js");
 
 PacketHandlers.READY = (client, { d: data }, shard) => {
 	if(client.user) {
@@ -291,33 +291,9 @@ PacketHandlers.APPLICATION_COMMAND_UPDATE = (client, { d: data }, shard) => {
 	client.emit(Constants.Events.APPLICATION_COMMAND_UPDATE, oldCommand, newCommand);
 };
 
-PacketHandlers.INTERACTION_CREATE = (client, { d: data }, shard) => {
-	data.shardID = shard.id;
-	let InteractionType;
-	switch(data.type) {
-		case Constants.InteractionTypes.APPLICATION_COMMAND: {
-			InteractionType = Structures.get("CommandInteraction");
-			break;
-		}
-		case Constants.InteractionTypes.MESSAGE_COMPONENT: {
-			switch(data.data.component_type) {
-				case Constants.MessageComponentTypes.BUTTON: {
-					InteractionType = Structures.get("ButtonInteraction");
-					break;
-				}
-				default: {
-					client.emit(Constants.Events.DEBUG, `[INTERACTION] Received component interaction with unknown type: ${data.data.component_type}`);
-					return;
-				}
-			}
-			break;
-		}
-		default: {
-			client.emit(Constants.Events.DEBUG, `[INTERACTION] Received interaction with unknown type: ${data.type}`);
-			return;
-		}
-	}
-	client.emit(Constants.Events.INTERACTION_CREATE, new InteractionType(client, data));
+PacketHandlers.INTERACTION_CREATE = (client, packet, shard) => {
+	packet.d.shardID = shard.id;
+	client.actions.InteractionCreate.handle(packet.d);
 };
 
 PacketHandlers.STAGE_INSTANCE_CREATE = (client, packet, shard) => {
@@ -333,6 +309,36 @@ PacketHandlers.STAGE_INSTANCE_DELETE = (client, packet, shard) => {
 PacketHandlers.STAGE_INSTANCE_UPDATE = (client, packet, shard) => {
 	packet.d.shardID = shard.id;
 	client.actions.StageInstanceUpdate.handle(packet.d);
+};
+
+PacketHandlers.THREAD_CREATE = (client, packet, shard) => {
+	packet.d.shardID = shard.id;
+	client.actions.ThreadCreate.handle(packet.d);
+};
+
+PacketHandlers.THREAD_DELETE = (client, packet, shard) => {
+	packet.d.shardID = shard.id;
+	client.actions.ThreadDelete.handle(packet.d);
+};
+
+PacketHandlers.THREAD_LIST_SYNC = (client, packet, shard) => {
+	packet.d.shardID = shard.id;
+	client.actions.ThreadListSync.handle(packet.d);
+};
+
+PacketHandlers.THREAD_MEMBER_UPDATE = (client, packet, shard) => {
+	packet.d.shardID = shard.id;
+	client.actions.ThreadMemberUpdate.handle(packet.d);
+};
+
+PacketHandlers.THREAD_MEMBERS_UPDATE = (client, packet, shard) => {
+	packet.d.shardID = shard.id;
+	client.actions.ThreadMembersUpdate.handle(packet.d);
+};
+
+PacketHandlers.THREAD_UPDATE = (client, packet) => {
+	const { old, updated } = client.actions.ChannelUpdate.handle(packet.d);
+	client.emit(Constants.Events.THREAD_UPDATE, old, updated);
 };
 
 module.exports = PacketHandlers;

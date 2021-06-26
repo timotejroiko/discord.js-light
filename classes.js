@@ -22,7 +22,7 @@ Discord.Structures.extend("Message", M => {
 		patch(data) {
 			const d = {};
 			for(const i in data) {
-				if(!["mentions", "mention_roles"].includes(i)) { d[i] = data[i]; }
+				if(!["mentions", "mention_roles", "thread", "referenced_message"].includes(i)) { d[i] = data[i]; }
 			}
 			const clone = super.patch(d);
 			if(data.mentions && data.mentions.length) {
@@ -50,12 +50,19 @@ Discord.Structures.extend("Message", M => {
 					this.mentions.roles.set(role, this.guild.roles.cache.get(role) || this.guild.roles.add({ id: role }, false));
 				}
 			}
+			if(data.thread) {
+				this.thread = this.client.channels.add(data.thread, null, this.client.options.cacheChannels || this.client.channels.cache.has(data.thread.id));
+			}
+			if(data.referenced_message) {
+				const author = data.referenced_message.author;
+				this.mentions.repliedUser = this.client.users.add(author, this.client.options.cacheMembers || this.client.users.cache.has(author.id));
+			}
 			return clone;
 		}
 		_patch(data) {
 			const d = {};
 			for(const i in data) {
-				if(!["author", "member", "mentions", "mention_roles", "interaction"].includes(i)) { d[i] = data[i]; }
+				if(!["author", "member", "mentions", "mention_roles", "interaction", "thread", "referenced_message"].includes(i)) { d[i] = data[i]; }
 			}
 			super._patch(d);
 			this.author = data.author ? this.client.users.add(data.author, this.client.options.cacheMembers || this.client.users.cache.has(data.author.id)) : null;
@@ -99,6 +106,15 @@ Discord.Structures.extend("Message", M => {
 					commandName: data.interaction.name,
 					user: this.client.users.add(data.interaction.user, this.client.options.cacheMembers || this.client.users.cache.has(data.author.id))
 				};
+			}
+			if(data.thread) {
+				this.thread = this.client.channels.add(data.thread, null, this.client.options.cacheChannels || this.client.channels.cache.has(data.thread.id));
+			} else if(!this.thread) {
+				this.thread = null;
+			}
+			if(data.referenced_message) {
+				const author = data.referenced_message.author;
+				this.mentions.repliedUser = this.client.users.add(author, this.client.options.cacheMembers || this.client.users.cache.has(author.id));
 			}
 		}
 		get member() {
@@ -166,7 +182,7 @@ Discord.Structures.extend("Guild", G => {
 			const d = {};
 			const emojis = Boolean(this.emojis);
 			for(const key in data) {
-				if(!["channels", "roles", "members", "presences", "voice_states", "emojis"].includes(key)) {
+				if(!["channels", "roles", "members", "presences", "voice_states", "emojis", "threads"].includes(key)) {
 					d[key] = data[key];
 				}
 			}
@@ -217,6 +233,13 @@ Discord.Structures.extend("Guild", G => {
 				} else if(this.client.options.cacheEmojis) {
 					for(const emoji of data.emojis) {
 						this.emojis.add(emoji);
+					}
+				}
+			}
+			if(Array.isArray(data.threads)) {
+				for (const rawThread of data.threads) {
+					if(this.client.options.cacheChannels || this.client.channels.cache.has(rawThread.id)) {
+						this.client.channels.add(rawThread, this);
 					}
 				}
 			}
@@ -449,6 +472,14 @@ Discord.Channel.create = (client, data, _guild) => {
 					channel = new StageChannel(guild, data);
 					break;
 				}
+				case Discord.Constants.ChannelTypes.NEWS_THREAD:
+				case Discord.Constants.ChannelTypes.PUBLIC_THREAD:
+				case Discord.Constants.ChannelTypes.PRIVATE_THREAD: {
+					const ThreadChannel = Discord.Structures.get("ThreadChannel");
+					channel = new ThreadChannel(guild, data);
+					channel.parent?.threads.cache.set(channel.id, channel);
+					break;
+				}
 			}
 		}
 	}
@@ -474,8 +505,9 @@ Discord.Invite.prototype._patch = function(data) {
 	this.createdTimestamp = "created_at" in data ? new Date(data.created_at).getTime() : null;
 	this.inviter = data.inviter ? this.client.users.add(data.inviter, this.client.users.cache.has(data.inviter.id)) : null;
 	this.targetUser = data.target_user ? this.client.users.add(data.target_user, this.client.users.cache.has(data.target_user.id)) : null;
-	this.guild = data.guild instanceof Discord.Guild ? data.guild : this.client.guilds.add(data.guild, false);
+	this.guild = data.guild ? data.guild instanceof Discord.Guild ? data.guild : this.client.guilds.add(data.guild, false) : null;
 	this.channel = data.channel instanceof Discord.Channel ? data.channel : this.client.channels.add(data.channel, this.guild, false);
+	this.stageInstance = data.stage_instance ? new Discord.InviteStageInstance(this.client, data.stage_instance, this.channel.id, this.guild?.id) : null;
 };
 
 Discord.GuildTemplate.prototype._patch = function(data) {
@@ -538,6 +570,17 @@ Discord.Webhook.prototype._patch = function(data) {
 	this.owner = data.user ? this.client.users?.add(data.user, this.client.users.cache.has(data.user.id)) ?? data.user : null;
 	this.sourceGuild = data.source_guild ? this.client.guilds?.add(data.source_guild, false) ?? data.source_guild : null;
 	this.sourceChannel = this.client.channels?.resolve(data.source_channel?.id) ?? data.source_channel ?? null;
+};
+
+Discord.InviteStageInstance.prototype._patch = function(data) {
+	this.topic = data.topic;
+	this.participantCount = data.participant_count;
+	this.speakerCount = data.speaker_count;
+	this.members.clear();
+	for (const rawMember of data.members) {
+		const member = this.guild.members.add(rawMember, this.client.options.cacheMembers || this.client.users.cache.has(rawMember.id));
+		this.members.set(member.id, member);
+	}
 };
 
 Discord.UserManager.prototype.forge = function(id) {

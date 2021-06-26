@@ -1,7 +1,7 @@
 "use strict";
 
 const PacketHandlers = require("./handlers.js");
-const { Constants, Collection, Channel, DMChannel, Invite, GuildBan } = require("discord.js");
+const { Constants, Collection, Channel, DMChannel, Invite, GuildBan, Structures } = require("discord.js");
 
 module.exports = client => {
 	for(const event of client.options.disabledEvents) { delete PacketHandlers[event]; }
@@ -684,5 +684,128 @@ module.exports = client => {
 			oldStageInstance,
 			newStageInstance
 		};
+	};
+	client.actions.InteractionCreate.handle = function(data) {
+		let InteractionType;
+		switch(data.type) {
+			case Constants.InteractionTypes.APPLICATION_COMMAND: {
+				InteractionType = Structures.get("CommandInteraction");
+				break;
+			}
+			case Constants.InteractionTypes.MESSAGE_COMPONENT: {
+				switch(data.data.component_type) {
+					case Constants.MessageComponentTypes.BUTTON: {
+						InteractionType = Structures.get("ButtonInteraction");
+						break;
+					}
+					case Constants.MessageComponentTypes.SELECT_MENU:
+						InteractionType = Structures.get("SelectMenuInteraction");
+						break;
+					default: {
+						client.emit(Constants.Events.DEBUG, `[INTERACTION] Received component interaction with unknown type: ${data.data.component_type}`);
+						return;
+					}
+				}
+				break;
+			}
+			default: {
+				client.emit(Constants.Events.DEBUG, `[INTERACTION] Received interaction with unknown type: ${data.type}`);
+				return;
+			}
+		}
+		client.emit(Constants.Events.INTERACTION_CREATE, new InteractionType(client, data));
+	};
+	client.actions.ThreadCreate.handle = function(data) {
+		const thread = client.channels.add(data, null, client.options.cacheChannels || client.channels.cache.has(data.id));
+		client.emit(Constants.Events.THREAD_CREATE, thread);
+		return { thread };
+	};
+	client.actions.ThreadDelete.handle = function(data) {
+		let channel = client.channels.cache.get(data.id);
+		if(channel) {
+			for(const message of channel.messages.cache.values()) {
+				message.deleted = true;
+			}
+			client.channels.remove(channel.id);
+			channel.deleted = true;
+		} else {
+			channel = client.channels.add(data, null, false);
+		}
+		client.emit(Constants.Events.THREAD_DELETE, channel);
+		return { channel };
+	};
+	client.actions.ThreadListSync.handle = function(data) {
+		const c = this.client;
+		const guild = data.guild_id ? c.guilds.cache.get(data.guild_id) || c.guilds.add({
+			id: data.guild_id,
+			shardID: data.shardID
+		}, false) : void 0;
+		if (data.channel_ids) {
+			for (const id of data.channel_ids) {
+				const channel = client.channels.resolve(id);
+				if (channel) {this.removeStale(channel);}
+			}
+		} else {
+			for (const channel of guild.channels.cache.values()) {
+				this.removeStale(channel);
+			}
+		}
+		const syncedThreads = data.threads.reduce((coll, rawThread) => {
+			const thread = client.channels.add(rawThread, null, c.options.cacheChannels || c.channels.cache.has(data.id));
+			return coll.set(thread.id, thread);
+		}, new Collection());
+		for (const rawMember of Object.values(data.members)) {
+			const thread = client.channels.cache.get(rawMember.id) || syncedThreads.get(rawMember.id);
+			if (thread) {
+				thread.members._add(rawMember);
+			}
+		}
+		client.emit(Constants.Events.THREAD_LIST_SYNC, syncedThreads);
+		return { syncedThreads };
+	};
+	client.actions.ThreadMemberUpdate.handle = function(data) {
+		let thread = client.channels.cache.get(data.id);
+		let old = null;
+		let member = null;
+		if (thread) {
+			member = thread.members.cache.get(data.user_id);
+			if (member) {
+				old = member._update(data);
+			} else {
+				member = thread.members._add(data);
+			}
+		} else {
+			thread = client.channels.add({
+				id: data.id,
+				type: 11
+			}, null, false);
+			member = thread.members._add(data);
+		}
+		client.emit(Constants.Events.THREAD_MEMBER_UPDATE, old, member);
+		return {};
+	};
+	client.actions.ThreadMembersUpdate.handle = function(data) {
+		let thread = client.channels.cache.get(data.id);
+		let old = null;
+		if (thread) {
+			old = thread.members.cache.clone();
+			thread.memberCount = data.member_count;
+			data.added_members?.forEach(rawMember => {
+				thread.members._add(rawMember);
+			});
+			data.removed_member_ids?.forEach(memberId => {
+				thread.members.cache.delete(memberId);
+			});
+		} else {
+			thread = client.channels.add({
+				id: data.id,
+				type: 11
+			}, null, false);
+			data.added_members?.forEach(rawMember => {
+				thread.members._add(rawMember);
+			});
+		}
+		client.emit(Constants.Events.THREAD_MEMBERS_UPDATE, old, thread.members.cache, data);
+		return {};
 	};
 };

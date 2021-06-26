@@ -195,18 +195,18 @@ require.cache[ALPath].exports = class GuildAuditLogs extends AL {
 const TXPath = resolve(require.resolve("discord.js").replace("index.js", "/structures/interfaces/TextBasedChannel.js"));
 const TX = require(TXPath);
 require.cache[TXPath].exports = class TextBasedChannel extends TX {
-	async send(content, options) {
+	async send(options) {
 		if (this.constructor.name === "User" || this.constructor.name === "GuildMember") {
-			return this.createDM().then(dm => dm.send(content, options));
+			return this.createDM().then(dm => dm.send(options));
 		}
 		let apiMessage;
-		if (content instanceof APIMessage) {
-			apiMessage = content.resolveData();
+		if (options instanceof APIMessage) {
+			apiMessage = options.resolveData();
 		} else {
-			apiMessage = APIMessage.create(this, content, options).resolveData();
-			if (Array.isArray(apiMessage.data.content)) {
-				return Promise.all(apiMessage.split().map(this.send.bind(this)));
-			}
+			apiMessage = APIMessage.create(this, options).resolveData();
+		}
+		if (Array.isArray(apiMessage.data.content)) {
+			return Promise.all(apiMessage.split().map(this.send.bind(this)));
 		}
 		const { data, files } = await apiMessage.resolveFiles();
 		return this.client.api.channels[this.id].messages.post({
