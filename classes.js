@@ -572,6 +572,7 @@ Discord.Webhook.prototype._patch = function(data) {
 	this.sourceChannel = this.client.channels?.resolve(data.source_channel?.id) ?? data.source_channel ?? null;
 };
 
+/*
 Discord.InviteStageInstance.prototype._patch = function(data) {
 	this.topic = data.topic;
 	this.participantCount = data.participant_count;
@@ -582,6 +583,7 @@ Discord.InviteStageInstance.prototype._patch = function(data) {
 		this.members.set(member.id, member);
 	}
 };
+*/
 
 Discord.UserManager.prototype.forge = function(id) {
 	return this.add({ id }, false);
