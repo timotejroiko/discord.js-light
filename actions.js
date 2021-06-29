@@ -716,7 +716,11 @@ module.exports = client => {
 		client.emit(Constants.Events.INTERACTION_CREATE, new InteractionType(client, data));
 	};
 	client.actions.ThreadCreate.handle = function(data) {
-		const thread = client.channels.add(data, null, client.options.cacheChannels || client.channels.cache.has(data.id));
+		const guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({
+			id: data.guild_id,
+			shardID: data.shardID
+		}, false);
+		const thread = client.channels.add(data, guild, client.options.cacheChannels || client.channels.cache.has(data.id));
 		client.emit(Constants.Events.THREAD_CREATE, thread);
 		return { thread };
 	};
@@ -729,8 +733,12 @@ module.exports = client => {
 			client.channels.remove(channel.id);
 			channel.deleted = true;
 		} else {
+			const guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({
+				id: data.guild_id,
+				shardID: data.shardID
+			}, false);
 			data.thread_metadata = {};
-			channel = client.channels.add(data, null, false);
+			channel = client.channels.add(data, guild, false);
 		}
 		client.emit(Constants.Events.THREAD_DELETE, channel);
 		return { channel };
@@ -776,11 +784,15 @@ module.exports = client => {
 				member = thread.members._add(data);
 			}
 		} else {
+			const guild = client.guilds.add({
+				id: 0,
+				shardID: data.shardID
+			}, false);
 			thread = client.channels.add({
 				id: data.id,
 				type: 11,
 				thread_metadata: {}
-			}, null, false);
+			}, guild, false);
 			member = thread.members._add(data);
 		}
 		client.emit(Constants.Events.THREAD_MEMBER_UPDATE, old, member);
@@ -799,11 +811,15 @@ module.exports = client => {
 				thread.members.cache.delete(memberId);
 			});
 		} else {
+			const guild = client.guilds.cache.get(data.guild_id) || client.guilds.add({
+				id: data.guild_id,
+				shardID: data.shardID
+			}, false);
 			thread = client.channels.add({
 				id: data.id,
 				type: 11,
 				thread_metadata: {}
-			}, null, false);
+			}, guild, false);
 			data.added_members?.forEach(rawMember => {
 				thread.members._add(rawMember);
 			});
