@@ -5,7 +5,7 @@ const Permissions = require(resolve(require.resolve("discord.js").replace("index
 const Constants = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Constants.js")));
 const Util = require(resolve(require.resolve("discord.js").replace("index.js", "/util/Util.js")));
 const Base = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/Base.js")));
-const APIMessage = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/APIMessage.js")));
+const MessagePayload = require(resolve(require.resolve("discord.js").replace("index.js", "/structures/MessagePayload.js")));
 const { Error: DJSError } = require(resolve(require.resolve("discord.js").replace("index.js", "/errors")));
 
 const RHPath = resolve(require.resolve("discord.js").replace("index.js", "/rest/APIRequest.js"));
@@ -199,16 +199,16 @@ require.cache[TXPath].exports = class TextBasedChannel extends TX {
 		if (this.constructor.name === "User" || this.constructor.name === "GuildMember") {
 			return this.createDM().then(dm => dm.send(options));
 		}
-		let apiMessage;
-		if (options instanceof APIMessage) {
-			apiMessage = options.resolveData();
+		let messagePayload;
+		if (options instanceof MessagePayload) {
+			messagePayload = options.resolveData();
 		} else {
-			apiMessage = APIMessage.create(this, options).resolveData();
+			messagePayload = MessagePayload.create(this, options).resolveData();
 		}
-		if (Array.isArray(apiMessage.data.content)) {
-			return Promise.all(apiMessage.split().map(this.send.bind(this)));
+		if (Array.isArray(messagePayload.data.content)) {
+			return Promise.all(messagePayload.split().map(this.send.bind(this)));
 		}
-		const { data, files } = await apiMessage.resolveFiles();
+		const { data, files } = await messagePayload.resolveFiles();
 		return this.client.api.channels[this.id].messages.post({
 			data,
 			files
