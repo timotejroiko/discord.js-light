@@ -729,6 +729,7 @@ module.exports = client => {
 			client.channels.remove(channel.id);
 			channel.deleted = true;
 		} else {
+			data.thread_metadata = {};
 			channel = client.channels.add(data, null, false);
 		}
 		client.emit(Constants.Events.THREAD_DELETE, channel);
@@ -777,7 +778,8 @@ module.exports = client => {
 		} else {
 			thread = client.channels.add({
 				id: data.id,
-				type: 11
+				type: 11,
+				thread_metadata: {}
 			}, null, false);
 			member = thread.members._add(data);
 		}
@@ -799,7 +801,8 @@ module.exports = client => {
 		} else {
 			thread = client.channels.add({
 				id: data.id,
-				type: 11
+				type: 11,
+				thread_metadata: {}
 			}, null, false);
 			data.added_members?.forEach(rawMember => {
 				thread.members._add(rawMember);
