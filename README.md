@@ -209,17 +209,15 @@ Some fetch methods are already included by default in discord.js, others were ad
 
 ### client.channels.fetch()
 
-`.fetch(id)`  
-`.fetch(id,cache)`  
-`.fetch(id,options)`  
-`.fetch(options)`  
+`.fetch(id)`   
+`.fetch(id,options)`    
 
 **`returns`** - `Promise (Channel)`
 
 Fetches a single channel from the `/channels/:id` endpoint. This method is identical to the original except that it includes an additional `withOverwrites` option.
 
-* **`id or options.id (string)`** - id of the channel to fetch.
-* **`cache or options.cache (boolean)`** - whether to cache the result if not cached. defaults to true.
+* **`id (string)`** - id of the channel to fetch.
+* **`options.cache (boolean)`** - whether to cache the result if not cached. defaults to true.
 * **`options.withOverwrites (boolean)`** - whether to include permissionOverwrites. always true if `cacheOverwrites` is enabled. defaults to false.
 * **`options.force (boolean)`** - whether to force fetch the channel from the api even if its already cached. defaults to false.
 
