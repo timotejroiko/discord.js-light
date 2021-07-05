@@ -62,7 +62,7 @@ module.exports = client => {
 		}, false) : void 0;
 		if(c.channels.cache.has(data.id)) {
 			let newChannel = c.channels.cache.get(data.id);
-			if(guild && (!c.options.cacheOverwrites && !newChannel.permissionOverwrites.size)) { data.permission_overwrites = []; }
+			if(guild && newChannel.permissionOverwrites && (!c.options.cacheOverwrites && !newChannel.permissionOverwrites.size)) { data.permission_overwrites = []; }
 			const oldChannel = newChannel._update(data);
 			if(Constants.ChannelTypes[oldChannel.type.toUpperCase()] !== data.type) {
 				const changedChannel = Channel.create(c, data, guild);
