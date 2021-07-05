@@ -737,7 +737,7 @@ module.exports = client => {
 				id: data.guild_id,
 				shardID: data.shardID
 			}, false);
-			data.thread_metadata = {};
+			data.thread_metadata = { archive_timestamp: 0 };
 			channel = client.channels.add(data, guild, false);
 		}
 		client.emit(Constants.Events.THREAD_DELETE, channel);
@@ -791,7 +791,7 @@ module.exports = client => {
 			thread = client.channels.add({
 				id: data.id,
 				type: 11,
-				thread_metadata: {}
+				thread_metadata: { archive_timestamp: 0 }
 			}, guild, false);
 			member = thread.members._add(data);
 		}
@@ -818,7 +818,7 @@ module.exports = client => {
 			thread = client.channels.add({
 				id: data.id,
 				type: 11,
-				thread_metadata: {}
+				thread_metadata: { archive_timestamp: 0 }
 			}, guild, false);
 			data.added_members?.forEach(rawMember => {
 				thread.members._add(rawMember);

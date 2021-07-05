@@ -598,7 +598,7 @@ Discord.ChannelManager.prototype.add = function(data, guild, cache = true) {
 		data.permission_overwrites = [];
 	}
 	const existing = this.cache.get(data.id);
-	if(existing && !(data._withOverwrites && !existing.permissionOverwrites.size && !cache)) {
+	if(existing && !(data._withOverwrites && !existing.permissionOverwrites?.size && !cache)) {
 		if(existing._patch && cache) { existing._patch(data); }
 		if(existing.guild) { existing.guild.channels.add(existing); }
 		return existing;
@@ -622,7 +622,7 @@ Discord.ChannelManager.prototype.fetch = async function(id, opts) {
 	const options = typeof opts === "object" ? opts : {};
 	if(typeof options.cache === "undefined") { options.cache = true; }
 	const existing = this.cache.get(id);
-	if(!options.force && existing && !existing.partial && (!existing.guild || !options.withOverwrites || existing.permissionOverwrites.size)) { return existing; }
+	if(!options.force && existing && !existing.partial && (!existing.guild || !existing.permissionOverwrites || !options.withOverwrites || existing.permissionOverwrites.size)) { return existing; }
 	const data = await this.client.api.channels(id).get();
 	if(typeof options.withOverwrites !== "undefined") { data._withOverwrites = options.withOverwrites; }
 	return this.add(data, null, options.cache);
@@ -652,7 +652,7 @@ Discord.GuildChannelManager.prototype.fetch = async function(id, cache) {
 	if(typeof options.cache === "undefined") { options.cache = true; }
 	if(options.id) {
 		const existing = this.cache.get(options.id);
-		if(!options.force && existing && !existing.partial && (!options.withOverwrites || existing.permissionOverwrites.size)) { return existing; }
+		if(!options.force && existing && !existing.partial && (!existing.permissionOverwrites || !options.withOverwrites || existing.permissionOverwrites.size)) { return existing; }
 	}
 	const channels = await this.client.api.guilds(this.guild.id).channels().get();
 	if(options.id) {
