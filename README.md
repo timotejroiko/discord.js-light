@@ -51,13 +51,14 @@ const client = new Discord.Client({
     });
 });
 
-client.login("your token here");
-
 client.on("messageCreate", async message => {
+    if(!message.guild) return;
     const guild = message.guild.partial ? message.guild.id : message.guild.name;
     const channel = message.channel.partial ? message.channel.id : message.channel.name;
     await message.channel.send(`hello from guild ${guild} and channel ${channel}`);
 });
+
+client.login("your token here");
 ```
 
 ## Notes
