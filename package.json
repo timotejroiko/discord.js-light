@@ -32,9 +32,9 @@
 	"devDependencies": {
 		"@types/node": "^15.0.2",
 		"discord-api-types": "^0.18.1",
-		"eslint": "^7.26.0"
+		"eslint": "^7.31.0"
 	},
 	"dependencies": {
-		"discord.js": "github:discordjs/discord.js#8c7a28f211dd05ec67cbce667b1d591ed59a40c6"
+		"discord.js": "github:discordjs/discord.js#2675b0866c70f4050ef5f60b5652ea2f108f29bd"
 	}
 }

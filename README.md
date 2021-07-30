@@ -1,27 +1,74 @@
 # discord.js-light
 
-WIP
+Discord.js v13 introduces major changes and a new caching system, therefore the discord.js-light master branch is in a very barebones experimental state.
 
-Discord.js v13 introduced major changes and a new caching system, therefore discord.js-light master is currently not up to date with the latest discord.js master.
+This version has most of its old features removed and instead focuses on making sure all events are properly delivered and all non-cached data is available as proper partials.
 
-I am currently assessing whether or not discord.js-light is still required and how to integrate it with the new discord.js caching system.
+Feel free to experiment with it and let me know of any issues.
 
-## Branches
+## Discord Changes
 
-* **master** - latest updates, based on the discord.js v13 (WIP)
-* **v3** - current npm version, based on the discord.js v12
-* **v2** - deprecated
-* **v1** - deprecated
+Starting from April 2022, message content will become a priviledged intent. With this move, Discord is pushing for a major switch to stateless infrastructure and slash commands.
+
+With these changes, developing a light-weight library is pretty much pointless. Therefore discord.js-light will enter maintenance mode soon, with discord.js v13 being the final version supported by discord.js-light.
+
+Bugs will still be fixed whenever they are found until the library becomes stable and maintenance changes will be done if/when they are needed.
 
 ## Features
 
-WIP
+* Discord.js partials system removed and replaced with an internal solution
+* Events always work, regardless of caching options (partial structures are given when missing)
+* Managers have a `.forge()` method to create a partial version of an uncached object on demand (to make api requests without fetching)
 
 ## Usage
 
-WIP
+```js
+const Discord = require("discord.js-light");
+const client = new Discord.Client({
+    intents: [ /* your intents here */ ],
+    // default caching options. enable caches by commenting them out.
+    makeCache: Discord.Options.cacheWithLimits({
+        ApplicationCommandManager: 0,
+        BaseGuildEmojiManager: 0,
+        ChannelManager: 0,
+        GuildBanManager: 0,
+        GuildChannelManager: 0,
+        GuildInviteManager: 0,
+        // GuildManager: 0,
+        GuildMemberManager: 0,
+        GuildStickerManager: 0,
+        MessageManager: 0,
+        PermissionOverwriteManager: 0,
+        PresenceManager: 0,
+        ReactionManager: 0,
+        ReactionUserManager: 0,
+        RoleManager: 0,
+        StageInstanceManager: 0,
+        ThreadManager: 0,
+        ThreadMemberManager: 0,
+        UserManager: 0,
+        VoiceStateManager: 0
+    });
+});
 
-## Bots using discord.js-light
+client.login("your token here");
+
+client.on("messageCreate", async message => {
+    const guild = message.guild.partial ? message.guild.id : message.guild.name;
+    const channel = message.channel.partial ? message.channel.id : message.channel.name;
+    await message.channel.send(`hello from guild ${guild} and channel ${channel}`);
+});
+```
+
+## Notes
+
+Partials from events should now properly have their `partial` properties set to true.
+
+A few additional non-standard events are included: shardConnect (when an internal shard connects), rest (when the library makes an api request), guildEmojisUpdate (when the emoji cache is disabled) and guildStickersUpdate (when the stickers cache is disabled).
+
+Fetching data does not automatically cache anymore when cache limits are set to 0. Instead, all caches have an additional method `.cache.forceSet()`, which is the same as .cache.set() but works even if the cache is disabled. Use this to manually cache fetched items.
+
+## Bots using discord.js-light (as of July 2021, before the slash command exodus)
 <!-- markdownlint-disable MD045 -->
 | Bot | Servers |
 |-|-|
@@ -43,6 +90,7 @@ WIP
 | [Hydra bot](https://hydrabot.xyz) | ![](https://top.gg/api/widget/servers/716708153143590952.svg) |
 | [CalcBot](https://top.gg/bot/674457690646249472) | ![](https://top.gg/api/widget/servers/674457690646249472.svg) |
 | [Helper](https://top.gg/bot/409538753997307915) | ![](https://top.gg/api/widget/servers/409538753997307915.svg) |
+| [Utix](https://top.gg/bot/541969002734419989) | ![](https://top.gg/api/widget/servers/541969002734419989.svg) |
 | [Custom Command](https://ccommandbot.ga) | ![](https://top.gg/api/widget/servers/725721249652670555.svg) |
 | [Scathach](https://discord.bots.gg/bots/724047481561809007) | ![](https://top.gg/api/widget/servers/724047481561809007.svg) |
 | [Melody](https://melodybot.tk) | ![](https://top.gg/api/widget/servers/739725994344316968.svg) |
@@ -70,5 +118,3 @@ WIP
 | [Stereo](https://github.com/NathanPenwill/Stereo) |  |
 | [Coconut Mall'd](https://github.com/Million900o/coconut-malld) |  |
 | [Discord.js Bot Template](https://github.com/Giuliopime/discordjs-bot-template) |  |
-
-(using discord.js-light? let me know if you're interested in having your bot listed here)

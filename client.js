@@ -1,92 +1,58 @@
 "use strict";
 
-require("./init.js");
-const Discord = require("./classes.js");
-const actions = require("./actions.js");
-const pkg = require("./package.json");
-const fs = require("fs");
+const Discord = require("./extensions.js");
+const PacketHandlers = require("./handlers.js");
+const Actions = require("./actions.js");
+
+Discord.LimitedCollection.prototype.forceSet = function(key, value) {
+	return Object.getPrototypeOf(Object.getPrototypeOf(this)).set.call(this, key, value);
+};
+
+Discord.Collection.prototype.forceSet = function(key, value) {
+	return this.set(key, value);
+};
 
 Discord.Client = class Client extends Discord.Client {
-	constructor(_options = {}) {
-		const options = {
-			cacheChannels: false,
-			cacheGuilds: true,
-			cachePresences: false,
-			cacheRoles: false,
-			cacheOverwrites: false,
-			cacheEmojis: false,
-			cacheMembers: false,
-			disabledEvents: [],
-			..._options
-		};
-		super(options);
-		actions(this);
-		if(options.hotreload) {
-			this.ws._hotreload = {};
-			if (options.sessionID && options.sequence) {
-				if (!Array.isArray(options.sessionID) && !Array.isArray(options.sequence)) {
-					options.sessionID = [options.sessionID];
-					options.sequence = [options.sequence];
-				}
-				for (let shard = 0; shard < options.sessionID.length; shard++) {
-					this.ws._hotreload[shard] = {
-						id: options.sessionID[shard],
-						seq: options.sequence[shard]
-					};
-				}
-			}
-			else {
-				try {
-					this.ws._hotreload = JSON.parse(fs.readFileSync(`${process.cwd()}/.sessions.json`, "utf8"));
-				} catch(e) {
-					this.ws._hotreload = {};
-				}
-			}
-			this.on(Discord.Constants.Events.SHARD_RESUME, () => {
-				if(!this.readyAt) { this.ws.checkShardsReady(); }
+	constructor(options = {}) {
+		if(Array.isArray(options.disabledEvents)) {
+			for(const event of options.disabledEvents) { delete PacketHandlers[event]; }
+		}
+		if(!options.makeCache) {
+			options.makeCache = Discord.Options.cacheWithLimits({
+				ApplicationCommandManager: 0,
+				BaseGuildEmojiManager: 0,
+				ChannelManager: 0,
+				GuildBanManager: 0,
+				GuildChannelManager: 0,
+				GuildInviteManager: 0,
+				// GuildManager: 0,
+				GuildMemberManager: 0,
+				GuildStickerManager: 0,
+				MessageManager: 0,
+				PermissionOverwriteManager: 0,
+				PresenceManager: 0,
+				ReactionManager: 0,
+				ReactionUserManager: 0,
+				RoleManager: 0,
+				StageInstanceManager: 0,
+				ThreadManager: 0,
+				ThreadMemberManager: 0,
+				UserManager: 0,
+				VoiceStateManager: 0
 			});
-			for(const eventType of ["exit", "uncaughtException", "SIGINT", "SIGTERM"]) {
-				process.on(eventType, () => {
-					try {
-						this.ws._hotreload = JSON.parse(fs.readFileSync(`${process.cwd()}/.sessions.json`, "utf8"));
-					} catch(e) {
-						this.ws._hotreload = {};
-					}
-					Object.assign(this.ws._hotreload, ...this.ws.shards.map(s => {
-						s.connection.close();
-						return {
-							[s.id]: {
-								id: s.sessionID,
-								seq: s.sequence
-							}
-						};
-					}));
-					fs.writeFileSync(`${process.cwd()}/.sessions.json`, JSON.stringify(this.ws._hotreload));
-					if(eventType !== "exit") {
-						process.exit();
-					}
-				});
+		}
+		super(options);
+		for(const action of Object.keys(Actions)) { this.actions[action].handle = Actions[action]; }
+		this.ws.handlePacket = (packet, shard) => {
+			if(packet && PacketHandlers[packet.t]) {
+				PacketHandlers[packet.t](this, packet, shard);
 			}
-		}
-	}
-	sweepUsers(_lifetime = 86400) {
-		const lifetime = _lifetime * 1000;
-		this.users.cache.sweep(t => t.id !== this.user.id && (!t.lastMessageID || Date.now() - Discord.SnowflakeUtil.deconstruct(t.lastMessageID).timestamp > lifetime));
-		for(const guild of this.guilds.cache.values()) {
-			guild.members.cache.sweep(t => !this.users.cache.has(t.id));
-			guild.presences.cache.sweep(t => !this.users.cache.has(t.id) && !this.options.cachePresences);
-		}
-	}
-	sweepChannels(_lifetime = 86400) {
-		const lifetime = _lifetime * 1000;
-		if(this.options.cacheChannels) { return; }
-		this.channels.cache.sweep(t => !t.lastMessageID || Date.now() - Discord.SnowflakeUtil.deconstruct(t.lastMessageID).timestamp > lifetime);
-		for(const guild of this.guilds.cache.values()) {
-			guild.channels.cache.sweep(t => !this.channels.cache.has(t.id));
-		}
+			return true;
+		};
 	}
 };
 
+const pkg = require("./package.json");
 Discord.version = `${pkg.version} (${Discord.version})`;
 
 module.exports = Discord;

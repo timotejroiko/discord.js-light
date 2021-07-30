@@ -88,7 +88,7 @@
 		"no-whitespace-before-property":"error",
 		"object-curly-newline":["error", { "multiline": true }],
 		"object-curly-spacing": ["error", "always"],
-		"object-property-newline":"error",
+		"object-property-newline": ["error", { "allowAllPropertiesOnSameLine": true }],
 		"key-spacing": ["error"],
 		"computed-property-spacing": ["error", "never"],
 		"operator-assignment":"error",
