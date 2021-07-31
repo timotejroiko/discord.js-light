@@ -1,6 +1,7 @@
 "use strict";
 
-const { override } = require("./functions");
+const Collection = require("@discordjs/collection");
+const { override, getOrCreateChannel } = require("./functions");
 
 override("/rest/APIRequest.js", X => class APIRequest extends X {
 	async make() {
@@ -21,25 +22,46 @@ override("/rest/APIRequest.js", X => class APIRequest extends X {
 	}
 });
 
-override("/structures/Message.js", X => class Message extends X {
-	_patch(data, ...args) {
-		super._patch(data, ...args);
-		if(data.member && !this.member) {
-			this._member = data.member;
-		}
-		if(data.mentions?.length) {
-			for(const mention of data.mentions) {
-				if(mention.member && !this.mentions.members.has(mention.id)) {
-					this.mentions._members.set(mention.id, this.guild.members._add(Object.assign(mention.member, { user: mention })));
+override("/structures/MessageMentions.js", X => class MessageMentions extends X {
+	constructor(message, users, roles, everyone, crosspostedChannels, repliedUser) {
+		super(message, users, roles, everyone, crosspostedChannels, repliedUser);
+		if(users?.length) {
+			for(const mention of users) {
+				if(mention.member && !this.members.has(mention.id)) {
+					this._members.set(mention.id, this.guild.members._add(Object.assign(mention.member, { user: mention })));
 				}
 			}
 		}
+		if(roles?.length) {
+			for(const id of roles) {
+				if(!this.roles.has(id)) {
+					this.roles.set(id, this.guild.roles._add({ id, permissions: 0 }, false));
+				}
+			}
+		}
+	}
+	get channels() {
+		if(this._channels) { return this._channels; }
+		this._channels = new Collection();
+		let matches;
+		while((matches = this.constructor.CHANNELS_PATTERN.exec(this._content)) !== null) {
+			const chan = getOrCreateChannel(this.client, matches[1], this.guild);
+			this._channels.set(chan.id, chan);
+		}
+		return this._channels;
+	}
+});
+
+override("/structures/Message.js", X => class Message extends X {
+	_patch(data, partial) {
+		super._patch(data, partial);
+		if(data.member && !this.member && this.author) { this._member = this.guild.members._add(Object.assign(data.member, { user: this.author })); }
 	}
 	get member() {
 		if(!this.guild) { return null; }
 		const id = this.author?.id || this._member?.id;
 		if(!id) { return null; }
-		return this.guild.members.cache.get(id) || (this._member ? this.guild.members._add(Object.assign(this._member, { user: this.author })) : null);
+		return this.guild.members.cache.get(id) || this._member || null;
 	}
 });
 
