@@ -23,7 +23,7 @@ override("/rest/APIRequest.js", X => class APIRequest extends X {
 
 override("/structures/Message.js", X => class Message extends X {
 	_patch(data, ...args) {
-		this.super(data, ...args);
+		super._patch(data, ...args);
 		if(data.member && !this.member) {
 			this._member = data.member;
 		}
