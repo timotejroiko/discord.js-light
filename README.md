@@ -48,7 +48,7 @@ const client = new Discord.Client({
         ThreadMemberManager: 0,
         UserManager: 0,
         VoiceStateManager: 0
-    });
+    })
 });
 
 client.on("messageCreate", async message => {
@@ -65,7 +65,7 @@ client.login("your token here");
 
 Partials from events should now properly have their `partial` properties set to true.
 
-A few additional non-standard events are included: shardConnect (when an internal shard connects), rest (when the library makes an api request), guildEmojisUpdate (when the emoji cache is disabled) and guildStickersUpdate (when the stickers cache is disabled).
+A few additional non-standard events are included: `shardConnect` (when an internal shard connects), `rest` (when the library makes an api request), `guildEmojisUpdate` (when the emoji cache is disabled) and `guildStickersUpdate` (when the stickers cache is disabled).
 
 Fetching data does not automatically cache anymore when cache limits are set to 0. Instead, all caches have an additional method `.cache.forceSet()`, which is the same as .cache.set() but works even if the cache is disabled. Use this to manually cache fetched items.
 
