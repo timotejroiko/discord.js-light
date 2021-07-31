@@ -561,7 +561,6 @@ module.exports = {
 		let channel = c.channels.cache.get(data.id);
 		if(!channel) {
 			const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
-			data.thread_metadata = { archive_timestamp: 0 };
 			channel = c.channels._add(data, guild, { cache: false, allowUnknownGuild: true });
 			makePartial(channel);
 		}
@@ -602,11 +601,7 @@ module.exports = {
 		let thread = c.channels.cache.get(data.id);
 		if(!thread) {
 			const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
-			thread = c.channels._add({
-				id: data.id,
-				type: 11,
-				thread_metadata: { archive_timestamp: 0 }
-			}, guild, { cache: false, allowUnknownGuild: true });
+			thread = c.channels._add({ id: data.id, type: 11 }, guild, { cache: false, allowUnknownGuild: true });
 			makePartial(thread);
 		}
 		let member = thread.members.cache.get(data.user_id);
@@ -637,11 +632,7 @@ module.exports = {
 			});
 		} else {
 			const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
-			thread = c.channels._add({
-				id: data.id,
-				type: 11,
-				thread_metadata: { archive_timestamp: 0 }
-			}, guild, { cache: false, allowUnknownGuild: true });
+			thread = c.channels._add({ id: data.id,	type: 11 }, guild, { cache: false, allowUnknownGuild: true });
 			data._added_members?.forEach(rawMember => {
 				thread.members._add(rawMember);
 			});
