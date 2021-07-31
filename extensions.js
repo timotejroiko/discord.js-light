@@ -21,6 +21,21 @@ override("/rest/APIRequest.js", X => class APIRequest extends X {
 	}
 });
 
+override("/structures/Message.js", X => class Message extends X {
+	_patch(data, ...args) {
+		this.super(data, ...args);
+		if(data.member && !this.member) {
+			this._member = data.member;
+		}
+	}
+	get member() {
+		if(!this.guild) { return null; }
+		const id = this.author?.id || this._member?.id;
+		if(!id) { return null; }
+		return this.guild.members.cache.get(id) || this.guild.members._add(Object.assign(this._member, { user: this.author })) || null;
+	}
+});
+
 const Discord = require("discord.js");
 
 Discord.UserManager.prototype.forge = function(id) {
