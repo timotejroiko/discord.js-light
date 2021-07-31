@@ -32,7 +32,7 @@ override("/structures/Message.js", X => class Message extends X {
 		if(!this.guild) { return null; }
 		const id = this.author?.id || this._member?.id;
 		if(!id) { return null; }
-		return this.guild.members.cache.get(id) || this.guild.members._add(Object.assign(this._member, { user: this.author })) || null;
+		return this.guild.members.cache.get(id) || (this._member ? this.guild.members._add(Object.assign(this._member, { user: this.author })) : null);
 	}
 });
 
