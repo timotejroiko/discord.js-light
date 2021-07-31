@@ -27,6 +27,13 @@ override("/structures/Message.js", X => class Message extends X {
 		if(data.member && !this.member) {
 			this._member = data.member;
 		}
+		if(data.mentions?.length) {
+			for(const mention of data.mentions) {
+				if(mention.member && !this.mentions.members.has(mention.id)) {
+					this.mentions._members.set(mention.id, this.guild.members._add(Object.assign(mention.member, { user: mention })));
+				}
+			}
+		}
 	}
 	get member() {
 		if(!this.guild) { return null; }
