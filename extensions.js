@@ -67,6 +67,17 @@ override("/structures/Message.js", X => class Message extends X {
 
 const Discord = require("discord.js");
 
+Discord.GuildChannel.prototype.fetchOverwrites = async function() {
+	const channel = await this.client.api.channels(this.id).get();
+	const collection = new Collection();
+	if(channel.permission_overwrites) {
+		for(const overwrite of channel.permission_overwrites) {
+			collection.set(overwrite.id, this.permissionOverwrites._add(overwrite));
+		}
+	}
+	return collection;
+};
+
 Discord.UserManager.prototype.forge = function(id) {
 	return this._add({ id }, false);
 };
