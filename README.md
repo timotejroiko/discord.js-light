@@ -1,24 +1,24 @@
-# discord.js-light
+# discord.js-light v4
 
-Discord.js v13 introduces major changes and a new caching system, therefore the discord.js-light master branch is in a very barebones experimental state.
+Discord.js v13 introduces several major changes including a new caching system, therefore discord.js-light v4 was heavily reworked to adapt to these changes.
 
-This version has most of its old features removed and instead focuses on making sure all events are properly delivered and all non-cached data is available as proper partials.
+This version is very experimental, most of its old features were removed and instead it focuses on making sure all events are properly delivered and all non-cached data is available as proper partials.
 
-Feel free to experiment with it and let me know of any issues.
+Feel free to test it and let me know of any bugs and issues.
 
 ## Discord Changes
 
 Starting from April 2022, message content will become a priviledged intent. With this move, Discord is pushing for a major switch to stateless infrastructure and slash commands.
 
-With these changes, developing a light-weight library is pretty much pointless. Therefore discord.js-light will enter maintenance mode soon, with discord.js v13 being the final version supported by discord.js-light.
+These changes combined with the recent caching improvements in discod.js make this library much less useful than it was before. Therefore discord.js-light will enter maintenance mode soon, with discord.js v13 being the final version supported.
 
-Bugs will still be fixed whenever they are found until the library becomes stable and maintenance changes will be done if/when they are needed.
+Bugs will still be fixed whenever they are found and maintenance will still be done until the library becomes stable enough.
 
 ## Features
 
 * Discord.js partials system removed and replaced with an internal solution
 * Events always work, regardless of caching options (partial structures are given when missing)
-* Managers have a `.forge()` method to create a partial version of an uncached object on demand (to make api requests without fetching)
+* Managers have a `.forge()` method to create partial versions of uncached objects on demand (to make api requests without fetching)
 
 ## Usage
 
@@ -67,7 +67,26 @@ Partials from events should now properly have their `partial` properties set to 
 
 A few additional non-standard events are included: `shardConnect` (when an internal shard connects), `rest` (when the library makes an api request), `guildEmojisUpdate` (when the emoji cache is disabled) and `guildStickersUpdate` (when the stickers cache is disabled).
 
+A non-standard GuildChannel#fetchOverwrites() was added to improve accessibility to permission checking.
+
 Fetching data does not automatically cache anymore when cache limits are set to 0. Instead, all caches have an additional method `.cache.forceSet()`, which is the same as .cache.set() but works even if the cache is disabled. Use this to manually cache fetched items.
+
+## Examples
+
+```js
+// manually fetching and caching a channel with permissionOverwrites, when all caches are set to 0
+async function fetchAndCacheChannelWithPermissions(id) {
+    if(client.channels.cache.has(id)) { return client.channels.cache.get(id); }
+    const channel = await client.channels.fetch(id);
+    client.channels.cache.forceSet(channel.id, channel);
+    if(channel.guild) {
+        const overwrites = await channel.fetchOverwrites();
+        overwrites.forEach(o => channel.permissionOverwrites.cache.forceSet(o.id, o));
+        channel.guild.channels.cache.forceSet(channel.id, channel);
+    }
+    return channel;
+}
+```
 
 ## Bots using discord.js-light (as of July 2021, before the slash command exodus)
 <!-- markdownlint-disable MD045 -->
