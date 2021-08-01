@@ -10,7 +10,7 @@ Feel free to test it and let me know of any bugs and issues.
 
 Starting from April 2022, message content will become a priviledged intent. With this move, Discord is pushing for a major switch to stateless infrastructure and slash commands.
 
-These changes combined with the recent caching improvements in discod.js make this library much less useful than it was before. Therefore discord.js-light will enter maintenance mode soon, with discord.js v13 being the final version supported.
+These changes combined with the recent caching improvements in discord.js make this library much less useful than it was before. Therefore discord.js-light will enter maintenance mode soon, with discord.js v13 being the final version supported.
 
 Bugs will still be fixed whenever they are found and maintenance will still be done until the library becomes stable enough.
 
