@@ -25,30 +25,30 @@ Bugs will still be fixed whenever they are found and maintenance will still be d
 ```js
 const Discord = require("discord.js-light");
 const client = new Discord.Client({
-    intents: [ /* your intents here */ ],
-    // default caching options. enable caches by commenting them out.
+    // default caching options, feel free to copy and modify. more info on caching options below.
     makeCache: Discord.Options.cacheWithLimits({
-        ApplicationCommandManager: 0,
-        BaseGuildEmojiManager: 0,
-        ChannelManager: 0,
-        GuildBanManager: 0,
-        GuildChannelManager: 0,
-        GuildInviteManager: 0,
-        // GuildManager: 0,
-        GuildMemberManager: 0,
-        GuildStickerManager: 0,
-        MessageManager: 0,
-        PermissionOverwriteManager: 0,
-        PresenceManager: 0,
-        ReactionManager: 0,
-        ReactionUserManager: 0,
-        RoleManager: 0,
-        StageInstanceManager: 0,
-        ThreadManager: 0,
-        ThreadMemberManager: 0,
-        UserManager: 0,
-        VoiceStateManager: 0
-    })
+        ApplicationCommandManager: 0, // guild.commands
+        BaseGuildEmojiManager: 0, // guild.emojis
+        ChannelManager: 0, // client.channels
+        GuildBanManager: 0, // guild.bans
+        GuildChannelManager: 0, // guild.channels
+        GuildInviteManager: 0, // guild.invites
+        GuildManager: Infinity, // client.guilds
+        GuildMemberManager: 0, // guild.members
+        GuildStickerManager: 0, // guild.stickers
+        MessageManager: 0, // channel.messages
+        PermissionOverwriteManager: 0, // channel.permissionOverwrites
+        PresenceManager: 0, // guild.presences
+        ReactionManager: 0, // message.reactions
+        ReactionUserManager: 0, // reaction.users
+        RoleManager: 0, // guild.roles
+        StageInstanceManager: 0, // guild.stageInstances
+        ThreadManager: 0, // channel.threads
+        ThreadMemberManager: 0, // threadchannel.members
+        UserManager: 0, // client.users
+        VoiceStateManager: 0 // guild.voiceStates
+    }),
+    intents: [ /* your intents here */ ],
 });
 
 client.on("messageCreate", async message => {
@@ -61,6 +61,37 @@ client.on("messageCreate", async message => {
 client.login("your token here");
 ```
 
+## Cache Configuration
+
+Discord.js's new caching configuration is very powerful, but a but it can be a bit complex to use. Check the examples below.
+
+```js
+ChannelManager: 0, // cache disabled. nothing will ever be added, except when using .cache.forceSet(). items added with forceSet can be updated and deleted normally.
+GuildChannelManager: 5, // only 5 items will be allowed, any new item will first remove the oldest when added, by insertion order.
+MessageManager: { maxSize: 20 }, // same thing as above.
+UserManager: {
+    maxSize: 10,
+    /**
+     * if set, this function is called when a new item is added and the collection is already at the limit.
+     * the collection starts looking for the oldest item to remove and tests each item with this function.
+     * if the function returns true, the item is not removed, and the next is tested. The first item that returns false is removed, then the new item is inserted.
+     * If maxSize is 0 or if updating an existing item, this function is not called.
+    */
+    keepOverLimit: (value, key, collection) => value.id === client.user.id
+},
+GuildMemberManager: {
+    maxSize: Infinity,
+    /**
+     * if set, automatic sweeping is enabled, and this function is called every sweepInterval seconds.
+     * this function provides the collection being swept, and expects another function as a return value.
+     * the returned function will be given to collection.sweep() internally, and will delete all items for which the function returns true.
+     * this example will remove all members except the bot member, every 600 seconds.
+    */
+    sweepFilter: collection => (value, key, collection) => value.id !== client.user.id,
+    sweepInterval: 600 // autosweep interval in seconds
+}
+```
+
 ## Notes
 
 Partials from events should now properly have their `partial` properties set to true.
@@ -69,23 +100,35 @@ A few additional non-standard events are included: `shardConnect` (when an inter
 
 A non-standard GuildChannel#fetchOverwrites() was added to improve accessibility to permission checking.
 
-Fetching data does not automatically cache anymore when cache limits are set to 0. Instead, all caches have an additional method `.cache.forceSet()`, which is the same as .cache.set() but works even if the cache is disabled. Use this to manually cache fetched items.
+Fetching data does not automatically cache anymore when cache limits are set to 0. Instead, all caches have an additional method `.cache.forceSet()`, which is the same as `.cache.set()` but works even if the cache is disabled. Use this to manually cache fetched items.
+
+From now on, the bot member AND the bot roles are always cached. Roles cache is not required to check permissions for the bot itself, only to check permissions for other members.
 
 ## Examples
 
+Permission checking with channels disabled:
+
 ```js
-// manually fetching and caching a channel with permissionOverwrites, when all caches are set to 0
-async function fetchAndCacheChannelWithPermissions(id) {
-    if(client.channels.cache.has(id)) { return client.channels.cache.get(id); }
-    const channel = await client.channels.fetch(id);
-    client.channels.cache.forceSet(channel.id, channel);
-    if(channel.guild) {
-        const overwrites = await channel.fetchOverwrites();
-        overwrites.forEach(o => channel.permissionOverwrites.cache.forceSet(o.id, o));
-        channel.guild.channels.cache.forceSet(channel.id, channel);
+// ChannelManager: 0
+// GuildChannelManager: 0
+// GuildManager: Infinity (if guilds are not cached, use client.channels.fetch(id, { allowUnknownGuild:true }) instead)
+// PermissionOverwritesManager: Infinity (if enabled, fetched channels will always include permissionOverwrites)
+// RoleManager: Infinity (can be set to 0 if you only check permissions for the bot itself)
+
+client.on("messageCreate", async message => {
+    if(!client.channels.cache.has(message.channel.id)) {
+        const channel = await client.channels.fetch(message.channel.id);
+        if(message.channel.permissionOverwrites?.cache.maxSize === 0) } {
+            // if PermissionOverwriteManager is disabled we can manually fetch permissions
+            const overwrites = await channel.fetchOverwrites();
+            overwrites.forEach(o => channel.permissionOverwrites.cache.forceSet(o.id, o)); // force insert overwrites into channel
+        }
+        client.channels.cache.forceSet(channel.id, channel); // optionally force cache to avoid re-fetching
+        message.guild?.channels.cache.forceSet(channel.id, channel); // optionally also add to guild if it exists
+        message.channel = channel; // optionally replace the partial channel with the full channel in this message
     }
-    return channel;
-}
+    console.log(message.channel.permissionsFor(message.member));
+});
 ```
 
 ## Bots using discord.js-light (as of July 2021, before the slash command exodus)
