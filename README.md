@@ -66,29 +66,31 @@ client.login("your token here");
 Discord.js's new caching configuration is very powerful, but a but it can be a bit complex to use. Check the examples below.
 
 ```js
-ChannelManager: 0, // cache disabled. nothing will ever be added, except when using .cache.forceSet(). items added with forceSet can be updated and deleted normally.
-GuildChannelManager: 5, // only 5 items will be allowed, any new item will first remove the oldest when added, by insertion order.
-MessageManager: { maxSize: 20 }, // same thing as above.
-UserManager: {
-    maxSize: 10,
-    /**
-     * if set, this function is called when a new item is added and the collection is already at the limit.
-     * the collection starts looking for the oldest item to remove and tests each item with this function.
-     * if the function returns true, the item is not removed, and the next is tested. The first item that returns false is removed, then the new item is inserted.
-     * If maxSize is 0 or if updating an existing item, this function is not called.
-    */
-    keepOverLimit: (value, key, collection) => value.id === client.user.id
-},
-GuildMemberManager: {
-    maxSize: Infinity,
-    /**
-     * if set, automatic sweeping is enabled, and this function is called every sweepInterval seconds.
-     * this function provides the collection being swept, and expects another function as a return value.
-     * the returned function will be given to collection.sweep() internally, and will delete all items for which the function returns true.
-     * this example will remove all members except the bot member, every 600 seconds.
-    */
-    sweepFilter: collection => (value, key, collection) => value.id !== client.user.id,
-    sweepInterval: 600 // autosweep interval in seconds
+{
+    ChannelManager: 0, // cache disabled. nothing will ever be added, except when using .cache.forceSet(). items added with forceSet can be updated and deleted normally.
+    GuildChannelManager: 5, // only 5 items will be allowed, any new item will first remove the oldest by insertion order before being added.
+    MessageManager: { maxSize: 20 }, // same thing as above.
+    UserManager: {
+        maxSize: 10,
+        /**
+         * if set, this function is called when a new item is added and the collection is already at the limit.
+         * the collection starts looking for the oldest item to remove and tests each item with this function.
+         * if the function returns true, the item is not removed, and the next is tested. The first item that returns false is removed, then the new item is inserted.
+         * If maxSize is 0 or if updating an existing item, this function is not called.
+        */
+        keepOverLimit: (value, key, collection) => value.id === client.user.id
+    },
+    GuildMemberManager: {
+        maxSize: Infinity,
+        /**
+         * if set, automatic sweeping is enabled, and this function is called every sweepInterval seconds.
+         * this function provides the collection being swept, and expects another function as a return value.
+         * the returned function will be given to collection.sweep() internally, and will delete all items for which the function returns true.
+         * this example will remove all members except the bot member, every 600 seconds.
+        */
+        sweepFilter: collection => (value, key, collection) => value.id !== client.user.id,
+        sweepInterval: 600 // autosweep interval in seconds
+    }
 }
 ```
 
