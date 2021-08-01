@@ -25,10 +25,18 @@ override("/rest/APIRequest.js", X => class APIRequest extends X {
 override("/structures/Guild.js", X => class Guild extends X {
 	_patch(data) {
 		super._patch(data);
-		if(data.members?.length) {
+		if(data.members) {
 			const me = data.members.find(member => member.user.id === this.client.user.id);
 			if(me && !this.me) {
 				this.members.cache.forceSet(me.user.id, this.members._add(me));
+			}
+		}
+		if(data.roles) {
+			const everyone = data.roles.find(role => role.id === this.id);
+			if(everyone && !this.roles.cache.has(everyone.id)) { this.roles.cache.forceSet(everyone.id, this.roles._add(everyone)); }
+			const roles = data.roles.filter(role => this.me._roles.includes(role.id));
+			for(const role of roles) {
+				if(!this.roles.cache.has(role.id)) { this.roles.cache.forceSet(role.id, this.roles._add(role)); }
 			}
 		}
 	}
