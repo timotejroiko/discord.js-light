@@ -22,6 +22,18 @@ override("/rest/APIRequest.js", X => class APIRequest extends X {
 	}
 });
 
+override("/structures/Guild.js", X => class Guild extends X {
+	_patch(data) {
+		super._patch(data);
+		if(data.members?.length) {
+			const me = data.members.find(member => member.user.id === this.client.user.id);
+			if(me && !this.me) {
+				this.members.cache.forceSet(me.user.id, this.members._add(me));
+			}
+		}
+	}
+});
+
 override("/structures/MessageMentions.js", X => class MessageMentions extends X {
 	constructor(message, users, roles, everyone, crosspostedChannels, repliedUser) {
 		super(message, users, roles, everyone, crosspostedChannels, repliedUser);
