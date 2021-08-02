@@ -1,21 +1,16 @@
 # discord.js-light v4
 
-Discord.js v13 introduces several major changes including a new caching system, therefore discord.js-light v4 was heavily reworked to adapt to these changes.
+Discord.js v13 introduces several major changes including a new caching system, therefore discord.js-light was heavily reworked to adapt to these changes. This version is still experimental and most of its old code was removed to be reassessed and reworked as needed. Feel free to test it and let me know of any bugs and issues.
 
-This version is very experimental, most of its old features were removed and instead it focuses on making sure all events are properly delivered and all non-cached data is available as proper partials.
+With the discord.js's new caching system, most of discord.js-light's modifications are no longer needed. However, discord.js still suffers from some side effects when disabling certain caches, such as events not being emitted even with partials enabled.
 
-Feel free to test it and let me know of any bugs and issues.
+Therefore, while those issues persist, discord.js-light will focus on making sure all events are properly delivered, supporting all caching configurations and assisting with non-cached usage in general.
 
-## Discord Changes
-
-Starting from April 2022, message content will become a priviledged intent. With this move, Discord is pushing for a major switch to stateless infrastructure and slash commands.
-
-These changes combined with the recent caching improvements in discord.js make this library much less useful than it was before. Therefore discord.js-light will enter maintenance mode soon, with discord.js v13 being the final version supported.
-
-Bugs will still be fixed whenever they are found and maintenance will still be done until the library becomes stable enough.
+However, discord.js-light might not be so useful anymore in the future, so it will likely enter maintenance mode soon, with discord.js v13 likely being the final version supported by discord.js-light. Lets see how it goes.
 
 ## Features
 
+* Fully supports the new discord.js caching system
 * Discord.js partials system removed and replaced with an internal solution
 * Events always work, regardless of caching options (partial structures are given when missing)
 * Managers have a `.forge()` method to create partial versions of uncached objects on demand (to make api requests without fetching)
@@ -30,8 +25,8 @@ const client = new Discord.Client({
         ApplicationCommandManager: 0, // guild.commands
         BaseGuildEmojiManager: 0, // guild.emojis
         ChannelManager: 0, // client.channels
-        GuildBanManager: 0, // guild.bans
         GuildChannelManager: 0, // guild.channels
+        GuildBanManager: 0, // guild.bans
         GuildInviteManager: 0, // guild.invites
         GuildManager: Infinity, // client.guilds
         GuildMemberManager: 0, // guild.members
@@ -68,8 +63,8 @@ Discord.js's new caching configuration is very powerful, but a but it can be a b
 ```js
 {
     ChannelManager: 0, // cache disabled. nothing will ever be added, except when using .cache.forceSet(). items added with forceSet can be updated and deleted normally.
-    GuildChannelManager: 5, // only 5 items will be allowed, any new item will first remove the oldest by insertion order before being added.
-    MessageManager: { maxSize: 20 }, // same thing as above.
+    GuildChannelManager: { maxSize: 0 }, // same as above
+    RoleManager: 5, // only 5 items will be allowed, any new item will first remove the oldest by insertion order before being added.
     UserManager: {
         maxSize: 10,
         /**
@@ -94,17 +89,28 @@ Discord.js's new caching configuration is very powerful, but a but it can be a b
 }
 ```
 
-## Notes
+## Notes and Important Info
 
 Partials from events should now properly have their `partial` properties set to true.
 
-A few additional non-standard events are included: `shardConnect` (when an internal shard connects), `rest` (when the library makes an api request), `guildEmojisUpdate` (when the emoji cache is disabled) and `guildStickersUpdate` (when the stickers cache is disabled).
+Fetching data does not automatically cache if cache limits are set to 0. Instead, all caches have an additional method `.cache.forceSet()`, which is the same as `.cache.set()` but works even if the cache is disabled. Use this to manually cache fetched items. Manually cached items can be accessed, updated, swept and removed normally.
 
-A non-standard GuildChannel#fetchOverwrites() was added to improve accessibility to permission checking.
+The bot member is cached by default (unless removed by the user). GuildMemberManager auto-sweep will still remove it if not excluded in your sweepFilter.
 
-Fetching data does not automatically cache anymore when cache limits are set to 0. Instead, all caches have an additional method `.cache.forceSet()`, which is the same as `.cache.set()` but works even if the cache is disabled. Use this to manually cache fetched items.
+The everyone role and the bot roles are cached by default (unless removed by the user). Roles cache is not required to check permissions for the bot itself, only to check permissions for other members. RoleManager auto-sweep still affects them and will remove them if they are not excluded in your sweepFilter.
 
-From now on, the bot member AND the bot roles are always cached. Roles cache is not required to check permissions for the bot itself, only to check permissions for other members.
+ChannelManager and GuildChannelManager should be configured together, otherwise weird things can happen if they have different configurations, use at your own risk.
+
+The `client.channels.fetch()` does not work if the channel's guild is not cached, it needs an additional `{ allowUnknownGuild: true }` parameter to work in that case. `guild.channels.fetch()` still works normally, even with a forged guild.
+
+A non-standard `GuildChannel#fetchOverwrites()` was added to improve accessibility to permission checking when caches are disabled.
+
+Some non-standard events were added:
+
+* `shardConnect` (fired when an internal shard connects)
+* `rest` (fired when the library makes an api request)
+* `guildEmojisUpdate` (fired only when the emoji cache is disabled)
+* `guildStickersUpdate` (fired only when the stickers cache is disabled)
 
 ## Examples
 
