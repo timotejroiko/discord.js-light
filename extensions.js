@@ -1,7 +1,7 @@
 "use strict";
 
 const { Collection } = require("@discordjs/collection");
-const { override, getOrCreateChannel } = require("./functions");
+const { override, getOrCreateChannel, getOrCreateGuild } = require("./functions");
 
 override("/rest/APIRequest.js", X => class APIRequest extends X {
 	async make() {
@@ -82,6 +82,15 @@ override("/structures/Message.js", X => class Message extends X {
 		const id = this.author?.id || this._member?.id;
 		if(!id) { return null; }
 		return this.guild.members.cache.get(id) || this._member || null;
+	}
+});
+
+override("/structures/Interaction.js", X => class Interaction extends X {
+	get channel() {
+		return this.channelId ? getOrCreateChannel(this.client, this.channelId, this.guild) : null;
+	}
+	get guild() {
+		return this.guildId ? getOrCreateGuild(this.client, this.guildId) : null;
 	}
 });
 
