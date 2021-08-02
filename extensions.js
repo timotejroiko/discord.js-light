@@ -1,6 +1,6 @@
 "use strict";
 
-const Collection = require("@discordjs/collection");
+const { Collection } = require("@discordjs/collection");
 const { override, getOrCreateChannel } = require("./functions");
 
 override("/rest/APIRequest.js", X => class APIRequest extends X {
