@@ -12,7 +12,7 @@ However, discord.js-light might not be so useful anymore in the future, so it wi
 
 * Fully supports the new discord.js caching system
 * Discord.js partials system removed and replaced with an internal solution
-* Events always work, regardless of caching options (partial structures are given when missing)
+* Events always work, regardless of caching options (partial structures are given when missing), see [djs-cache-test](https://github.com/Vicente015/djs-cache-test)
 * Managers have a `.forge()` method to create partial versions of uncached objects on demand (to make api requests without fetching)
 
 ## Usage
