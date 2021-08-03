@@ -13,7 +13,7 @@ However, discord.js-light might not be so useful anymore in the future, so it wi
 * Fully supports the new discord.js caching system
 * Discord.js partials system removed and replaced with an internal solution
 * Events always work, regardless of caching options (partial structures are given when missing), see [djs-cache-test](https://github.com/Vicente015/djs-cache-test)
-* Managers have a `.forge()` method to create partial versions of uncached objects on demand (to make api requests without fetching)
+* Partials can be created on demand to interact with the Discord API without fetching first.
 
 ## Usage
 
@@ -105,9 +105,17 @@ The `client.channels.fetch()` does not work if the channel's guild is not cached
 
 ## Non-standard stuff
 
+### ...Manager#forge
+
+All managers implement this method to create partial versions of uncached objects on demand. This enabled the user to make API requests without fetching uncached objects first.
+
+```js
+await client.users.forge(id).send("hello");
+```
+
 ### Collection#forceSet
 
-All caches implement this method, for example `.cache.forceSet()`, which is the same as `.cache.set()` but works even if the caches are completely disabled (set to 0). Use this to manually cache fetched items.
+All caches implement this method, which is the same as `.cache.set()` but works even if the caches are completely disabled (set to 0). Use this to manually cache fetched items.
 
 ```js
 const user = await client.users.fetch(id);
@@ -197,7 +205,7 @@ client.on("messageCreate", async message => {
 });
 ```
 
-## Bots using discord.js-light (as of July 2021, before the slash command exodus)
+## Bots using discord.js-light
 <!-- markdownlint-disable MD045 -->
 | Bot | Servers |
 |-|-|
