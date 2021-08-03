@@ -22,6 +22,12 @@ override("/rest/APIRequest.js", X => class APIRequest extends X {
 	}
 });
 
+override("/managers/RoleManager.js", X => class RoleManager extends X {
+	get everyone() {
+		return super.everyone || this._add({ id: this.guild.id, permissions: 0 }, false);
+	}
+});
+
 override("/structures/BaseGuild.js", X => class BaseGuild extends X {
 	get nameAcronym() {
 		return this.name ? super.nameAcronym : null;
@@ -97,12 +103,6 @@ override("/structures/Interaction.js", X => class Interaction extends X {
 	}
 	get guild() {
 		return this.guildId ? getOrCreateGuild(this.client, this.guildId) : null;
-	}
-});
-
-override("/managers/RoleManager.js", X => class RoleManager extends X {
-	get everyone() {
-		return super.everyone || this.guild.roles._add({ id: this.guild.id, permissions: 0 }, false);
 	}
 });
 
