@@ -109,6 +109,8 @@ The `client.channels.fetch()` does not work if the channel's guild is not cached
 
 Method added to improve accessibility to permission checking when caches are disabled.
 
+* returns: collection of PermissionOverwrite objects
+
 ### shardConnect
 
 Event fired when each individual internal shard connects.
