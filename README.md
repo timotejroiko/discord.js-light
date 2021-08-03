@@ -93,7 +93,7 @@ Discord.js's new caching configuration is very powerful, but a but it can be a b
 
 Partials from events should now properly have their `partial` properties set to true.
 
-Fetching data does not automatically cache if cache limits are set to 0. Instead, all caches have an additional method `.cache.forceSet()`, which is the same as `.cache.set()` but works even if the cache is disabled. Use this to manually cache fetched items. Manually cached items can be accessed, updated, swept and removed normally.
+Fetching data does not automatically cache if cache limits are set to 0. Use the non-standard `Collection#forceSet` method instead to manually cache fetched items. Manually cached items can be accessed, updated, swept and removed normally.
 
 The bot member is cached by default (unless removed by the user). GuildMemberManager auto-sweep will still remove it if not excluded in your sweepFilter.
 
@@ -105,39 +105,70 @@ The `client.channels.fetch()` does not work if the channel's guild is not cached
 
 ## Non-standard stuff
 
+### Collection#forceSet
+
+All caches implement this method, for example `.cache.forceSet()`, which is the same as `.cache.set()` but works even if the caches are completely disabled (set to 0). Use this to manually cache fetched items.
+
+```js
+const user = await client.users.fetch(id);
+client.users.cache.forceSet(id, user);
+```
+
 ### GuildChannel#fetchOverwrites
 
 Method added to improve accessibility to permission checking when caches are disabled.
 
-* returns: collection of PermissionOverwrite objects
+```js
+const overwrites = await channel.fetchOverwrites();
+console.log(overwrites) // Collection<PermissionOverwrites>
+```
 
 ### shardConnect
 
 Event fired when each individual internal shard connects.
 
-* shardId: number
-* guilds: array of unavailable guilds
+```js
+client.on("shardConnect", (shardId, guilds) => {
+    console.log(shardId) // shard ID
+    console.log(guilds) // array of unavailable guilds as per the Discord API
+});
+```
 
 ### guildEmojisUpdate
 
 Event fired instead of the standard emoji events when the emoji cache is disabled.
 
-* emojis: collection of updated emojis
+```js
+client.on("guildEmojisUpdate", emojis => {
+    console.log(emojis) // Collection<GuildEmoji>
+})
+```
 
 ### guildStickersUpdate
 
 Event fired instead of the standard sticker events when the sticker cache is disabled.
 
-* stickers: collection of updated stickers
+```js
+client.on("guildStickersUpdate", stickers => {
+    console.log(stickers) // Collection<Sticker>
+})
+```
 
 ### rest
 
 Event fired when the library makes a request to the discord API.
 
-* path: string
-* method: string
-* responseHeaders: object
-* responseBody: string
+```js
+client.on("rest", request => {
+    console.log(request); /*
+    {
+        path: string,
+        method: string,
+        responseHeaders: object,
+        responseBody: string
+    } */
+});
+```
 
 ## Examples
 
