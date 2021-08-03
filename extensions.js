@@ -22,6 +22,12 @@ override("/rest/APIRequest.js", X => class APIRequest extends X {
 	}
 });
 
+override("/structures/BaseGuild.js", X => class BaseGuild extends X {
+	get nameAcronym() {
+		return this.name ? super.nameAcronym : null;
+	}
+});
+
 override("/structures/Guild.js", X => class Guild extends X {
 	_patch(data) {
 		super._patch(data);
@@ -91,6 +97,12 @@ override("/structures/Interaction.js", X => class Interaction extends X {
 	}
 	get guild() {
 		return this.guildId ? getOrCreateGuild(this.client, this.guildId) : null;
+	}
+});
+
+override("/managers/RoleManager.js", X => class RoleManager extends X {
+	get everyone() {
+		return super.everyone || this.guild.roles._add({ id: this.guild.id, permissions: 0 }, false);
 	}
 });
 
@@ -190,28 +202,5 @@ Discord.PermissionOverwriteManager.prototype.forge = function(id, type) {
 Discord.ThreadMemberManager.prototype.forge = function(user_id) {
 	return this._add({ user_id });
 };
-
-/*
-- ApplicationCommandManager: 0,
-- BaseGuildEmojiManager: 0,
-- ChannelManager: 0,
-- GuildBanManager: 0,
-- GuildChannelManager: 0,
-- GuildInviteManager: 0,
-- GuildManager: 0,
-- GuildMemberManager: 0,
-- GuildStickerManager: 0,
-- MessageManager: 0,
-- PermissionOverwriteManager: 0,
-- PresenceManager: 0,
-- ReactionManager: 0,
-ReactionUserManager: 0,
-- RoleManager: 0,
-- StageInstanceManager: 0,
-ThreadManager: 0,
-- ThreadMemberManager: 0,
-- UserManager: 0,
-- VoiceStateManager: 0
-*/
 
 module.exports = Discord;
