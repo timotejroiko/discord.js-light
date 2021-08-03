@@ -103,14 +103,39 @@ ChannelManager and GuildChannelManager should be configured together, otherwise 
 
 The `client.channels.fetch()` does not work if the channel's guild is not cached, it needs an additional `{ allowUnknownGuild: true }` parameter to work in that case. `guild.channels.fetch()` still works normally, even with a forged guild.
 
-A non-standard `GuildChannel#fetchOverwrites()` was added to improve accessibility to permission checking when caches are disabled.
+## Non-standard stuff
 
-Some non-standard events were added:
+### GuildChannel#fetchOverwrites
 
-* `shardConnect` (fired when an internal shard connects)
-* `rest` (fired when the library makes an api request)
-* `guildEmojisUpdate` (fired only when the emoji cache is disabled)
-* `guildStickersUpdate` (fired only when the stickers cache is disabled)
+Method added to improve accessibility to permission checking when caches are disabled.
+
+### shardConnect
+
+Event fired when each individual internal shard connects.
+
+* shardId: number
+* guilds: array of unavailable guilds
+
+### guildEmojisUpdate
+
+Event fired instead of the standard emoji events when the emoji cache is disabled.
+
+* emojis: collection of updated emojis
+
+### guildStickersUpdate
+
+Event fired instead of the standard sticker events when the sticker cache is disabled.
+
+* stickers: collection of updated stickers
+
+### rest
+
+Event fired when the library makes a request to the discord API.
+
+* path: string
+* method: string
+* responseHeaders: object
+* responseBody: string
 
 ## Examples
 
