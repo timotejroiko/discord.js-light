@@ -180,26 +180,37 @@ client.on("rest", request => {
 
 ## Examples
 
-Permission checking with channels disabled:
+Support permission checking with channels disabled. Fetch text channels when needed and cache them while they remain active. Automatically remove inactive channels after 1 hour.
 
 ```js
-// ChannelManager: 0
-// GuildChannelManager: 0
-// GuildManager: Infinity (if guilds are not cached, use client.channels.fetch(id, { allowUnknownGuild:true }) instead)
-// PermissionOverwritesManager: Infinity (if enabled, fetched channels will always include permissionOverwrites)
-// RoleManager: Infinity (can be set to 0 if you only check permissions for the bot itself)
+function channelFilter(channel) {
+    return !channel.messages || Discord.SnowflakeUtil.deconstruct(channel.lastMessageId).timestamp < Date.now() - 3600000;
+}
+
+const makeCache = Discord.Options.cacheWithLimits({
+    RoleManager: Infinity,
+    PermissionOverwrites: Infinity,
+    ChannelManager: {
+        maxSize: 0,
+        sweepFilter: () => channelFilter,
+        sweepInterval: 3600000
+    },
+    GuildChannelManager: {
+        maxSize: 0,
+        sweepFilter: () => channelFilter,
+        sweepInterval: 3600000
+    },
+    /* other caches */
+});
+
+const client = new Discord.Client({ makeCache, intents: [ /* your intents */ ] });
 
 client.on("messageCreate", async message => {
     if(!client.channels.cache.has(message.channel.id)) {
         const channel = await client.channels.fetch(message.channel.id);
-        if(message.channel.permissionOverwrites?.cache.maxSize === 0) } {
-            // if PermissionOverwriteManager is disabled we can manually fetch permissions
-            const overwrites = await channel.fetchOverwrites();
-            overwrites.forEach(o => channel.permissionOverwrites.cache.forceSet(o.id, o)); // force insert overwrites into channel
-        }
-        client.channels.cache.forceSet(channel.id, channel); // optionally force cache to avoid re-fetching
-        message.guild?.channels.cache.forceSet(channel.id, channel); // optionally also add to guild if it exists
-        message.channel = channel; // optionally replace the partial channel with the full channel in this message
+        client.channels.cache.forceSet(channel.id, channel);
+        message.guild?.channels.cache.forceSet(channel.id, channel);
+        message.channel = channel;
     }
     console.log(message.channel.permissionsFor(message.member));
 });
