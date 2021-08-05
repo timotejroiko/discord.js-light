@@ -95,6 +95,12 @@ override("/structures/Message.js", X => class Message extends X {
 		if(!id) { return null; }
 		return this.guild.members.cache.get(id) || this._member || null;
 	}
+	get channel() {
+		return getOrCreateChannel(this.client, this.channelId, this.guild);
+	}
+	get guild() {
+		return getOrCreateGuild(this.client, this.guildId);
+	}
 });
 
 override("/structures/Interaction.js", X => class Interaction extends X {
