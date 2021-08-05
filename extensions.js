@@ -99,7 +99,7 @@ override("/structures/Message.js", X => class Message extends X {
 		return getOrCreateChannel(this.client, this.channelId, this.guild);
 	}
 	get guild() {
-		return getOrCreateGuild(this.client, this.guildId);
+		return this.guildId ? getOrCreateGuild(this.client, this.guildId) : null;
 	}
 });
 
