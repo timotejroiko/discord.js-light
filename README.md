@@ -100,7 +100,7 @@ Discord.js's new caching configuration is very powerful, here are a few examples
 
 ### ...Manager#forge
 
-All managers implement this method to create partial versions of uncached objects on demand. This enables making API requests without fetching uncached objects first. This is only used to send requests to the API, if you need to access the object's properties, you need to fetch it.
+All managers implement this method to create partial versions of uncached objects on demand. This enables making API requests without fetching uncached objects first. This is only used to send requests to the API, if you need to access the object's properties, you need to fetch it. Some forge methods require additional parameters, check your intelisense.
 
 ```js
 await client.users.forge(id).send("hello");
@@ -176,45 +176,6 @@ client.on("rest", request => {
 });
 ```
 
-## Examples
-
-An example that maximizes caching efficiency while keeping full support for permission checking. Text channels are fetched when needed and cached while they remain active. Automatically removes inactive channels after 1 hour.
-
-```js
-const Discord = require("discord.js-light");
-
-function channelFilter(channel) {
-    return !channel.messages || Discord.SnowflakeUtil.deconstruct(channel.lastMessageId).timestamp < Date.now() - 3600000;
-}
-
-const makeCache = Discord.Options.cacheWithLimits({
-    RoleManager: Infinity,
-    PermissionOverwrites: Infinity,
-    ChannelManager: {
-        maxSize: 0,
-        sweepFilter: () => channelFilter,
-        sweepInterval: 3600
-    },
-    GuildChannelManager: {
-        maxSize: 0,
-        sweepFilter: () => channelFilter,
-        sweepInterval: 3600
-    },
-    /* other caches */
-});
-
-const client = new Discord.Client({ makeCache, intents: [ /* your intents */ ] });
-
-client.on("messageCreate", async message => {
-    if(!client.channels.cache.has(message.channel.id)) {
-        const channel = await client.channels.fetch(message.channel.id);
-        client.channels.cache.forceSet(channel.id, channel);
-        message.guild?.channels.cache.forceSet(channel.id, channel);
-    }
-    console.log(message.channel.permissionsFor(message.member));
-});
-```
-
 ## Notes and Important Info
 
 Fetching data does not automatically cache if cache limits are set to 0. Use the non-standard `Collection#forceSet` method instead to manually cache fetched items. Manually cached items can be accessed, updated, swept and removed normally.
@@ -226,6 +187,87 @@ The everyone role is cached by default (unless removed by the user). RoleManager
 ChannelManager and GuildChannelManager should be configured together, otherwise weird things can happen if they have different configurations, use at your own risk. If anything prioritize enabling ChannelManager over GuildChannelManager.
 
 The `client.channels.fetch()` method needs an additional `{ allowUnknownGuild: true }` parameter if the channel's guild is not cached. `guild.channels.fetch()` still works normally, even with a forged guild.
+
+## Examples
+
+An example for maximizing cache efficiency while keeping full support for permission checking. Using the new autosweep functionality and the non-standard forceSet methods to keep only active text channels cached.
+
+```js
+const Discord = require("discord.js-light");
+
+// remove non-text channels and remove text channels whose last message is older than 1 hour
+function channelFilter(channel) {
+    return !channel.messages || Discord.SnowflakeUtil.deconstruct(channel.lastMessageId).timestamp < Date.now() - 3600000;
+}
+
+const makeCache = Discord.Options.cacheWithLimits({
+    GuildManager: Infinity, // roles require guilds
+    RoleManager: Infinity, // cache all roles
+    PermissionOverwrites: Infinity, // cache all PermissionOverwrites. It only costs memory if the channel it belongs to is cached
+    ChannelManager: {
+        maxSize: 0, // prevent automatic caching
+        sweepFilter: () => channelFilter, // remove manually cached channels according to the filter
+        sweepInterval: 3600
+    },
+    GuildChannelManager: {
+        maxSize: 0, // prevent automatic caching
+        sweepFilter: () => channelFilter, // remove manually cached channels according to the filter
+        sweepInterval: 3600
+    },
+    /* other caches */
+});
+
+const client = new Discord.Client({ makeCache, intents: [ /* your intents */ ] });
+
+client.on("messageCreate", async message => {
+    // if the channel is not cached, manually cache it while its active
+    if(!client.channels.cache.has(message.channel.id)) {
+        const channel = await client.channels.fetch(message.channel.id);
+        client.channels.cache.forceSet(channel.id, channel); // manually cache it in client.channels
+        message.guild?.channels.cache.forceSet(channel.id, channel); // manually cache it in guild.channels
+    }
+    console.log(message.channel.permissionsFor(message.member));
+});
+```
+
+An example for caching roles only for the bot itself and ignoring all other roles. Use in combination with the previous example if you want to check permissions in channels as well.
+
+```js
+const Discord = require("discord.js-light");
+
+const makeCache = Discord.Options.cacheWithLimits({
+    GuildManager: Infinity, // roles require guilds
+    RoleManager: {
+        maxSize: Infinity, // start with cache enabled to get initial roles, then disable it in the ready event
+        sweepFilter: () => role => !role.guild.me.roles.has(role.id), // remove roles the bot doesnt have
+        sweepInterval: 3600
+    },
+    /* other caches */
+});
+
+const client = new Discord.Client({ makeCache, intents: [ /* your intents */ ] });
+
+client.on("ready", () => {
+    client.guilds.forEach(guild => {
+        // disable cache and remove roles we dont have
+        guild.roles.cache.maxSize = 0;
+        guild.roles.cache.sweep(role => !guild.me.roles.has(role.id))
+    });
+});
+
+client.on("guildMemberUpdate", async (oldMember, newMember) => {
+    if(newMember.id === client.user.id) {
+        // check for new roles and fetch them as needed
+        // removed roles will be uncached later by the autosweeper
+        for(const role of newMember.roles.cache.values()) {
+            if(role.partial) {
+                const fetched = await newMember.guild.roles.fetch(role.id);
+                newMember.guild.roles.cache.forceSet(role.id, fetched);
+            }
+        }
+    }
+});
+```
 
 ## Bots using discord.js-light
 <!-- markdownlint-disable MD045 -->
