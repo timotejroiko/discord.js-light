@@ -22,6 +22,22 @@ override("/rest/APIRequest.js", X => class APIRequest extends X {
 	}
 });
 
+override("/managers/GuildMemberRoleManager.js", X => class GuildMemberRoleManager extends X {
+	get cache() {
+		const everyone = this.guild.roles.everyone;
+		const roles = new Collection([[everyone.id, everyone]]);
+		for(const id of this.member._roles) {
+			let role = this.guild.roles.cache.get(id);
+			if(!role) {
+				role = this.guild.roles._add({ id, permissions: 0 }, false);
+				role.partial = true;
+			}
+			roles.set(id, role);
+		}
+		return roles;
+	}
+});
+
 override("/managers/RoleManager.js", X => class RoleManager extends X {
 	get everyone() {
 		return super.everyone || this._add({ id: this.guild.id, permissions: 0 }, false);
