@@ -1,21 +1,24 @@
 import * as Discord from "discord.js"
 export * from "discord.js"
 
-export class Client extends Discord.Client {
-
-}
-
 declare module "discord.js-light" {
+	interface Caches {
+		ChannelManager: [manager: typeof Discord.ChannelManager, holds: typeof Discord.Channel];
+		GuildChannelManager: [manager: typeof Discord.GuildChannelManager, holds: typeof Discord.GuildChannel];
+		GuildManager: [manager: typeof Discord.GuildManager, holds: typeof Discord.Guild];
+		PermissionOverwriteManager: [manager: typeof Discord.PermissionOverwriteManager, holds: typeof Discord.PermissionOverwrites];
+		RoleManager: [manager: typeof Discord.RoleManager, holds: typeof Discord.Role];
+	}
 	interface ClientOptions {
 		disabledEvents?: Array<string>
 	}
 	interface ClientEvents {
 		rest: [
 			{
-				path:string,
-				method:string,
-				responseHeaders:object,
-				responseBody:string
+				path: string,
+				method: string,
+				responseHeaders: object,
+				responseBody: string
 			}
 		];
 		shardConnect: [

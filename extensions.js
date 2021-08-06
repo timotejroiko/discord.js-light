@@ -46,10 +46,6 @@ override("/structures/Guild.js", X => class Guild extends X {
 		if(data.roles) {
 			const everyone = data.roles.find(role => role.id === this.id);
 			if(everyone && !this.roles.cache.has(everyone.id)) { this.roles.cache.forceSet(everyone.id, this.roles._add(everyone)); }
-			const roles = data.roles.filter(role => this.me._roles.includes(role.id));
-			for(const role of roles) {
-				if(!this.roles.cache.has(role.id)) { this.roles.cache.forceSet(role.id, this.roles._add(role)); }
-			}
 		}
 	}
 });
@@ -64,7 +60,7 @@ override("/structures/MessageMentions.js", X => class MessageMentions extends X 
 				}
 			}
 		}
-		if(roles?.length) {
+		if(roles?.length && this.guild) {
 			for(const id of roles) {
 				if(!this.roles.has(id)) {
 					this.roles.set(id, this.guild.roles._add({ id, permissions: 0 }, false));

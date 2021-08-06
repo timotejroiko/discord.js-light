@@ -27,7 +27,7 @@
 	},
 	"license": "Apache-2.0",
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=16.6.0"
 	},
 	"devDependencies": {
 		"@types/node": "^15.0.2",
@@ -35,6 +35,6 @@
 		"eslint": "^7.31.0"
 	},
 	"dependencies": {
-		"discord.js": "github:discordjs/discord.js"
+		"discord.js": "13.0.0"
 	}
 }

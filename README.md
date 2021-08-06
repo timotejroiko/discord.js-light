@@ -1,19 +1,24 @@
 # discord.js-light v4
 
-Discord.js v13 introduces several major changes including a new caching system, therefore discord.js-light was heavily reworked to adapt to these changes. This version is still experimental and most of its old code was removed to be reassessed and reworked as needed. Feel free to test it and let me know of any bugs and issues.
+Discord.js v13 introduces several major changes including a completely new caching system which enables users to fully customize the library to match their caching preferences, however not all caching configurations are officially supported and some may introduce several side effects.
 
-With the discord.js's new caching system, most of discord.js-light's modifications are no longer needed. However, discord.js still suffers from some side effects when disabling certain caches, such as events not being emitted even with partials enabled.
+This library aims to improve support and usability when using discord.js with limited or disabled caches.
 
-Therefore, while those issues persist, discord.js-light will focus on making sure all events are properly delivered, supporting all caching configurations and assisting with non-cached usage in general.
+## Branches
 
-However, discord.js-light might not be so useful anymore in the future, so it will likely enter maintenance mode soon, with discord.js v13 likely being the final version supported by discord.js-light. Lets see how it goes.
+* **master** - latest updates, based on the discord.js master branch (not actively maintained)
+* **v4** - current npm version, based on discord.js v13
+* **v3** - old npm version, based on discord.js v12
+* **v2** - deprecated
+* **v1** - deprecated
 
-## Features
+## v4 Features
 
-* Fully supports the new discord.js caching system
-* Discord.js partials system removed and replaced with an internal solution
+* Fully supports the new discord.js caching system, including unsupported configurations, with little to no side effects
+* Discord.js partials system removed and replaced with an internal "always on" solution
 * Events always work, regardless of caching options (partial structures are given when missing), see [djs-cache-test](https://github.com/Vicente015/djs-cache-test)
-* Partials can be created on demand to interact with the Discord API without fetching first.
+* Partials can be created on demand to interact with the Discord API without fetching first
+* Additional utilities to improve usability with caches disabled
 
 ## Usage
 
@@ -48,9 +53,10 @@ const client = new Discord.Client({
 
 client.on("messageCreate", async message => {
     if(!message.guild) return;
-    const guild = message.guild.partial ? message.guild.id : message.guild.name;
-    const channel = message.channel.partial ? message.channel.id : message.channel.name;
-    await message.channel.send(`hello from guild ${guild} and channel ${channel}`);
+    // if .partial is true, only .id is guaranteed to exist, all other properties will be either null or undefined, if you need them, you must fetch them from the api
+    const guildNameOrId = message.guild.partial ? message.guild.id : message.guild.name;
+    const channelNameOrId = message.channel.partial ? message.channel.id : message.channel.name;
+    await message.channel.send(`hello from guild ${guildNameOrId} and channel ${channelNameOrId}`);
 });
 
 client.login("your token here");
@@ -58,7 +64,7 @@ client.login("your token here");
 
 ## Cache Configuration
 
-Discord.js's new caching configuration is very powerful, but a but it can be a bit complex to use. Check the examples below.
+Discord.js's new caching configuration is very powerful, here are a few examples:
 
 ```js
 {
@@ -72,6 +78,7 @@ Discord.js's new caching configuration is very powerful, but a but it can be a b
          * the collection starts looking for the oldest item to remove and tests each item with this function.
          * if the function returns true, the item is not removed, and the next is tested. The first item that returns false is removed, then the new item is inserted.
          * If maxSize is 0 or if updating an existing item, this function is not called.
+         * This example will prevent the bot user from ever being removed due to the cache being full and some other user will be removed instead.
         */
         keepOverLimit: (value, key, collection) => value.id === client.user.id
     },
@@ -89,25 +96,11 @@ Discord.js's new caching configuration is very powerful, but a but it can be a b
 }
 ```
 
-## Notes and Important Info
-
-Partials from events should now properly have their `partial` properties set to true.
-
-Fetching data does not automatically cache if cache limits are set to 0. Use the non-standard `Collection#forceSet` method instead to manually cache fetched items. Manually cached items can be accessed, updated, swept and removed normally.
-
-The bot member is cached by default (unless removed by the user). GuildMemberManager auto-sweep will still remove it if not excluded in your sweepFilter.
-
-The everyone role and the bot roles are cached by default (unless removed by the user). Roles cache is not required to check permissions for the bot itself, only to check permissions for other members. RoleManager auto-sweep still affects them and will remove them if they are not excluded in your sweepFilter.
-
-ChannelManager and GuildChannelManager should be configured together, otherwise weird things can happen if they have different configurations, use at your own risk.
-
-The `client.channels.fetch()` does not work if the channel's guild is not cached, it needs an additional `{ allowUnknownGuild: true }` parameter to work in that case. `guild.channels.fetch()` still works normally, even with a forged guild.
-
 ## Non-standard stuff
 
 ### ...Manager#forge
 
-All managers implement this method to create partial versions of uncached objects on demand. This enabled the user to make API requests without fetching uncached objects first.
+All managers implement this method to create partial versions of uncached objects on demand. This enables making API requests without fetching uncached objects first. This is only used to send requests to the API, if you need to access the object's properties, you need to fetch it.
 
 ```js
 await client.users.forge(id).send("hello");
@@ -124,11 +117,16 @@ client.users.cache.forceSet(id, user);
 
 ### GuildChannel#fetchOverwrites
 
-Method added to improve accessibility to permission checking when caches are disabled.
+Method added to improve accessibility to permission checking when caches are disabled. This can be used to work with permissions directly but to use regular permission checking methods, they need to be manually added to the cache.
 
 ```js
 const overwrites = await channel.fetchOverwrites();
 console.log(overwrites) // Collection<PermissionOverwrites>
+
+// to enable permission checking in this channel if permissionOverwrites are not cached
+overwrites.forEach(overwrite => {
+    channel.permissionOverwrites.cache.forceSet(overwrite.id, overwrite);
+})
 ```
 
 ### shardConnect
@@ -144,7 +142,7 @@ client.on("shardConnect", (shardId, guilds) => {
 
 ### guildEmojisUpdate
 
-Event fired instead of the standard emoji events when the emoji cache is disabled.
+Event fired instead of the standard emoji events when the emoji cache is disabled. If the emojis cache is disabled, emojiCreate, emojiUpdate and emojiDelete will never be fired.
 
 ```js
 client.on("guildEmojisUpdate", emojis => {
@@ -154,7 +152,7 @@ client.on("guildEmojisUpdate", emojis => {
 
 ### guildStickersUpdate
 
-Event fired instead of the standard sticker events when the sticker cache is disabled.
+Event fired instead of the standard sticker events when the sticker cache is disabled. If the stickers cache is disabled, stickerCreate, stickerUpdate and stickerDelete will never be fired.
 
 ```js
 client.on("guildStickersUpdate", stickers => {
@@ -164,7 +162,7 @@ client.on("guildStickersUpdate", stickers => {
 
 ### rest
 
-Event fired when the library makes a request to the discord API.
+Event fired when the library makes a request to the discord API. Use this to debug rate limit issues.
 
 ```js
 client.on("rest", request => {
@@ -180,9 +178,11 @@ client.on("rest", request => {
 
 ## Examples
 
-Support permission checking with channels disabled. Fetch text channels when needed and cache them while they remain active. Automatically remove inactive channels after 1 hour.
+An example that maximizes caching efficiency while keeping full support for permission checking. Text channels are fetched when needed and cached while they remain active. Automatically removes inactive channels after 1 hour.
 
 ```js
+const Discord = require("discord.js-light");
+
 function channelFilter(channel) {
     return !channel.messages || Discord.SnowflakeUtil.deconstruct(channel.lastMessageId).timestamp < Date.now() - 3600000;
 }
@@ -193,12 +193,12 @@ const makeCache = Discord.Options.cacheWithLimits({
     ChannelManager: {
         maxSize: 0,
         sweepFilter: () => channelFilter,
-        sweepInterval: 3600000
+        sweepInterval: 3600
     },
     GuildChannelManager: {
         maxSize: 0,
         sweepFilter: () => channelFilter,
-        sweepInterval: 3600000
+        sweepInterval: 3600
     },
     /* other caches */
 });
@@ -210,11 +210,22 @@ client.on("messageCreate", async message => {
         const channel = await client.channels.fetch(message.channel.id);
         client.channels.cache.forceSet(channel.id, channel);
         message.guild?.channels.cache.forceSet(channel.id, channel);
-        message.channel = channel;
     }
     console.log(message.channel.permissionsFor(message.member));
 });
 ```
+
+## Notes and Important Info
+
+Fetching data does not automatically cache if cache limits are set to 0. Use the non-standard `Collection#forceSet` method instead to manually cache fetched items. Manually cached items can be accessed, updated, swept and removed normally.
+
+The bot member is cached by default (unless removed by the user). GuildMemberManager auto-sweep will still remove it if not excluded in your sweepFilter.
+
+The everyone role is cached by default (unless removed by the user). RoleManager auto-sweep will still remove it if not excluded in your sweepFilter.
+
+ChannelManager and GuildChannelManager should be configured together, otherwise weird things can happen if they have different configurations, use at your own risk. If anything prioritize enabling ChannelManager over GuildChannelManager.
+
+The `client.channels.fetch()` method needs an additional `{ allowUnknownGuild: true }` parameter if the channel's guild is not cached. `guild.channels.fetch()` still works normally, even with a forged guild.
 
 ## Bots using discord.js-light
 <!-- markdownlint-disable MD045 -->

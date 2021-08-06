@@ -1,4 +1,6 @@
-bench.png
 .github
-.gitattributes
+.vscode
 .eslintrc.json
+.gitattributes
+node_modules
+package-lock.json

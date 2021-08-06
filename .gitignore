@@ -1,7 +1,5 @@
-node_modules
-package-lock.json
 .vscode
 .eslintrc.json
 .gitattributes
-test.js
-test.ts
+node_modules
+package-lock.json
