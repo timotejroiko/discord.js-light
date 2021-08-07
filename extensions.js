@@ -44,6 +44,13 @@ override("/managers/RoleManager.js", X => class RoleManager extends X {
 	}
 });
 
+override("/managers/ChannelManager.js", X => class RoleManager extends X {
+	_add(data, guild, options) {
+		options.allowUnknownGuild = true;
+		return super._add(data, guild, options);
+	}
+});
+
 override("/structures/BaseGuild.js", X => class BaseGuild extends X {
 	get nameAcronym() {
 		return this.name ? super.nameAcronym : null;
@@ -219,6 +226,14 @@ Discord.PermissionOverwriteManager.prototype.forge = function(id, type) {
 
 Discord.ThreadMemberManager.prototype.forge = function(user_id) {
 	return this._add({ user_id });
+};
+
+Discord.LimitedCollection.prototype.forceSet = function(key, value) {
+	return Object.getPrototypeOf(Object.getPrototypeOf(this)).set.call(this, key, value);
+};
+
+Discord.Collection.prototype.forceSet = function(key, value) {
+	return this.set(key, value);
 };
 
 module.exports = Discord;
