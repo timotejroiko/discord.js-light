@@ -44,13 +44,6 @@ override("/managers/RoleManager.js", X => class RoleManager extends X {
 	}
 });
 
-override("/managers/ChannelManager.js", X => class RoleManager extends X {
-	_add(data, guild, options) {
-		options.allowUnknownGuild = true;
-		return super._add(data, guild, options);
-	}
-});
-
 override("/structures/BaseGuild.js", X => class BaseGuild extends X {
 	get nameAcronym() {
 		return this.name ? super.nameAcronym : null;
@@ -132,6 +125,11 @@ override("/structures/Interaction.js", X => class Interaction extends X {
 });
 
 const Discord = require("discord.js");
+const { create } = Discord.Channel;
+
+Discord.Channel.create = function(client, data, guild, { fromInteraction } = {}) {
+	return create(client, data, guild, { allowUnknownGuild: true, fromInteraction });
+};
 
 Discord.GuildChannel.prototype.fetchOverwrites = async function() {
 	const channel = await this.client.api.channels(this.id).get();
