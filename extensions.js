@@ -128,6 +128,7 @@ const Discord = require("discord.js");
 const { create } = Discord.Channel;
 
 Discord.Channel.create = function(client, data, guild, { fromInteraction } = {}) {
+	if(data instanceof this) { return data; }
 	return create(client, data, guild, { allowUnknownGuild: true, fromInteraction });
 };
 
