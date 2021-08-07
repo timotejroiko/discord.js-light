@@ -44,6 +44,13 @@ override("/managers/RoleManager.js", X => class RoleManager extends X {
 	}
 });
 
+override("/managers/ChannelManager.js", X => class RoleManager extends X {
+	_add(data, guild, options) {
+		options.allowUnknownGuild = true;
+		return super._add(data, guild, options);
+	}
+});
+
 override("/structures/BaseGuild.js", X => class BaseGuild extends X {
 	get nameAcronym() {
 		return this.name ? super.nameAcronym : null;
