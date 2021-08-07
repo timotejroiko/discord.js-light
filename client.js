@@ -7,7 +7,7 @@ const { emitWarning } = process;
 
 process.emitWarning = function(...args) {
 	if(args[1] !== "UnuspportedCacheOverwriteWarning") {
-		return emitWarning(...args);
+		emitWarning(...args);
 	}
 };
 
