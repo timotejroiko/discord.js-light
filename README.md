@@ -255,6 +255,7 @@ client.on("ready", () => {
     });
 });
 
+// this event is still sent for the bot user even if you dont have the GUILD_MEMBERS intent
 client.on("guildMemberUpdate", async (oldMember, newMember) => {
     if(newMember.id === client.user.id) {
         // check for new roles and fetch them as needed
