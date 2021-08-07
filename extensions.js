@@ -44,7 +44,7 @@ override("/managers/RoleManager.js", X => class RoleManager extends X {
 	}
 });
 
-override("/managers/ChannelManager.js", X => class RoleManager extends X {
+override("/managers/ChannelManager.js", X => class ChannelManager extends X {
 	_add(data, guild, { cache = true, allowUnknownGuild = true, fromInteraction = false } = {}) {
 		return super._add(data, guild, { cache, allowUnknownGuild, fromInteraction });
 	}
