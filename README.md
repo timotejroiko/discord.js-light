@@ -186,6 +186,8 @@ The everyone role is cached by default (unless removed by the user). RoleManager
 
 ChannelManager and GuildChannelManager should be configured together, otherwise weird things can happen if they have different configurations, use at your own risk. If anything prioritize enabling ChannelManager over GuildChannelManager.
 
+Certain caches may produce a warning because they are known to break discord.js, however they should work correctly in discord.js-light so you can safely ignore the warning.
+
 The `client.channels.fetch()` method needs an additional `{ allowUnknownGuild: true }` parameter if the channel's guild is not cached. `guild.channels.fetch()` still works normally, even with a forged guild.
 
 Note about continued development: v4 will likely be the last discord.js-light version. As of v13, discord.js is now much better than what it used to be in terms of configurability and resource management, and v14 will likely be even better, to the point where discord.js-light probably wont be useful anymore. For now v4 will still be maintained and will still keep up with discord.js's v13 development as needed, but this adventure might reach a conclusion soon. So long and thanks for all the fish!
