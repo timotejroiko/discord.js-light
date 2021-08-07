@@ -3,13 +3,12 @@
 const Discord = require("./extensions.js");
 const PacketHandlers = require("./handlers.js");
 const Actions = require("./actions.js");
+const { emitWarning } = process;
 
-Discord.LimitedCollection.prototype.forceSet = function(key, value) {
-	return Object.getPrototypeOf(Object.getPrototypeOf(this)).set.call(this, key, value);
-};
-
-Discord.Collection.prototype.forceSet = function(key, value) {
-	return this.set(key, value);
+process.emitWarning = function(...args) {
+	if(args[1] !== "UnuspportedCacheOverwriteWarning") {
+		return emitWarning(...args);
+	}
 };
 
 Discord.Client = class Client extends Discord.Client {
