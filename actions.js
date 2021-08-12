@@ -8,6 +8,7 @@ const {
 	ButtonInteraction,
 	CommandInteraction,
 	SelectMenuInteraction,
+	ContextMenuInteraction,
 	Typing,
 	LimitedCollection
 } = require("discord.js");
@@ -296,7 +297,18 @@ module.exports = {
 		let InteractionType;
 		switch(data.type) {
 			case Constants.InteractionTypes.APPLICATION_COMMAND: {
-				InteractionType = CommandInteraction;
+				switch(data.data.type) {
+					case Constants.ApplicationCommandTypes.CHAT_INPUT:
+						InteractionType = CommandInteraction;
+						break;
+					case Constants.ApplicationCommandTypes.USER:
+					case Constants.ApplicationCommandTypes.MESSAGE:
+						InteractionType = ContextMenuInteraction;
+						break;
+					default:
+						c.emit(Constants.Events.DEBUG, `[INTERACTION] Received application command interaction with unknown type: ${data.data.type}`);
+						return;
+				}
 				break;
 			}
 			case Constants.InteractionTypes.MESSAGE_COMPONENT: {
