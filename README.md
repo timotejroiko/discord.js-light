@@ -197,7 +197,7 @@ const Discord = require("discord.js-light");
 
 // remove non-text channels and remove text channels whose last message is older than 1 hour
 function channelFilter(channel) {
-    return !channel.messages || Discord.SnowflakeUtil.deconstruct(channel.lastMessageId).timestamp < Date.now() - 3600000;
+    return !channel.lastMessageId || Discord.SnowflakeUtil.deconstruct(channel.lastMessageId).timestamp < Date.now() - 3600000;
 }
 
 const makeCache = Discord.Options.cacheWithLimits({
@@ -255,6 +255,7 @@ client.on("ready", () => {
     });
 });
 
+// this event is still sent for the bot user even if you dont have the GUILD_MEMBERS intent
 client.on("guildMemberUpdate", async (oldMember, newMember) => {
     if(newMember.id === client.user.id) {
         // check for new roles and fetch them as needed

@@ -129,7 +129,9 @@ const { create } = Discord.Channel;
 
 Discord.Channel.create = function(client, data, guild, { fromInteraction } = {}) {
 	if(data instanceof this) { return data; }
-	return create(client, data, guild, { allowUnknownGuild: true, fromInteraction });
+	const channel = create(client, data, guild, { allowUnknownGuild: true, fromInteraction });
+	if(channel && channel.guild) { channel.guild.channels.cache.set(channel.id, channel); }
+	return channel;
 };
 
 Discord.GuildChannel.prototype.fetchOverwrites = async function() {

@@ -6,7 +6,7 @@ const Actions = require("./actions.js");
 const { emitWarning } = process;
 
 process.emitWarning = function(...args) {
-	if(args[1] !== "UnuspportedCacheOverwriteWarning") {
+	if(args[1] !== "UnsupportedCacheOverwriteWarning") {
 		emitWarning(...args);
 	}
 };
