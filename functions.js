@@ -1,21 +1,17 @@
 "use strict";
 
 const path = require("path");
-const list = ["/discord.js/src/structures", "/discord.js/src/managers", "\\discord.js\\src\\structures", "\\discord.js\\src\\managers"];
 const overrides = {};
 
 function override(filepath, callback) {
 	const fullPath = path.resolve(require.resolve("discord.js").replace("index.js", filepath));
 	const original = require(fullPath);
-	require.cache[fullPath].exports = callback(original);
-	overrides[fullPath] = callback;
-	const dependencies = Object.keys(require.cache).filter(key => list.some(l => key.includes(l)) && key !== fullPath);
+	const modified = callback(original);
+	require.cache[fullPath].exports = overrides[fullPath] = modified;
+	const dependencies = Object.keys(require.cache).filter(key => require.cache[key].children?.find(child => child.id === fullPath));
 	for(const dependency of dependencies) {
-		delete require.cache[dependency];
-		if(overrides[dependency]) {
-			const old = require(dependency);
-			require.cache[dependency].exports = overrides[dependency](old);
-		} else {
+		if(!overrides[dependency]) {
+			delete require.cache[dependency];
 			require(dependency);
 		}
 	}
