@@ -44,28 +44,6 @@ override("/managers/RoleManager.js", X => class RoleManager extends X {
 	}
 });
 
-override("/structures/BaseGuild.js", X => class BaseGuild extends X {
-	get nameAcronym() {
-		return this.name ? super.nameAcronym : null;
-	}
-});
-
-override("/structures/Guild.js", X => class Guild extends X {
-	_patch(data) {
-		super._patch(data);
-		if(data.members) {
-			const me = data.members.find(member => member.user.id === this.client.user.id);
-			if(me && !this.me) {
-				this.members.cache.forceSet(me.user.id, this.members._add(me));
-			}
-		}
-		if(data.roles) {
-			const everyone = data.roles.find(role => role.id === this.id);
-			if(everyone && !this.roles.cache.has(everyone.id)) { this.roles.cache.forceSet(everyone.id, this.roles._add(everyone)); }
-		}
-	}
-});
-
 override("/structures/MessageMentions.js", X => class MessageMentions extends X {
 	constructor(message, users, roles, everyone, crosspostedChannels, repliedUser) {
 		super(message, users, roles, everyone, crosspostedChannels, repliedUser);
@@ -112,6 +90,28 @@ override("/structures/Message.js", X => class Message extends X {
 	}
 	get guild() {
 		return this.guildId ? getOrCreateGuild(this.client, this.guildId) : null;
+	}
+});
+
+override("/structures/BaseGuild.js", X => class BaseGuild extends X {
+	get nameAcronym() {
+		return this.name ? super.nameAcronym : null;
+	}
+});
+
+override("/structures/Guild.js", X => class Guild extends X {
+	_patch(data) {
+		super._patch(data);
+		if(data.members) {
+			const me = data.members.find(member => member.user.id === this.client.user.id);
+			if(me && !this.me) {
+				this.members.cache.forceSet(me.user.id, this.members._add(me));
+			}
+		}
+		if(data.roles) {
+			const everyone = data.roles.find(role => role.id === this.id);
+			if(everyone && !this.roles.cache.has(everyone.id)) { this.roles.cache.forceSet(everyone.id, this.roles._add(everyone)); }
+		}
 	}
 });
 
