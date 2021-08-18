@@ -32,6 +32,12 @@ declare module "discord.js-light" {
 			Discord.Collection<Discord.Snowflake, Discord.Sticker>
 		];
 	}
+	interface LimitedCollection {
+		forceSet(key: any, value: any): this
+	}
+	interface GuildChannel {
+		fetchOverwrites(): Promise<Discord.Collection<Discord.Snowflake, Discord.PermissionOverwrites>>
+	}
 	interface UserManager {
 		forge(user_id: Discord.Snowflake): Discord.User
 	}
