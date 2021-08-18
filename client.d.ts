@@ -38,6 +38,11 @@ declare module "discord.js-light" {
 	interface GuildManager {
 		forge(guild_id: Discord.Snowflake): Discord.Guild
 	}
+
+	interface GuildChannel {
+		fetchOverwrites(): Promise<Discord.Collection<string, Discord.PermissionOverwrites>>
+	}
+
 	interface ChannelManager {
 		forge(id: Discord.Snowflake, type?: "DM"): Discord.DMChannel
 		forge(id: Discord.Snowflake, type: "GUILD_TEXT"): Discord.TextChannel
