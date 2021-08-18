@@ -40,7 +40,7 @@ declare module "discord.js-light" {
 	}
 
 	interface GuildChannel {
-		fetchOverwrites(): Promise<Discord.Collection<string, Discord.PermissionOverwrites>>
+		fetchOverwrites(): Promise<Discord.Collection<Discord.Snowflake, Discord.PermissionOverwrites>>
 	}
 
 	interface ChannelManager {
