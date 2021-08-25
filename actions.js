@@ -692,7 +692,7 @@ module.exports = {
 		if(data.member?.user) {
 			const user = c.users.cache.get(data.user_id) || c.users._add(data.member.user);
 			if(data.member.user.username && !user.equals(data.member.user)) {
-				const { old, updated } = c.actions.UserUpdate.handle(data.user);
+				const { old, updated } = c.actions.UserUpdate.handle(data.member.user);
 				c.emit(Constants.Events.USER_UPDATE, old, updated);
 			}
 			const member = guild.members.cache.get(data.user_id);
