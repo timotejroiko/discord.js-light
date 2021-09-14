@@ -32,7 +32,7 @@ declare module "discord.js-light" {
 			Discord.Collection<Discord.Snowflake, Discord.Sticker>
 		];
 	}
-	interface LimitedCollection {
+	interface LimitedCollection<K, V> {
 		forceSet(key: any, value: any): this
 	}
 	interface GuildChannel {
