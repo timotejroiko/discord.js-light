@@ -35,6 +35,9 @@ declare module "discord.js-light" {
 	interface LimitedCollection<K, V> {
 		forceSet(key: any, value: any): this
 	}
+	interface Collection<K, V> {
+		forceSet(key: any, value: any): this
+	}
 	interface GuildChannel {
 		fetchOverwrites(): Promise<Discord.Collection<Discord.Snowflake, Discord.PermissionOverwrites>>
 	}
