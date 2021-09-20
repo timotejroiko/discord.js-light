@@ -1,6 +1,13 @@
 import * as Discord from "discord.js"
 export * from "discord.js"
 
+export class LimitedCollection<K, V> extends Discord.LimitedCollection<K, V> {
+	forceSet(key: any, value: any): this
+}
+export class Collection<K, V> extends Discord.Collection<K, V> {
+	forceSet(key: any, value: any): this
+}
+
 declare module "discord.js-light" {
 	interface Caches {
 		ChannelManager: [manager: typeof Discord.ChannelManager, holds: typeof Discord.Channel];
@@ -31,12 +38,6 @@ declare module "discord.js-light" {
 		guildStickersUpdate: [
 			Discord.Collection<Discord.Snowflake, Discord.Sticker>
 		];
-	}
-	interface LimitedCollection<K, V> {
-		forceSet(key: any, value: any): this
-	}
-	interface Collection<K, V> {
-		forceSet(key: any, value: any): this
 	}
 	interface GuildChannel {
 		fetchOverwrites(): Promise<Discord.Collection<Discord.Snowflake, Discord.PermissionOverwrites>>
