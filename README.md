@@ -320,3 +320,4 @@ client.on("guildMemberUpdate", async (oldMember, newMember) => {
 | [Stereo](https://github.com/NathanPenwill/Stereo) |  |
 | [Coconut Mall'd](https://github.com/Million900o/coconut-malld) |  |
 | [Discord.js Bot Template](https://github.com/Giuliopime/discordjs-bot-template) |  |
+| [Growtopian](https://growtopian.xyz) |  |
