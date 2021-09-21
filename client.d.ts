@@ -11,6 +11,10 @@ export class Collection<K, V> extends DiscordCollection.Collection<K, V> {
 	forceSet(key: any, value: any): this
 }
 
+export class Collection<K, V> extends Discord.Collection<K, V> {
+	forceSet(key: any, value: any): this
+}
+
 declare module "discord.js-light" {
 	interface Caches {
 		ChannelManager: [manager: typeof Discord.ChannelManager, holds: typeof Discord.Channel];
