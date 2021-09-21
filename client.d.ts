@@ -1,13 +1,7 @@
 import * as Discord from "discord.js"
-import * as DiscordCollection from "@discordjs/collection"
-export * from "@discordjs/collection"
 export * from "discord.js"
 
 export class LimitedCollection<K, V> extends Discord.LimitedCollection<K, V> {
-	forceSet(key: any, value: any): this
-}
-
-export class Collection<K, V> extends DiscordCollection.Collection<K, V> {
 	forceSet(key: any, value: any): this
 }
 
