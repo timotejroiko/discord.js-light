@@ -130,7 +130,7 @@ const { create } = Discord.Channel;
 Discord.Channel.create = function(client, data, guild, { fromInteraction } = {}) {
 	if(data instanceof this) { return data; }
 	const channel = create(client, data, guild, { allowUnknownGuild: true, fromInteraction });
-	if(channel && channel.guild) { channel.guild.channels.cache.set(channel.id, channel); }
+	if(channel && channel.guild && channel.guild.channels) { channel.guild.channels.cache.set(channel.id, channel); }
 	return channel;
 };
 
