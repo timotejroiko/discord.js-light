@@ -40,6 +40,27 @@ declare module "discord.js-light" {
 			Discord.Collection<Discord.Snowflake, Discord.Sticker>
 		];
 	}
+	interface Guild {
+		partial: boolean
+	}
+	interface Role {
+		partial: boolean
+	}
+	interface Invite {
+		partial: boolean
+	}
+	interface Presence {
+		partial: boolean
+	}
+	interface StageInstance {
+		partial: boolean
+	}
+	interface ThreadMember {
+		partial: boolean
+	}
+	interface ApplicationCommand {
+		partial: boolean
+	}
 	interface GuildChannel {
 		fetchOverwrites(): Promise<Discord.Collection<Discord.Snowflake, Discord.PermissionOverwrites>>
 	}
