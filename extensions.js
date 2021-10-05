@@ -75,8 +75,8 @@ override("/structures/MessageMentions.js", X => class MessageMentions extends X 
 });
 
 override("/structures/Message.js", X => class Message extends X {
-	_patch(data, partial) {
-		super._patch(data, partial);
+	_patch(data) {
+		super._patch(data);
 		if(data.member && !this.member && this.author) { this._member = this.guild.members._add(Object.assign(data.member, { user: this.author })); }
 	}
 	get member() {

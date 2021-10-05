@@ -283,8 +283,8 @@ const handlers = {
 
 	MESSAGE_REACTION_REMOVE_ALL: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
-		const { message } = client.actions.MessageReactionRemoveAll.handle(packet.d);
-		client.emit(Constants.Events.MESSAGE_REACTION_REMOVE_ALL, message);
+		const { message, removed } = client.actions.MessageReactionRemoveAll.handle(packet.d);
+		client.emit(Constants.Events.MESSAGE_REACTION_REMOVE_ALL, message, removed);
 	},
 
 	MESSAGE_REACTION_REMOVE_EMOJI: (client, packet, shard) => {

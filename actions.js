@@ -189,7 +189,7 @@ module.exports = {
 			const user = c.users.cache.get(data.user.id);
 			if(!user) {
 				c.users._add(data.user);
-			} else if(!user.equals(data.user)) {
+			} else if(!user._equals(data.user)) {
 				const { old, updated } = c.actions.UserUpdate.handle(data.user);
 				c.emit(Constants.Events.USER_UPDATE, old, updated);
 			}
@@ -399,7 +399,7 @@ module.exports = {
 		let message = channel.messages.cache.get(data.id);
 		let old;
 		if(message) {
-			old = message._update(data, true);
+			old = message._update(data);
 		} else {
 			message = channel.messages._add(data);
 			old = channel.messages._add({ id: data.id }, false); // has built in partial
@@ -470,8 +470,9 @@ module.exports = {
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
 		const message = getOrCreateMessage(channel, data.message_id);
+		const removed = message.reactions.cache.clone();
 		message.reactions.cache.clear();
-		return { message };
+		return { message, removed };
 	},
 
 	MessageReactionRemoveEmoji: function(data) {
@@ -495,7 +496,7 @@ module.exports = {
 		const c = this.client;
 		if(data.user.username) {
 			const user = c.users.cache.get(data.user.id) || c.users._add(data.user);
-			if(!user.equals(data.user)) {
+			if(!user._equals(data.user)) {
 				const { old, updated } = c.actions.UserUpdate.handle(data.user);
 				c.emit(Constants.Events.USER_UPDATE, old, updated);
 			}
@@ -691,7 +692,7 @@ module.exports = {
 		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
 		if(data.member?.user) {
 			const user = c.users.cache.get(data.user_id) || c.users._add(data.member.user);
-			if(data.member.user.username && !user.equals(data.member.user)) {
+			if(data.member.user.username && !user._equals(data.member.user)) {
 				const { old, updated } = c.actions.UserUpdate.handle(data.member.user);
 				c.emit(Constants.Events.USER_UPDATE, old, updated);
 			}

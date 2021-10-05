@@ -30,11 +30,11 @@
 		"node": ">=16.6.0"
 	},
 	"devDependencies": {
-		"@types/node": "^16.6.1",
-		"discord-api-types": "^0.22.0",
+		"@types/node": "^16.10.2",
+		"discord-api-types": "^0.23.1",
 		"eslint": "^7.32.0"
 	},
 	"dependencies": {
-		"discord.js": "github:discordjs/discord.js#9a833b1e0eb638c60c4abbb9255ed64a170e4679"
+		"discord.js": "13.2.0"
 	}
 }
