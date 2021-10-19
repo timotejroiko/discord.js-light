@@ -1,6 +1,6 @@
 # discord.js-light v4
 
-Discord.js v13 introduces several major changes including a completely new caching system which enables users to fully customize the library to match their caching preferences, however not all caching configurations are officially supported and some may introduce several side effects.
+Discord.js v13 introduces several major changes including a completely new caching system which enables users to fully customize the library to match their caching preferences, however [not all caching configurations are officially supported](https://discord.js.org/#/docs/main/13.2.0/typedef/ClientOptions) and some may introduce several side effects.
 
 This library aims to improve support and usability when using discord.js with limited or disabled caches.
 
