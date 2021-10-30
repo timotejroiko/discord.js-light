@@ -9,6 +9,7 @@ const {
 	CommandInteraction,
 	SelectMenuInteraction,
 	ContextMenuInteraction,
+	AutocompleteInteraction,
 	Typing,
 	LimitedCollection
 } = require("discord.js");
@@ -325,6 +326,10 @@ module.exports = {
 						return;
 					}
 				}
+				break;
+			}
+			case Constants.InteractionTypes.APPLICATION_COMMAND_AUTOCOMPLETE: {
+				InteractionType = AutocompleteInteraction;
 				break;
 			}
 			default: {

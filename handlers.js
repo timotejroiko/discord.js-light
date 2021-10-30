@@ -89,11 +89,9 @@ const handlers = {
 	CHANNEL_PINS_UPDATE: (client, { d: data }, shard) => {
 		const guild = data.guild_id ? getOrCreateGuild(client, data.guild_id, shard.id) : void 0;
 		const channel = getOrCreateChannel(client, data.channel_id, guild);
-		const time = new Date(data.last_pin_timestamp);
-		if(!Number.isNaN(time.getTime())) {
-			channel.lastPinTimestamp = time.getTime() || null;
-			client.emit(Constants.Events.CHANNEL_PINS_UPDATE, channel, time);
-		}
+		const time = data.last_pin_timestamp ? new Date(data.last_pin_timestamp).getTime() : null;
+		channel.lastPinTimestamp = time;
+		client.emit(Constants.Events.CHANNEL_PINS_UPDATE, channel, time);
 	},
 
 	CHANNEL_UPDATE: (client, packet, shard) => {
