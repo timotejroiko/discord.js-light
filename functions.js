@@ -52,7 +52,7 @@ function getOrCreateMessage(channel, id) {
 			id,
 			channel_id: channel.id,
 			guild_id: channel.guild?.id
-		}, false); // nuilt in partial if content not a string
+		}, false); // built in partial if content not a string
 	}
 	return message;
 }

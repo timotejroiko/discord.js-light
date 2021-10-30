@@ -75,9 +75,17 @@ override("/structures/MessageMentions.js", X => class MessageMentions extends X 
 });
 
 override("/structures/Message.js", X => class Message extends X {
-	_patch(data, partial) {
-		super._patch(data, partial);
-		if(data.member && !this.member && this.author) { this._member = this.guild.members._add(Object.assign(data.member, { user: this.author })); }
+	constructor(client, data) {
+		super(client, data);
+		if(data.guild_id && !this.guildId) {
+			this.guildId = data.guild_id;
+		}
+	}
+	_patch(data) {
+		super._patch(data);
+		if(data.member && !this.member && this.author && this.guild) {
+			this._member = this.guild.members._add(Object.assign(data.member, { user: this.author }));
+		}
 	}
 	get member() {
 		if(!this.guild) { return null; }
