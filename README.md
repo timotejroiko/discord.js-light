@@ -251,7 +251,7 @@ client.on("ready", () => {
     client.guilds.cache.forEach(guild => {
         // disable cache and remove roles we dont have
         guild.roles.cache.maxSize = 0;
-        guild.roles.cache.sweep(role => !guild.me.roles.has(role.id))
+        guild.roles.cache.sweep(role => !guild.me.roles.cache.has(role.id))
     });
 });
 
