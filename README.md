@@ -248,10 +248,10 @@ const makeCache = Discord.Options.cacheWithLimits({
 const client = new Discord.Client({ makeCache, intents: [ /* your intents */ ] });
 
 client.on("ready", () => {
-    client.guilds.forEach(guild => {
+    client.guilds.cache.forEach(guild => {
         // disable cache and remove roles we dont have
         guild.roles.cache.maxSize = 0;
-        guild.roles.cache.sweep(role => !guild.me.roles.has(role.id))
+        guild.roles.cache.sweep(role => !guild.me.roles.cache.has(role.id))
     });
 });
 
