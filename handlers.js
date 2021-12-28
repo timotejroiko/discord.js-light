@@ -212,6 +212,36 @@ const handlers = {
 		client.emit(Constants.Events.GUILD_ROLE_UPDATE, old, updated);
 	},
 
+	GUILD_SCHEDULED_EVENT_CREATE: (client, packet, shard) => {
+		packet.d.shardId = shard.id;
+		const { guildScheduledEvent } = client.actions.GuildScheduledEventCreate.handle(packet.d);
+		client.emit(Constants.Events.GUILD_SCHEDULED_EVENT_CREATE, guildScheduledEvent);
+	},
+
+	GUILD_SCHEDULED_EVENT_DELETE: (client, packet, shard) => {
+		packet.d.shardId = shard.id;
+		const { guildScheduledEvent } = client.actions.GuildScheduledEventDelete.handle(packet.d);
+		client.emit(Constants.Events.GUILD_SCHEDULED_EVENT_DELETE, guildScheduledEvent);
+	},
+
+	GUILD_SCHEDULED_EVENT_UPDATE: (client, packet, shard) => {
+		packet.d.shardId = shard.id;
+		const { oldGuildScheduledEvent, newGuildScheduledEvent } = client.actions.GuildScheduledEventUpdate.handle(packet.d);
+		client.emit(Constants.Events.GUILD_SCHEDULED_EVENT_UPDATE, oldGuildScheduledEvent, newGuildScheduledEvent);
+	},
+
+	GUILD_SCHEDULED_EVENT_USER_ADD: (client, packet, shard) => {
+		packet.d.shardId = shard.id;
+		const { guildScheduledEvent, user } = client.actions.GuildScheduledEventUserAdd.handle(packet.d);
+		client.emit(Constants.Events.GUILD_SCHEDULED_EVENT_USER_ADD, guildScheduledEvent, user);
+	},
+
+	GUILD_SCHEDULED_EVENT_USER_REMOVE: (client, packet, shard) => {
+		packet.d.shardId = shard.id;
+		const { guildScheduledEvent, user } = client.actions.GuildScheduledEventUserRemove.handle(packet.d);
+		client.emit(Constants.Events.GUILD_SCHEDULED_EVENT_USER_REMOVE, guildScheduledEvent, user);
+	},
+
 	GUILD_STICKERS_UPDATE: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
 		const guild = getOrCreateGuild(client, packet.d.guild_id, packet.d.shardId);

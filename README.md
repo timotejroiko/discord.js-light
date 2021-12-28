@@ -197,7 +197,7 @@ const Discord = require("discord.js-light");
 
 // remove non-text channels and remove text channels whose last message is older than 1 hour
 function channelFilter(channel) {
-    return !channel.lastMessageId || Discord.SnowflakeUtil.deconstruct(channel.lastMessageId).timestamp < Date.now() - 3600000;
+    return !channel.lastMessageId || Discord.SnowflakeUtil.timestampFrom(channel.lastMessageId) < Date.now() - 3600000;
 }
 
 const makeCache = Discord.Options.cacheWithLimits({

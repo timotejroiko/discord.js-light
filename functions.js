@@ -3,6 +3,10 @@
 const path = require("path");
 const overrides = {};
 
+// fix weird circular dependencies, thanks discord.js >.>
+require(path.resolve(require.resolve("discord.js").replace("index.js", "/structures/GuildChannel")));
+require(path.resolve(require.resolve("discord.js").replace("index.js", "/managers/MessageManager")));
+
 function override(filepath, callback) {
 	const fullPath = path.resolve(require.resolve("discord.js").replace("index.js", filepath));
 	const original = require(fullPath);

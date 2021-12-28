@@ -74,31 +74,34 @@ override("/structures/MessageMentions.js", X => class MessageMentions extends X 
 	}
 });
 
-override("/structures/Message.js", X => class Message extends X {
-	constructor(client, data) {
-		super(client, data);
-		if(data.guild_id && !this.guildId) {
-			this.guildId = data.guild_id;
+override("/structures/Message.js", obj => {
+	obj.Message = class Message extends obj.Message {
+		constructor(client, data) {
+			super(client, data);
+			if(data.guild_id && !this.guildId) {
+				this.guildId = data.guild_id;
+			}
 		}
-	}
-	_patch(data) {
-		super._patch(data);
-		if(data.member && !this.member && this.author && this.guild) {
-			this._member = this.guild.members._add(Object.assign(data.member, { user: this.author }));
+		_patch(data) {
+			super._patch(data);
+			if(data.member && !this.member && this.author && this.guild) {
+				this._member = this.guild.members._add(Object.assign(data.member, { user: this.author }));
+			}
 		}
-	}
-	get member() {
-		if(!this.guild) { return null; }
-		const id = this.author?.id || this._member?.id;
-		if(!id) { return null; }
-		return this.guild.members.cache.get(id) || this._member || null;
-	}
-	get channel() {
-		return getOrCreateChannel(this.client, this.channelId, this.guild);
-	}
-	get guild() {
-		return this.guildId ? getOrCreateGuild(this.client, this.guildId) : null;
-	}
+		get member() {
+			if(!this.guild) { return null; }
+			const id = this.author?.id || this._member?.id;
+			if(!id) { return null; }
+			return this.guild.members.cache.get(id) || this._member || null;
+		}
+		get channel() {
+			return getOrCreateChannel(this.client, this.channelId, this.guild);
+		}
+		get guild() {
+			return this.guildId ? getOrCreateGuild(this.client, this.guildId) : null;
+		}
+	};
+	return obj;
 });
 
 override("/structures/BaseGuild.js", X => class BaseGuild extends X {
@@ -107,20 +110,23 @@ override("/structures/BaseGuild.js", X => class BaseGuild extends X {
 	}
 });
 
-override("/structures/Guild.js", X => class Guild extends X {
-	_patch(data) {
-		super._patch(data);
-		if(data.members) {
-			const me = data.members.find(member => member.user.id === this.client.user.id);
-			if(me && !this.me) {
-				this.members.cache.forceSet(me.user.id, this.members._add(me));
+override("/structures/Guild.js", obj => {
+	obj.Guild = class Guild extends obj.Guild {
+		_patch(data) {
+			super._patch(data);
+			if(data.members) {
+				const me = data.members.find(member => member.user.id === this.client.user.id);
+				if(me && !this.me) {
+					this.members.cache.forceSet(me.user.id, this.members._add(me));
+				}
+			}
+			if(data.roles) {
+				const everyone = data.roles.find(role => role.id === this.id);
+				if(everyone && !this.roles.cache.has(everyone.id)) { this.roles.cache.forceSet(everyone.id, this.roles._add(everyone)); }
 			}
 		}
-		if(data.roles) {
-			const everyone = data.roles.find(role => role.id === this.id);
-			if(everyone && !this.roles.cache.has(everyone.id)) { this.roles.cache.forceSet(everyone.id, this.roles._add(everyone)); }
-		}
-	}
+	};
+	return obj;
 });
 
 override("/structures/Interaction.js", X => class Interaction extends X {

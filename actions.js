@@ -8,7 +8,7 @@ const {
 	ButtonInteraction,
 	CommandInteraction,
 	SelectMenuInteraction,
-	ContextMenuInteraction,
+	MessageContextMenuInteraction,
 	AutocompleteInteraction,
 	Typing,
 	LimitedCollection
@@ -250,6 +250,64 @@ module.exports = {
 		};
 	},
 
+	GuildScheduledEventCreate: function(data) {
+		const c = this.client;
+		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
+		const guildScheduledEvent = guild.scheduledEvents._add(data);
+		return { guildScheduledEvent };
+	},
+
+	GuildScheduledEventDelete: function(data) {
+		const c = this.client;
+		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
+		let guildScheduledEvent = guild.scheduledEvents.cache.get(data.id);
+		if(guildScheduledEvent) {
+			guild.scheduledEvents.cache.delete(guildScheduledEvent.id);
+		} else {
+			guildScheduledEvent = guild.scheduledEvents._add(data, false);
+		}
+		guildScheduledEvent.deleted = true;
+		return { guildScheduledEvent };
+	},
+
+	GuildScheduledEventUpdate: function(data) {
+		const c = this.client;
+		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
+		const oldGuildScheduledEvent = guild.scheduledEvents.cache.get(data.id)?._clone() ?? guild.scheduledEvents._add(data, false);
+		const newGuildScheduledEvent = guild.scheduledEvents._add(data);
+		return { oldGuildScheduledEvent, newGuildScheduledEvent };
+	},
+
+	GuildScheduledEventUserAdd: function(data) {
+		const c = this.client;
+		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
+		let guildScheduledEvent = guild.scheduledEvents.cache.get(data.guild_scheduled_event_id);
+		if(!guildScheduledEvent) {
+			guildScheduledEvent = guild.scheduledEvents._add({ id: data.guild_scheduled_event_id, guild_id: data.guild_id }, false);
+			guildScheduledEvent.partial = true;
+		}
+		let user = c.users.cache.get(data.user_id);
+		if(!user) {
+			user = c.users._add({ id: data.user_id }, false); // has built in partial
+		}
+		return { guildScheduledEvent, user };
+	},
+
+	GuildScheduledEventUserRemove: function(data) {
+		const c = this.client;
+		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
+		let guildScheduledEvent = guild.scheduledEvents.cache.get(data.guild_scheduled_event_id);
+		if(!guildScheduledEvent) {
+			guildScheduledEvent = guild.scheduledEvents._add({ id: data.guild_scheduled_event_id, guild_id: data.guild_id }, false);
+			guildScheduledEvent.partial = true;
+		}
+		let user = c.users.cache.get(data.user_id);
+		if(!user) {
+			user = c.users._add({ id: data.user_id }, false); // has built in partial
+		}
+		return { guildScheduledEvent, user };
+	},
+
 	// called by GuildStickersUpdate, GuildStickerManager.create()
 	GuildStickerCreate: function(guild, createdSticker) {
 		const sticker = guild.stickers._add(createdSticker);
@@ -304,7 +362,7 @@ module.exports = {
 						break;
 					case Constants.ApplicationCommandTypes.USER:
 					case Constants.ApplicationCommandTypes.MESSAGE:
-						InteractionType = ContextMenuInteraction;
+						InteractionType = MessageContextMenuInteraction;
 						break;
 					default:
 						c.emit(Constants.Events.DEBUG, `[INTERACTION] Received application command interaction with unknown type: ${data.data.type}`);
