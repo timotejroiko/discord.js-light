@@ -227,6 +227,10 @@ Discord.GuildStickerManager.prototype.forge = function(id) {
 	return this._add({ id }, false);
 };
 
+Discord.GuildScheduledEventManager.prototype.forge = function(id) {
+	return this._add({ id }, false);
+};
+
 Discord.StageInstanceManager.prototype.forge = function(id) {
 	return this._add({ id }, false);
 };

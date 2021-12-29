@@ -61,6 +61,9 @@ declare module "discord.js-light" {
 	interface ApplicationCommand {
 		partial: boolean
 	}
+	interface GuildScheduledEvent {
+		partial: boolean
+	}
 	interface GuildChannel {
 		fetchOverwrites(): Promise<Discord.Collection<Discord.Snowflake, Discord.PermissionOverwrites>>
 	}
@@ -119,6 +122,9 @@ declare module "discord.js-light" {
 	}
 	interface GuildStickerManager {
 		forge(sticker_id: Discord.Snowflake): Discord.Sticker
+	}
+	interface GuildScheduledEventManager {
+		forge(sticker_id: Discord.Snowflake): Discord.GuildScheduledEvent
 	}
 	interface StageInstanceManager {
 		forge(stage_id: Discord.Snowflake): Discord.StageInstance
