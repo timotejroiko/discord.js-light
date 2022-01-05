@@ -363,6 +363,7 @@ module.exports = {
 						break;
 					case Constants.ApplicationCommandTypes.USER:
 						InteractionType = UserContextMenuInteraction;
+						break;
 					case Constants.ApplicationCommandTypes.MESSAGE:
 						InteractionType = MessageContextMenuInteraction;
 						break;
