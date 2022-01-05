@@ -8,6 +8,7 @@ const {
 	ButtonInteraction,
 	CommandInteraction,
 	SelectMenuInteraction,
+	UserContextMenuInteraction,
 	MessageContextMenuInteraction,
 	AutocompleteInteraction,
 	Typing,
@@ -361,6 +362,7 @@ module.exports = {
 						InteractionType = CommandInteraction;
 						break;
 					case Constants.ApplicationCommandTypes.USER:
+						InteractionType = UserContextMenuInteraction;
 					case Constants.ApplicationCommandTypes.MESSAGE:
 						InteractionType = MessageContextMenuInteraction;
 						break;
