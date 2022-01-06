@@ -330,7 +330,6 @@ client.on("guildMemberUpdate", async (oldMember, newMember) => {
 | [Scathach](https://discord.bots.gg/bots/724047481561809007) | ![](https://top.gg/api/widget/servers/724047481561809007.svg) |
 | [Melody](https://melodybot.tk) | ![](https://top.gg/api/widget/servers/739725994344316968.svg) |
 | [Foxy 🦊](https://top.gg/bot/731144016686612510) | ![](https://top.gg/api/widget/servers/731144016686612510.svg) |
-| [FlaviBot](https://flavibot.xyz) | ![](https://top.gg/api/widget/servers/684773505157431347.svg) |
 | [Game Tracker](https://game-tracker.js.org) | ![](https://top.gg/api/widget/servers/475421235950518292.svg) |
 | [Anti NSFW](https://top.gg/bot/706054368318980138) | ![](https://top.gg/api/widget/servers/706054368318980138.svg) |
 | [Denky](https://denkybot.ga) | ![](https://top.gg/api/widget/servers/704517722100465746.svg) |
