@@ -6,7 +6,7 @@ This library aims to improve support and usability when using discord.js with li
 
 ## Branches
 
-* **master** - latest updates, based on the discord.js master branch (not actively maintained)
+* **master** - based on the discord.js master branch (not actively maintained, should not be used)
 * **v4** - current npm version, based on discord.js v13
 * **v3** - old npm version, based on discord.js v12
 * **v2** - deprecated
@@ -36,6 +36,7 @@ const client = new Discord.Client({
         GuildManager: Infinity, // client.guilds
         GuildMemberManager: 0, // guild.members
         GuildStickerManager: 0, // guild.stickers
+        GuildScheduledEventManager: 0, // guild.scheduledEvents
         MessageManager: 0, // channel.messages
         PermissionOverwriteManager: 0, // channel.permissionOverwrites
         PresenceManager: 0, // guild.presences
@@ -80,7 +81,7 @@ Discord.js's new caching configuration is very powerful, here are a few examples
          * If maxSize is 0 or if updating an existing item, this function is not called.
          * This example will prevent the bot user from ever being removed due to the cache being full and some other user will be removed instead.
         */
-        keepOverLimit: (value, key, collection) => value.id === client.user.id
+        keepOverLimit: (value, key, collection) => value.id === value.client.user.id
     },
     GuildMemberManager: {
         maxSize: Infinity,
@@ -90,11 +91,43 @@ Discord.js's new caching configuration is very powerful, here are a few examples
          * the returned function will be given to collection.sweep() internally, and will delete all items for which the function returns true.
          * this example will remove all members except the bot member, every 600 seconds.
         */
-        sweepFilter: collection => (value, key, collection) => value.id !== client.user.id,
+        /*
+         * As of discord.js version 13.4.0+ (discord.js-light 4.5.0+) sweepFilter and sweepInterval are deprecated.
+         * Instead use the new client sweeper options.
+        */
+        sweepFilter: collection => (value, key, collection) => value.id !== value.client.user.id,
         sweepInterval: 600 // autosweep interval in seconds
     }
 }
 ```
+
+New sweeper options added with discord.js v13.4.0 (discord.js-light 4.5.0):
+
+```js
+new Discord.Client({
+    makeCache: Discord.Options.cacheWithLimits({
+        UserManager: {
+            maxSize: 50,
+            keepOverLimit: (value, key, collection) => value.id === value.client.user.id
+        },
+        MessageManager: {
+            maxSize: 100
+        }
+    }),
+    sweepers: {
+        users: {
+            interval: 600,
+            filter: user => user.id !== user.client.user.id
+        },
+        messages: {
+            interval: 600,
+            filter: message => message.author?.id !== message.client.user.id
+        }
+    }
+})
+```
+
+For further information refer to the official discord.js documentation.
 
 ## Non-standard stuff
 
@@ -197,7 +230,7 @@ const Discord = require("discord.js-light");
 
 // remove non-text channels and remove text channels whose last message is older than 1 hour
 function channelFilter(channel) {
-    return !channel.lastMessageId || Discord.SnowflakeUtil.deconstruct(channel.lastMessageId).timestamp < Date.now() - 3600000;
+    return !channel.lastMessageId || Discord.SnowflakeUtil.timestampFrom(channel.lastMessageId) < Date.now() - 3600000;
 }
 
 const makeCache = Discord.Options.cacheWithLimits({
@@ -248,10 +281,10 @@ const makeCache = Discord.Options.cacheWithLimits({
 const client = new Discord.Client({ makeCache, intents: [ /* your intents */ ] });
 
 client.on("ready", () => {
-    client.guilds.cache.forEach(guild => {
+    client.guilds.forEach(guild => {
         // disable cache and remove roles we dont have
         guild.roles.cache.maxSize = 0;
-        guild.roles.cache.sweep(role => !guild.me.roles.cache.has(role.id))
+        guild.roles.cache.sweep(role => !guild.me.roles.has(role.id))
     });
 });
 
@@ -322,4 +355,3 @@ client.on("guildMemberUpdate", async (oldMember, newMember) => {
 | [Discord.js Bot Template](https://github.com/Giuliopime/discordjs-bot-template) |  |
 | [Growtopian](https://growtopian.xyz) |  |
 | [MenheraBot](https://menherabot.xyz) | ![](https://top.gg/api/widget/servers/708014856711962654.svg) |
-| [BloxBot](https://bloxbot.xyz) | ![](https://top.gg/api/widget/servers/451139247538307082.svg) |
