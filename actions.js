@@ -36,6 +36,9 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = c.channels.cache.get(data.id) || c.channels._add(data, guild);
+		if(!channel) {
+			return {};
+		}
 		if(channel.messages?.cache.size && !(channel instanceof DMChannel)) {
 			for(const message of channel.messages.cache.values()) { message.deleted = true; }
 		}
@@ -62,7 +65,9 @@ module.exports = {
 		} else {
 			channel = c.channels._add(data, guild);
 			old = c.channels._add({ id: data.id, type: data.type }, guild, { cache: false, allowUnknownGuild: true });
-			makePartial(old);
+			if(old) {
+				makePartial(old);
+			}
 		}
 		return {
 			old,
@@ -631,6 +636,9 @@ module.exports = {
 		const c = this.client;
 		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
 		const thread = c.channels._add(data, guild);
+		if(!thread) {
+			return {};
+		}
 		c.emit(Constants.Events.THREAD_CREATE, thread);
 		return { thread };
 	},
@@ -641,6 +649,9 @@ module.exports = {
 		if(!channel) {
 			const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
 			channel = c.channels._add(data, guild, { cache: false, allowUnknownGuild: true });
+			if(!channel) {
+				return {};
+			}
 			makePartial(channel);
 		}
 		for(const message of channel.messages.cache.values()) { message.deleted = true; }
@@ -665,6 +676,9 @@ module.exports = {
 		}
 		const syncedThreads = data.threads.reduce((coll, rawThread) => {
 			const thread = c.channels._add(rawThread);
+			if(!thread) {
+				return coll;
+			}
 			return coll.set(thread.id, thread);
 		}, new Collection());
 		for(const rawMember of Object.values(data.members)) {
