@@ -51,6 +51,7 @@ function getOrCreateChannel(client, id, guild) {
 }
 
 function getOrCreateMessage(channel, id) {
+	if(!channel.messages) { return null; }
 	let message = channel.messages.cache.get(id);
 	if(!message) {
 		message = channel.messages._add({

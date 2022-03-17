@@ -435,7 +435,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
-		if(!channel) { return {}; }
+		if(!channel || !channel.messages) { return {}; }
 		channel.lastMessageId = data.id;
 		const message = channel.messages._add(data);
 		return { message };
@@ -446,7 +446,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
-		if(!channel) { return {}; }
+		if(!channel || !channel.messages) { return {}; }
 		const message = getOrCreateMessage(channel, data.id);
 		channel.messages.cache.delete(message.id);
 		message.deleted = true;
@@ -457,7 +457,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
-		if(!channel) { return {}; }
+		if(!channel || !channel.messages) { return {}; }
 		const deleted = new Collection();
 		for(const id of data.ids) {
 			const message = getOrCreateMessage(channel, id);
@@ -472,7 +472,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
-		if(!channel) { return {}; }
+		if(!channel || !channel.messages) { return {}; }
 		let message = channel.messages.cache.get(data.id);
 		let old;
 		if(message) {
@@ -494,7 +494,7 @@ module.exports = {
 		if(!channel) {
 			const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 			channel = getOrCreateChannel(c, data.channel_id, guild);
-			if(!channel) { return {}; }
+			if(!channel || !channel.messages) { return {}; }
 		}
 		let user = data.user || c.users.cache.get(data.user_id);
 		if(!user) {
@@ -522,7 +522,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
-		if(!channel) { return {}; }
+		if(!channel || !channel.messages) { return {}; }
 		let user = c.users.cache.get(data.user_id);
 		if(!user) {
 			user = c.users._add({ id: data.user_id }, false); // has built in partial
@@ -548,7 +548,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
-		if(!channel) { return {}; }
+		if(!channel || !channel.messages) { return {}; }
 		const message = getOrCreateMessage(channel, data.message_id);
 		const removed = message.reactions.cache.clone();
 		message.reactions.cache.clear();
@@ -559,7 +559,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
-		if(!channel) { return {}; }
+		if(!channel || !channel.messages) { return {}; }
 		const message = getOrCreateMessage(channel, data.message_id);
 		let reaction = message.reactions.cache.get(data.emoji.id ?? decodeURIComponent(data.emoji.name));
 		if(!reaction) {
@@ -662,7 +662,7 @@ module.exports = {
 		if(!channel) {
 			const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
 			channel = c.channels._add(data, guild, { cache: false, allowUnknownGuild: true });
-			if(!channel) {
+			if(!channel || !channel.messages) {
 				return {};
 			}
 			makePartial(channel);
@@ -752,7 +752,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
-		if(!channel) { return; }
+		if(!channel || !channel.messages) { return; }
 		let user = c.users.cache.get(data.user_id);
 		if(!user) {
 			if(data.member?.user) {
