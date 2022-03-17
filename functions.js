@@ -44,6 +44,7 @@ function getOrCreateChannel(client, id, guild) {
 	let channel = client.channels.cache.get(id);
 	if(!channel) {
 		channel = client.channels._add({ id, type: guild ? 0 : 1 }, guild, { cache: false });
+		if(!channel) { return null; }
 		makePartial(channel);
 	}
 	return channel;

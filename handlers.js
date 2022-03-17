@@ -89,6 +89,7 @@ const handlers = {
 	CHANNEL_PINS_UPDATE: (client, { d: data }, shard) => {
 		const guild = data.guild_id ? getOrCreateGuild(client, data.guild_id, shard.id) : void 0;
 		const channel = getOrCreateChannel(client, data.channel_id, guild);
+		if(!channel) { return; }
 		const time = data.last_pin_timestamp ? new Date(data.last_pin_timestamp).getTime() : null;
 		channel.lastPinTimestamp = time;
 		client.emit(Constants.Events.CHANNEL_PINS_UPDATE, channel, time);
@@ -264,60 +265,70 @@ const handlers = {
 	INVITE_CREATE: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
 		const { invite } = client.actions.InviteCreate.handle(packet.d);
+		if(!invite) { return; }
 		client.emit(Constants.Events.INVITE_CREATE, invite);
 	},
 
 	INVITE_DELETE: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
 		const { invite } = client.actions.InviteDelete.handle(packet.d);
+		if(!invite) { return; }
 		client.emit(Constants.Events.INVITE_DELETE, invite);
 	},
 
 	MESSAGE_CREATE: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
 		const { message } = client.actions.MessageCreate.handle(packet.d);
+		if(!message) { return; }
 		client.emit(Constants.Events.MESSAGE_CREATE, message);
 	},
 
 	MESSAGE_DELETE: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
 		const { message } = client.actions.MessageDelete.handle(packet.d);
+		if(!message) { return; }
 		client.emit(Constants.Events.MESSAGE_DELETE, message);
 	},
 
 	MESSAGE_DELETE_BULK: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
 		const { messages } = client.actions.MessageDeleteBulk.handle(packet.d);
+		if(!messages) { return; }
 		client.emit(Constants.Events.MESSAGE_BULK_DELETE, messages);
 	},
 
 	MESSAGE_UPDATE: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
 		const { old, updated } = client.actions.MessageUpdate.handle(packet.d);
+		if(!updated) { return; }
 		client.emit(Constants.Events.MESSAGE_UPDATE, old, updated);
 	},
 
 	MESSAGE_REACTION_ADD: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
 		const { reaction, user } = client.actions.MessageReactionAdd.handle(packet.d);
+		if(!reaction) { return; }
 		client.emit(Constants.Events.MESSAGE_REACTION_ADD, reaction, user);
 	},
 
 	MESSAGE_REACTION_REMOVE: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
 		const { reaction, user } = client.actions.MessageReactionRemove.handle(packet.d);
+		if(!reaction) { return; }
 		client.emit(Constants.Events.MESSAGE_REACTION_REMOVE, reaction, user);
 	},
 
 	MESSAGE_REACTION_REMOVE_ALL: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
 		const { message, removed } = client.actions.MessageReactionRemoveAll.handle(packet.d);
+		if(!message) { return; }
 		client.emit(Constants.Events.MESSAGE_REACTION_REMOVE_ALL, message, removed);
 	},
 
 	MESSAGE_REACTION_REMOVE_EMOJI: (client, packet, shard) => {
 		packet.d.shardId = shard.id;
 		const { reaction } = client.actions.MessageReactionRemoveEmoji.handle(packet.d);
+		if(!reaction) { return; }
 		client.emit(Constants.Events.MESSAGE_REACTION_REMOVE_EMOJI, reaction);
 	},
 

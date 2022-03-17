@@ -411,6 +411,7 @@ module.exports = {
 		if(!data.guild_id) { return; }
 		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return {}; }
 		const invite = guild.invites._add(Object.assign(data, { channel, guild }));
 		return { invite };
 	},
@@ -422,6 +423,7 @@ module.exports = {
 		let invite = guild.invites.cache.get(data.code);
 		if(!invite) {
 			const channel = getOrCreateChannel(c, data.channel_id, guild);
+			if(!channel) { return {}; }
 			invite = guild.invites._add(Object.assign(data, { channel, guild }), false);
 			invite.partial = true;
 		}
@@ -433,6 +435,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return {}; }
 		channel.lastMessageId = data.id;
 		const message = channel.messages._add(data);
 		return { message };
@@ -443,6 +446,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return {}; }
 		const message = getOrCreateMessage(channel, data.id);
 		channel.messages.cache.delete(message.id);
 		message.deleted = true;
@@ -453,6 +457,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return {}; }
 		const deleted = new Collection();
 		for(const id of data.ids) {
 			const message = getOrCreateMessage(channel, id);
@@ -467,6 +472,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return {}; }
 		let message = channel.messages.cache.get(data.id);
 		let old;
 		if(message) {
@@ -488,6 +494,7 @@ module.exports = {
 		if(!channel) {
 			const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 			channel = getOrCreateChannel(c, data.channel_id, guild);
+			if(!channel) { return {}; }
 		}
 		let user = data.user || c.users.cache.get(data.user_id);
 		if(!user) {
@@ -515,6 +522,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return {}; }
 		let user = c.users.cache.get(data.user_id);
 		if(!user) {
 			user = c.users._add({ id: data.user_id }, false); // has built in partial
@@ -540,6 +548,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return {}; }
 		const message = getOrCreateMessage(channel, data.message_id);
 		const removed = message.reactions.cache.clone();
 		message.reactions.cache.clear();
@@ -550,6 +559,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return {}; }
 		const message = getOrCreateMessage(channel, data.message_id);
 		let reaction = message.reactions.cache.get(data.emoji.id ?? decodeURIComponent(data.emoji.name));
 		if(!reaction) {
@@ -596,6 +606,7 @@ module.exports = {
 		const c = this.client;
 		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return {}; }
 		const stageInstance = channel.guild.stageInstances._add(data);
 		c.emit(Constants.Events.STAGE_INSTANCE_CREATE, stageInstance);
 		return { stageInstance };
@@ -605,6 +616,7 @@ module.exports = {
 		const c = this.client;
 		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return {}; }
 		const stageInstance = channel.guild.stageInstances._add(data);
 		if(stageInstance) {
 			channel.guild.stageInstances.cache.delete(stageInstance.id);
@@ -618,6 +630,7 @@ module.exports = {
 		const c = this.client;
 		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return {}; }
 		let oldStageInstance = channel.guild.stageInstances.cache.get(data.id)?._clone();
 		if(!oldStageInstance) {
 			oldStageInstance = channel.guild.stageInstances._add({ id: data.id }, false);
@@ -739,6 +752,7 @@ module.exports = {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return; }
 		let user = c.users.cache.get(data.user_id);
 		if(!user) {
 			if(data.member?.user) {
@@ -796,6 +810,7 @@ module.exports = {
 		const c = this.client;
 		const guild = getOrCreateGuild(c, data.guild_id, data.shardId);
 		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		if(!channel) { return; }
 		c.emit(Constants.Events.WEBHOOKS_UPDATE, channel);
 	}
 

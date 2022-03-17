@@ -68,6 +68,7 @@ override("/structures/MessageMentions.js", X => class MessageMentions extends X 
 		let matches;
 		while((matches = this.constructor.CHANNELS_PATTERN.exec(this._content)) !== null) {
 			const chan = getOrCreateChannel(this.client, matches[1], this.guild);
+			if(!chan) { continue; }
 			this._channels.set(chan.id, chan);
 		}
 		return this._channels;
