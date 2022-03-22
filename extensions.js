@@ -132,7 +132,8 @@ override("/structures/Guild.js", obj => {
 
 override("/structures/Interaction.js", X => class Interaction extends X {
 	get channel() {
-		return this.channelId ? getOrCreateChannel(this.client, this.channelId, this.guild) : null;
+		const c = this.channelId ? getOrCreateChannel(this.client, this.channelId, this.guild) : null;
+		return c.messages ? c : null;
 	}
 	get guild() {
 		return this.guildId ? getOrCreateGuild(this.client, this.guildId) : null;
