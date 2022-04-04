@@ -210,7 +210,7 @@ Discord.PresenceManager.prototype.forge = function(id) {
 };
 
 Discord.MessageManager.prototype.forge = function(id) {
-	return this._add({ id }, false);
+	return this._add({ id, guild_id: this.channel.guildId, channel_id: this.channel.id }, false);
 };
 
 Discord.GuildBanManager.prototype.forge = function(id) {
