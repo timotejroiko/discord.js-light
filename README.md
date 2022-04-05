@@ -354,3 +354,4 @@ client.on("guildMemberUpdate", async (oldMember, newMember) => {
 | [Discord.js Bot Template](https://github.com/Giuliopime/discordjs-bot-template) |  |
 | [Growtopian](https://growtopian.xyz) |  |
 | [MenheraBot](https://menherabot.xyz) | ![](https://top.gg/api/widget/servers/708014856711962654.svg) |
+| [GameStatus](https://github.com/Douile/discord-gamestatus) | ![](https://top.gg/api/widget/servers/659050996730822665.svg) |
