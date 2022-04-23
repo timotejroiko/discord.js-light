@@ -96,7 +96,7 @@ override("/structures/Message.js", obj => {
 			return this.guild.members.cache.get(id) || this._member || null;
 		}
 		get channel() {
-			return getOrCreateChannel(this.client, this.channelId, this.guild);
+			return getOrCreateChannel(this.client, this.channelId, this.guild, this.author);
 		}
 		get guild() {
 			return this.guildId ? getOrCreateGuild(this.client, this.guildId) : null;
@@ -132,7 +132,7 @@ override("/structures/Guild.js", obj => {
 
 override("/structures/Interaction.js", X => class Interaction extends X {
 	get channel() {
-		const c = this.channelId ? getOrCreateChannel(this.client, this.channelId, this.guild) : null;
+		const c = this.channelId ? getOrCreateChannel(this.client, this.channelId, this.guild, this.user) : null;
 		return c.messages ? c : null;
 	}
 	get guild() {

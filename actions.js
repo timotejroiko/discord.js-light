@@ -434,7 +434,7 @@ module.exports = {
 	MessageCreate: function(data) {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
-		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		const channel = getOrCreateChannel(c, data.channel_id, guild, data.author);
 		if(!channel || !channel.messages) { return {}; }
 		channel.lastMessageId = data.id;
 		const message = channel.messages._add(data);
@@ -471,7 +471,7 @@ module.exports = {
 	MessageUpdate: function(data) {
 		const c = this.client;
 		const guild = data.guild_id ? getOrCreateGuild(c, data.guild_id, data.shardId) : void 0;
-		const channel = getOrCreateChannel(c, data.channel_id, guild);
+		const channel = getOrCreateChannel(c, data.channel_id, guild, data.author);
 		if(!channel || !channel.messages) { return {}; }
 		let message = channel.messages.cache.get(data.id);
 		let old;

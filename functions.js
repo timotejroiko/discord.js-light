@@ -40,10 +40,12 @@ function getOrCreateGuild(client, id, shardId) {
 	return guild;
 }
 
-function getOrCreateChannel(client, id, guild) {
+function getOrCreateChannel(client, id, guild, recipient) {
 	let channel = client.channels.cache.get(id);
 	if(!channel) {
-		channel = client.channels._add({ id, type: guild ? 0 : 1 }, guild, { cache: false });
+		const data = { id, type: guild ? 0 : 1 };
+		if(data.type === 1 && recipient) { data.recipients = [recipient]; }
+		channel = client.channels._add(data, guild, { cache: false });
 		if(!channel) { return null; }
 		makePartial(channel);
 	}
