@@ -12,7 +12,8 @@ const {
 	MessageContextMenuInteraction,
 	AutocompleteInteraction,
 	Typing,
-	LimitedCollection
+	LimitedCollection,
+	ModalSubmitInteraction
 } = require("discord.js");
 
 const {
@@ -398,6 +399,10 @@ module.exports = {
 				InteractionType = AutocompleteInteraction;
 				break;
 			}
+			case Constants.InteractionTypes.MODAL_SUBMIT: {
+				InteractionType = ModalSubmitInteraction;
+				break;
+			}
 			default: {
 				c.emit(Constants.Events.DEBUG, `[INTERACTION] Received interaction with unknown type: ${data.type}`);
 				return;
@@ -652,7 +657,7 @@ module.exports = {
 		if(!thread) {
 			return {};
 		}
-		c.emit(Constants.Events.THREAD_CREATE, thread);
+		c.emit(Constants.Events.THREAD_CREATE, thread, data.newly_created ?? false);
 		return { thread };
 	},
 
