@@ -183,6 +183,7 @@ module.exports = {
 		}
 		member.deleted = true;
 		guild.members.cache.delete(data.user.id);
+		guild.presences.cache.delete(data.user.id);
 		guild.voiceStates.cache.delete(data.user.id);
 		if(guild.memberCount) { guild.memberCount--; }
 		return {
