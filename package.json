@@ -30,9 +30,9 @@
 		"node": ">=16.6.0"
 	},
 	"devDependencies": {
-		"@types/node": "^16.11.35",
-		"discord-api-types": "^0.33.0",
-		"eslint": "^8.15.0"
+		"@types/node": "^16.11.66",
+		"discord-api-types": "^0.33.5",
+		"eslint": "^8.25.0"
 	},
 	"dependencies": {
 		"discord.js": "^13.12.0"
